@@ -1,120 +1,252 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
-import { authProviders } from "@/features/auth/constants";
-import {
-  signInAction,
-  type SignInFormState,
-} from "@/features/auth/actions/sign-in";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { useId, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
-const initialState: SignInFormState = {};
+type SignInCardProps = {
+  resetSuccess?: boolean;
+};
+
 const isDevelopment = process.env.NODE_ENV === "development";
 const devSeedEmail = process.env.NEXT_PUBLIC_DEV_SEED_USER_EMAIL ?? "";
 const devSeedPassword = process.env.NEXT_PUBLIC_DEV_SEED_USER_PASSWORD ?? "";
+const rememberedEmailStorageKey = "docfleet.remembered-email";
 
-export function SignInCard() {
-  const [state, formAction, isPending] = useActionState(
-    signInAction,
-    initialState,
-  );
+type FormErrors = {
+  email?: string;
+  password?: string;
+  general?: string;
+};
+
+export function SignInCard({ resetSuccess = false }: SignInCardProps) {
+  const router = useRouter();
+  const emailId = useId();
+  const passwordId = useId();
+  const [email, setEmail] = useState(() => getInitialEmail());
+  const [password, setPassword] = useState(isDevelopment ? devSeedPassword : "");
+  const [rememberMe, setRememberMe] = useState(() => getInitialRememberMe());
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const nextErrors: FormErrors = {};
+
+    if (!trimmedEmail) {
+      nextErrors.email = "Informe seu email.";
+    }
+
+    if (!password) {
+      nextErrors.password = "Informe sua senha.";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    setIsLoading(true);
+    setErrors({});
+
+    if (rememberMe) {
+      window.localStorage.setItem(rememberedEmailStorageKey, trimmedEmail);
+    } else {
+      window.localStorage.removeItem(rememberedEmailStorageKey);
+    }
+
+    const result = await signIn("credentials", {
+      email: trimmedEmail,
+      password,
+      redirect: false,
+    });
+
+    setIsLoading(false);
+
+    if (!result || result.error) {
+      setErrors({
+        general: "Email ou senha invalidos.",
+      });
+      return;
+    }
+
+    router.push("/dashboard");
+    router.refresh();
+  }
 
   return (
-    <section className="rounded-[32px] border border-[var(--color-border)] bg-[var(--color-card)] p-8 shadow-[0_30px_80px_rgba(15,23,42,0.08)]">
-      <div className="space-y-6">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
-            Feature auth
-          </p>
-          <h2 className="mt-3 text-2xl font-semibold text-[var(--color-foreground)]">
-            Camadas separadas para UI, sessao e providers
-          </h2>
-        </div>
-
-        <div className="grid gap-4">
-          {authProviders.map((provider) => (
-            <article
-              key={provider.id}
-              className="rounded-2xl border border-[var(--color-border)] bg-white/90 p-4"
-            >
-              <h3 className="text-base font-semibold text-[var(--color-foreground)]">
-                {provider.name}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                {provider.description}
-              </p>
-            </article>
-          ))}
-        </div>
-
-        <form action={formAction} className="grid gap-4">
-          <label className="grid gap-2 text-sm font-medium text-[var(--color-foreground)]">
-            Email
-            <input
-              type="email"
-              name="email"
-              defaultValue={isDevelopment ? devSeedEmail : undefined}
-              className="h-12 rounded-2xl border border-[var(--color-border)] bg-white px-4 text-base outline-none transition-colors focus:border-[var(--color-accent)]"
-              autoComplete="email"
-              required
-            />
-          </label>
-
-          <label className="grid gap-2 text-sm font-medium text-[var(--color-foreground)]">
-            Senha
-            <input
-              type="password"
-              name="password"
-              defaultValue={isDevelopment ? devSeedPassword : undefined}
-              className="h-12 rounded-2xl border border-[var(--color-border)] bg-white px-4 text-base outline-none transition-colors focus:border-[var(--color-accent)]"
-              autoComplete="current-password"
-              required
-            />
-          </label>
-
-          {state.error ? (
-            <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {state.error}
+    <section className="w-full max-w-[480px] rounded-[32px] border border-slate-200/80 bg-white p-8 shadow-[0_32px_80px_rgba(15,23,42,0.14)] sm:p-10">
+      <div className="space-y-8">
+        <header className="space-y-3">
+          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Area segura
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-950">
+              Entrar no DocFleet
+            </h2>
+            <p className="text-sm leading-6 text-slate-500">
+              Acesse seu painel para acompanhar vencimentos, alertas operacionais e
+              documentos da frota em um unico lugar.
             </p>
-          ) : null}
+          </div>
+        </header>
 
-          <button
-            type="submit"
-            className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[var(--color-foreground)] px-6 text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isPending}
-          >
-            {isPending ? "Entrando..." : "Entrar no DocFleet"}
-          </button>
-        </form>
-
-        {isDevelopment && devSeedEmail && devSeedPassword ? (
-          <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-white/70 p-4">
-            <p className="text-sm leading-6 text-[var(--color-muted)]">
-              Credenciais de desenvolvimento: `{devSeedEmail}` / `{devSeedPassword}`.
-            </p>
+        {resetSuccess ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            Senha redefinida com sucesso. Entre com a sua nova credencial.
           </div>
         ) : null}
 
-        <p className="text-sm text-[var(--color-muted)]">
-          Ainda nao tem acesso?{" "}
-          <Link
-            href="/cadastro"
-            className="font-semibold text-[var(--color-accent)]"
+        {errors.general ? (
+          <div
+            role="alert"
+            className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
           >
-            Criar conta
-          </Link>
-        </p>
+            {errors.general}
+          </div>
+        ) : null}
 
-        <p className="text-sm text-[var(--color-muted)]">
-          Esqueceu a senha?{" "}
-          <Link
-            href="/recuperar-senha"
-            className="font-semibold text-[var(--color-accent)]"
-          >
-            Recuperar acesso
-          </Link>
-        </p>
+        <form className="grid gap-5" onSubmit={handleSubmit} noValidate>
+          <Input
+            id={emailId}
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="voce@empresa.com"
+            autoComplete="email"
+            required
+            error={errors.email}
+            icon={<MailIcon />}
+          />
+
+          <Input
+            id={passwordId}
+            label="Senha"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Sua senha"
+            autoComplete="current-password"
+            required
+            error={errors.password}
+            icon={<LockIcon />}
+            trailingAction={
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="text-xs font-semibold text-slate-500 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showPassword ? "Ocultar" : "Mostrar"}
+              </button>
+            }
+          />
+
+          <div className="flex items-center justify-between gap-4 text-sm">
+            <label className="flex items-center gap-3 text-slate-500">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-slate-300 text-[#f97316] focus:ring-[#fdba74]"
+                checked={rememberMe}
+                onChange={(event) => setRememberMe(event.target.checked)}
+              />
+              <span>Lembrar-me</span>
+            </label>
+
+            <Link
+              href="/recuperar-senha"
+              className="font-semibold text-slate-900 transition-colors hover:text-[#f97316]"
+            >
+              Esqueceu sua senha?
+            </Link>
+          </div>
+
+          <Button type="submit" isLoading={isLoading} loadingLabel="Entrando...">
+            Entrar
+          </Button>
+        </form>
+
+        <div className="space-y-4">
+          {isDevelopment && devSeedEmail && devSeedPassword ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+              Ambiente de desenvolvimento:
+              <span className="mt-1 block font-medium text-slate-800">
+                {devSeedEmail} / {devSeedPassword}
+              </span>
+            </div>
+          ) : null}
+
+          <p className="text-sm text-slate-500">
+            Ainda nao tem acesso?{" "}
+            <Link
+              href="/cadastro"
+              className="font-semibold text-slate-900 transition-colors hover:text-[#f97316]"
+            >
+              Criar conta
+            </Link>
+          </p>
+        </div>
       </div>
     </section>
   );
+}
+
+function MailIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 6h16v12H4z" />
+      <path d="m4 7 8 6 8-6" />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="4" y="11" width="16" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 1 1 8 0v3" />
+    </svg>
+  );
+}
+
+function getInitialEmail() {
+  if (typeof window !== "undefined") {
+    return window.localStorage.getItem(rememberedEmailStorageKey) ?? devSeedEmail;
+  }
+
+  return devSeedEmail;
+}
+
+function getInitialRememberMe() {
+  if (typeof window !== "undefined") {
+    return Boolean(window.localStorage.getItem(rememberedEmailStorageKey));
+  }
+
+  return Boolean(isDevelopment && devSeedEmail);
 }
