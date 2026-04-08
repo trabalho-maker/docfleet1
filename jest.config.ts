@@ -11,7 +11,9 @@ const config: Config = {
   clearMocks: true,
   collectCoverageFrom: [
     "features/auth/**/*.ts",
+    "features/alerts/**/*.ts",
     "features/data/repositories/**/*.ts",
+    "features/documents/**/*.ts",
     "!**/*.d.ts",
   ],
 };

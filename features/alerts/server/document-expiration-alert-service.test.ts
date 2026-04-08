@@ -61,4 +61,30 @@ describe("document expiration alert service", () => {
 
     expect(generatedAlerts).toHaveLength(0);
   });
+
+  it("preserves manual alerts while replacing only generated expiration alerts", async () => {
+    const dataLayer = createDataLayer();
+    const beforeSync = await dataLayer.alerts.listOpen(10);
+    const manualAlertsBefore = beforeSync.filter(
+      (alert) => alert.kind !== "document_expiration",
+    );
+
+    expect(manualAlertsBefore).toHaveLength(3);
+
+    await syncDocumentExpirationAlerts();
+
+    const afterSync = await dataLayer.alerts.listOpen(10);
+    const manualAlertsAfter = afterSync.filter(
+      (alert) => alert.kind !== "document_expiration",
+    );
+    const generatedAlertsAfter = afterSync.filter(
+      (alert) => alert.kind === "document_expiration",
+    );
+
+    expect(manualAlertsAfter).toHaveLength(3);
+    expect(generatedAlertsAfter.length).toBeGreaterThan(0);
+    expect(
+      manualAlertsAfter.map((alert) => alert.id).sort(),
+    ).toEqual(manualAlertsBefore.map((alert) => alert.id).sort());
+  });
 });
