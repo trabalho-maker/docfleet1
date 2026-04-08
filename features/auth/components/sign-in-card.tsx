@@ -117,6 +117,7 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
           <Input
             id={emailId}
             label="Email"
+            name="email"
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -130,6 +131,7 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
           <Input
             id={passwordId}
             label="Senha"
+            name="password"
             type={showPassword ? "text" : "password"}
             value={password}
             onChange={(event) => setPassword(event.target.value)}

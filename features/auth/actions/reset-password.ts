@@ -31,6 +31,7 @@ export async function resetPasswordAction(
   }
 
   const dataLayer = createDataLayer();
+  await dataLayer.passwordResetTokens.deleteExpired();
   const resetToken = await dataLayer.passwordResetTokens.findValidByRawToken(token);
 
   if (!resetToken) {

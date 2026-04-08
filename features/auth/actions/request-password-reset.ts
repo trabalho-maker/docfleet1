@@ -38,6 +38,7 @@ export async function requestPasswordResetAction(
     await consumePasswordResetAttempt(normalizedEmail);
 
     const dataLayer = createDataLayer();
+    await dataLayer.passwordResetTokens.deleteExpired();
     const user = await dataLayer.users.findByEmail(normalizedEmail);
 
     if (!user) {

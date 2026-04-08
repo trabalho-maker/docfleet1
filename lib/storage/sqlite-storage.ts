@@ -5,7 +5,7 @@ import { createSqliteSchema } from "@/lib/storage/sqlite-schema";
 import { seedSqliteDatabase } from "@/features/data/seed/seed-sqlite-db";
 import { logger } from "@/lib/logger";
 
-let databasePromise: Promise<Database> | null = null;
+let sqlJsPromise: ReturnType<typeof initSqlJs> | null = null;
 let writeQueue = Promise.resolve();
 
 function getDataDirectory() {
@@ -21,9 +21,13 @@ function getSqlWasmDirectory() {
 }
 
 async function getSqlJs() {
-  return initSqlJs({
-    locateFile: (file) => path.join(getSqlWasmDirectory(), file),
-  });
+  if (!sqlJsPromise) {
+    sqlJsPromise = initSqlJs({
+      locateFile: (file) => path.join(getSqlWasmDirectory(), file),
+    });
+  }
+
+  return sqlJsPromise;
 }
 
 export async function persistSqliteDatabase(db: Database) {
@@ -36,37 +40,43 @@ export async function persistSqliteDatabase(db: Database) {
 }
 
 export async function getSqliteDatabase(): Promise<Database> {
-  if (!databasePromise) {
-    databasePromise = (async () => {
-      const databasePath = getDatabasePath();
-      await mkdir(path.dirname(databasePath), { recursive: true });
+  const databasePath = getDatabasePath();
+  await mkdir(path.dirname(databasePath), { recursive: true });
 
-      const SQL = await getSqlJs();
+  const SQL = await getSqlJs();
 
-      try {
-        const file = await readFile(databasePath);
-        const db = new SQL.Database(new Uint8Array(file));
-        createSqliteSchema(db);
-        logger.info("storage.sqlite.loaded", {
-          databasePath,
-          source: "disk",
-        });
-        return db;
-      } catch {
-        const db = new SQL.Database();
-        createSqliteSchema(db);
-        await seedSqliteDatabase(db);
-        await persistSqliteDatabase(db);
-        logger.info("storage.sqlite.loaded", {
-          databasePath,
-          source: "seed",
-        });
-        return db;
-      }
-    })();
+  try {
+    const file = await readFile(databasePath);
+    const db = new SQL.Database(new Uint8Array(file));
+    createSqliteSchema(db);
+    logger.info("storage.sqlite.loaded", {
+      databasePath,
+      source: "disk",
+    });
+    return db;
+  } catch {
+    const db = new SQL.Database();
+    createSqliteSchema(db);
+    await seedSqliteDatabase(db);
+    await persistSqliteDatabase(db);
+    logger.info("storage.sqlite.loaded", {
+      databasePath,
+      source: "seed",
+    });
+    return db;
   }
+}
 
-  return databasePromise;
+export async function withSqliteDatabase<T>(
+  operation: (db: Database) => Promise<T> | T,
+): Promise<T> {
+  const db = await getSqliteDatabase();
+
+  try {
+    return await operation(db);
+  } finally {
+    db.close();
+  }
 }
 
 export async function withSqliteWriteLock<T>(
@@ -74,9 +84,13 @@ export async function withSqliteWriteLock<T>(
 ): Promise<T> {
   const run = async () => {
     const db = await getSqliteDatabase();
-    const result = await operation(db);
-    await persistSqliteDatabase(db);
-    return result;
+    try {
+      const result = await operation(db);
+      await persistSqliteDatabase(db);
+      return result;
+    } finally {
+      db.close();
+    }
   };
 
   const next = writeQueue.then(run, run);
@@ -102,11 +116,5 @@ export async function resetSqliteDatabase() {
 }
 
 export async function resetSqliteStorageState() {
-  if (databasePromise) {
-    const db = await databasePromise;
-    db.close();
-  }
-
-  databasePromise = null;
   writeQueue = Promise.resolve();
 }

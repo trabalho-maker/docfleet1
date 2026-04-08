@@ -1,5 +1,8 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { getSqliteDatabase, withSqliteWriteLock } from "@/lib/storage/sqlite-storage";
+import {
+  withSqliteDatabase,
+  withSqliteWriteLock,
+} from "@/lib/storage/sqlite-storage";
 import type {
   PasswordResetTokenRecord,
   PasswordResetTokenWithUser,
@@ -39,6 +42,7 @@ export interface PasswordResetTokenRepository {
   findValidByRawToken(token: string): Promise<PasswordResetTokenWithUser | null>;
   consume(id: string): Promise<void>;
   deleteById(id: string): Promise<void>;
+  deleteExpired(): Promise<void>;
   deleteActiveForUser(userId: string): Promise<void>;
 }
 
@@ -56,11 +60,6 @@ export class SqlitePasswordResetTokenRepository
       const expiresAt = new Date(
         now.getTime() + TOKEN_TTL_MINUTES * 60 * 1000,
       ).toISOString();
-
-      db.run(
-        "DELETE FROM password_reset_tokens WHERE user_id = ? AND consumed_at IS NULL",
-        [user.id],
-      );
 
       db.run(
         `INSERT INTO password_reset_tokens
@@ -84,42 +83,43 @@ export class SqlitePasswordResetTokenRepository
   }
 
   async findValidByRawToken(token: string): Promise<PasswordResetTokenWithUser | null> {
-    const db = await getSqliteDatabase();
     const tokenHash = hashToken(token);
     const now = new Date().toISOString();
 
-    const result = db.exec(
-      `SELECT
-         prt.id,
-         prt.user_id,
-         prt.token_hash,
-         prt.expires_at,
-         prt.created_at,
-         prt.consumed_at,
-         u.id,
-         u.name,
-         u.email,
-         u.role,
-         u.password_hash
-       FROM password_reset_tokens prt
-       INNER JOIN users u ON u.id = prt.user_id
-       WHERE prt.token_hash = ?
-         AND prt.consumed_at IS NULL
-         AND prt.expires_at > ?
-       LIMIT 1`,
-      [tokenHash, now],
-    );
+    return withSqliteDatabase(async (db) => {
+      const result = db.exec(
+        `SELECT
+           prt.id,
+           prt.user_id,
+           prt.token_hash,
+           prt.expires_at,
+           prt.created_at,
+           prt.consumed_at,
+           u.id,
+           u.name,
+           u.email,
+           u.role,
+           u.password_hash
+         FROM password_reset_tokens prt
+         INNER JOIN users u ON u.id = prt.user_id
+         WHERE prt.token_hash = ?
+           AND prt.consumed_at IS NULL
+           AND prt.expires_at > ?
+         LIMIT 1`,
+        [tokenHash, now],
+      );
 
-    const row = result[0]?.values?.[0];
+      const row = result[0]?.values?.[0];
 
-    if (!row) {
-      return null;
-    }
+      if (!row) {
+        return null;
+      }
 
-    return {
-      ...mapTokenRecord(row),
-      user: mapStoredUser(row),
-    };
+      return {
+        ...mapTokenRecord(row),
+        user: mapStoredUser(row),
+      };
+    });
   }
 
   async consume(id: string): Promise<void> {
@@ -134,6 +134,14 @@ export class SqlitePasswordResetTokenRepository
   async deleteById(id: string): Promise<void> {
     return withSqliteWriteLock(async (db) => {
       db.run("DELETE FROM password_reset_tokens WHERE id = ?", [id]);
+    });
+  }
+
+  async deleteExpired(): Promise<void> {
+    return withSqliteWriteLock(async (db) => {
+      db.run("DELETE FROM password_reset_tokens WHERE expires_at <= ?", [
+        new Date().toISOString(),
+      ]);
     });
   }
 

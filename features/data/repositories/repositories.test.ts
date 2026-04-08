@@ -86,6 +86,26 @@ describe("repositories", () => {
     expect(resolved?.user.email).toBe("operacoes@docfleet.local");
   });
 
+  it("allows multiple active password reset tokens to coexist for the same user", async () => {
+    const seededUser = await userRepository.findByEmail("operacoes@docfleet.local");
+
+    expect(seededUser).not.toBeNull();
+
+    const first = await passwordResetTokenRepository.createForUser(seededUser!);
+    const second = await passwordResetTokenRepository.createForUser(seededUser!);
+
+    const firstResolved = await passwordResetTokenRepository.findValidByRawToken(
+      first.token,
+    );
+    const secondResolved = await passwordResetTokenRepository.findValidByRawToken(
+      second.token,
+    );
+
+    expect(firstResolved).not.toBeNull();
+    expect(secondResolved).not.toBeNull();
+    expect(firstResolved?.id).not.toBe(secondResolved?.id);
+  });
+
   it("consumes a password reset token after use", async () => {
     const seededUser = await userRepository.findByEmail("operacoes@docfleet.local");
     const created = await passwordResetTokenRepository.createForUser(seededUser!);
@@ -102,6 +122,30 @@ describe("repositories", () => {
     );
 
     expect(afterConsume).toBeNull();
+  });
+
+  it("can invalidate all remaining active reset tokens after one is used successfully", async () => {
+    const seededUser = await userRepository.findByEmail("operacoes@docfleet.local");
+    const first = await passwordResetTokenRepository.createForUser(seededUser!);
+    const second = await passwordResetTokenRepository.createForUser(seededUser!);
+    const resolvedFirst = await passwordResetTokenRepository.findValidByRawToken(
+      first.token,
+    );
+
+    expect(resolvedFirst).not.toBeNull();
+
+    await passwordResetTokenRepository.consume(resolvedFirst!.id);
+    await passwordResetTokenRepository.deleteActiveForUser(seededUser!.id);
+
+    const firstAfter = await passwordResetTokenRepository.findValidByRawToken(
+      first.token,
+    );
+    const secondAfter = await passwordResetTokenRepository.findValidByRawToken(
+      second.token,
+    );
+
+    expect(firstAfter).toBeNull();
+    expect(secondAfter).toBeNull();
   });
 
   it("blocks login after multiple failed attempts", async () => {

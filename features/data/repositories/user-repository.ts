@@ -1,7 +1,10 @@
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import type { QueryExecResult } from "sql.js";
-import { getSqliteDatabase, withSqliteWriteLock } from "@/lib/storage/sqlite-storage";
+import {
+  withSqliteDatabase,
+  withSqliteWriteLock,
+} from "@/lib/storage/sqlite-storage";
 import type { NewUserInput, StoredUser } from "@/features/data/types";
 import { logger, maskEmail } from "@/lib/logger";
 
@@ -18,44 +21,46 @@ export interface UserRepository {
 
 export class SqliteUserRepository implements UserRepository {
   async listAll(): Promise<StoredUser[]> {
-    const db = await getSqliteDatabase();
-    const result = db.exec(`
-      SELECT id, name, email, role, password_hash
-      FROM users
-      ORDER BY name ASC
-    `);
+    return withSqliteDatabase(async (db) => {
+      const result = db.exec(`
+        SELECT id, name, email, role, password_hash
+        FROM users
+        ORDER BY name ASC
+      `);
 
-    const rows = result[0]?.values ?? [];
+      const rows = result[0]?.values ?? [];
 
-    return rows.map((row) => ({
-      id: String(row[0]),
-      name: String(row[1]),
-      email: String(row[2]),
-      role: String(row[3]),
-      passwordHash: String(row[4]),
-    }));
+      return rows.map((row) => ({
+        id: String(row[0]),
+        name: String(row[1]),
+        email: String(row[2]),
+        role: String(row[3]),
+        passwordHash: String(row[4]),
+      }));
+    });
   }
 
   async findByEmail(email: string): Promise<StoredUser | null> {
     const normalizedEmail = email.trim().toLowerCase();
-    const db = await getSqliteDatabase();
-    const result = db.exec(
-      "SELECT id, name, email, role, password_hash FROM users WHERE email = ? LIMIT 1",
-      [normalizedEmail],
-    );
-    const row = result[0]?.values?.[0];
+    return withSqliteDatabase(async (db) => {
+      const result = db.exec(
+        "SELECT id, name, email, role, password_hash FROM users WHERE email = ? LIMIT 1",
+        [normalizedEmail],
+      );
+      const row = result[0]?.values?.[0];
 
-    if (!row) {
-      return null;
-    }
+      if (!row) {
+        return null;
+      }
 
-    return {
-      id: String(row[0]),
-      name: String(row[1]),
-      email: String(row[2]),
-      role: String(row[3]),
-      passwordHash: String(row[4]),
-    };
+      return {
+        id: String(row[0]),
+        name: String(row[1]),
+        email: String(row[2]),
+        role: String(row[3]),
+        passwordHash: String(row[4]),
+      };
+    });
   }
 
   async create(input: NewUserInput): Promise<StoredUser> {

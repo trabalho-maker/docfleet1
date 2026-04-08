@@ -1,10 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
-import { loadEnvConfig } from "@next/env";
-import { e2eBaseUrl, getPlaywrightServerEnv } from "./playwright/env";
-
-loadEnvConfig(process.cwd());
+import { getPlaywrightServerEnv, resolveE2EBaseUrl } from "./playwright/env";
 
 const shouldUseManagedWebServer = process.env.PLAYWRIGHT_EXTERNAL_SERVER !== "true";
+const e2eBaseUrl = resolveE2EBaseUrl();
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -15,13 +13,14 @@ export default defineConfig({
   reporter: "list",
   use: {
     baseURL: e2eBaseUrl,
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
   },
-  globalSetup: "./playwright/global-setup.ts",
   ...(shouldUseManagedWebServer
     ? {
         webServer: {
-          command: "npx next start -H 127.0.0.1 -p 3000",
+          command: "npm run start -- --hostname 127.0.0.1 --port 3100",
           url: e2eBaseUrl,
           reuseExistingServer: false,
           timeout: 120_000,
@@ -33,7 +32,7 @@ export default defineConfig({
     {
       name: "chromium",
       use: {
-        ...devices["Desktop Chrome"],
+        ...devices["Desktop Chromium"],
       },
     },
   ],

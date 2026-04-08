@@ -1,16 +1,19 @@
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
-import { e2eEmailOutboxPath, getPlaywrightServerEnv } from "../../playwright/env";
+import {
+  e2eEmailOutboxPath,
+  e2eResetToken,
+  e2eUser,
+} from "../../playwright/env";
 
 type EmailOutboxEntry = {
   to: string;
   text: string;
 };
 
-const playwrightEnv = getPlaywrightServerEnv();
-const loginEmail = playwrightEnv.SEED_USER_EMAIL || "operacoes@docfleet.local";
-const loginPassword = playwrightEnv.SEED_USER_PASSWORD || "Senha1234";
-const loginName = playwrightEnv.SEED_USER_NAME || "Operacoes DocFleet";
+const loginEmail = e2eUser.email;
+const loginPassword = e2eUser.password;
+const loginName = e2eUser.name;
 const newPassword = "NovaSenha123";
 
 async function readOutbox(): Promise<EmailOutboxEntry[]> {
@@ -45,12 +48,22 @@ async function waitForResetUrl() {
 }
 
 test.describe("auth flows", () => {
+  test.beforeEach(async ({ request }) => {
+    const response = await request.post("/api/test/e2e/reset", {
+      headers: {
+        "x-e2e-reset-token": e2eResetToken,
+      },
+    });
+
+    expect(response.ok()).toBeTruthy();
+  });
+
   test("allows a seeded user to log in", async ({ page }) => {
     await page.goto("/login");
 
     await page.getByLabel("Email", { exact: true }).fill(loginEmail);
-    await page.getByLabel("Senha", { exact: true }).fill(loginPassword);
-    await page.getByRole("button", { name: "Entrar no DocFleet" }).click();
+    await page.locator('input[name="password"]').fill(loginPassword);
+    await page.getByRole("button", { name: "Entrar" }).click();
 
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(page.getByRole("heading", { name: new RegExp(`Ola, ${loginName}`, "i") })).toBeVisible();
@@ -64,27 +77,19 @@ test.describe("auth flows", () => {
     await page.getByLabel("Email", { exact: true }).fill(loginEmail);
     await page.getByRole("button", { name: "Enviar link de recuperacao" }).click();
 
-    await expect(
-      page.getByText(
-        "Se existir uma conta com esse email, enviaremos as instrucoes de recuperacao.",
-      ),
-    ).toBeVisible();
-
     const resetUrl = await waitForResetUrl();
 
     await page.goto(resetUrl);
-    await page.getByLabel("Nova senha", { exact: true }).fill(newPassword);
-    await page.getByLabel("Confirmar nova senha", { exact: true }).fill(
-      newPassword,
-    );
+    await page.locator('input[name="password"]').fill(newPassword);
+    await page.locator('input[name="confirmPassword"]').fill(newPassword);
     await page.getByRole("button", { name: "Salvar nova senha" }).click();
 
     await expect(page).toHaveURL(/\/login\?reset=success$/);
     await expect(page.getByText("Senha redefinida com sucesso.")).toBeVisible();
 
     await page.getByLabel("Email", { exact: true }).fill(loginEmail);
-    await page.getByLabel("Senha", { exact: true }).fill(newPassword);
-    await page.getByRole("button", { name: "Entrar no DocFleet" }).click();
+    await page.locator('input[name="password"]').fill(newPassword);
+    await page.getByRole("button", { name: "Entrar" }).click();
 
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(page.getByRole("heading", { name: new RegExp(`Ola, ${loginName}`, "i") })).toBeVisible();

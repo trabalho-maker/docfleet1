@@ -1,4 +1,7 @@
-import { getSqliteDatabase, withSqliteWriteLock } from "@/lib/storage/sqlite-storage";
+import {
+  withSqliteDatabase,
+  withSqliteWriteLock,
+} from "@/lib/storage/sqlite-storage";
 import type { RateLimitRecord, RateLimitScope } from "@/features/data/types";
 
 export type RateLimitPolicy = {
@@ -56,17 +59,18 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
     scope: RateLimitScope,
     identifier: string,
   ): Promise<RateLimitRecord | null> {
-    const db = await getSqliteDatabase();
-    const result = db.exec(
-      `SELECT scope, identifier, attempts, window_started_at, blocked_until, updated_at
-       FROM auth_rate_limits
-       WHERE scope = ? AND identifier = ?
-       LIMIT 1`,
-      [scope, identifier],
-    );
-    const row = result[0]?.values?.[0];
+    return withSqliteDatabase(async (db) => {
+      const result = db.exec(
+        `SELECT scope, identifier, attempts, window_started_at, blocked_until, updated_at
+         FROM auth_rate_limits
+         WHERE scope = ? AND identifier = ?
+         LIMIT 1`,
+        [scope, identifier],
+      );
+      const row = result[0]?.values?.[0];
 
-    return row ? mapRecord(row) : null;
+      return row ? mapRecord(row) : null;
+    });
   }
 
   async getState(
