@@ -80,7 +80,11 @@ export type PasswordResetTokenWithUser = PasswordResetTokenRecord & {
   user: StoredUser;
 };
 
-export type RateLimitScope = "login" | "password_reset";
+export type RateLimitScope =
+  | "login"
+  | "login_ip"
+  | "password_reset"
+  | "password_reset_ip";
 
 export type RateLimitRecord = {
   scope: RateLimitScope;
@@ -88,6 +92,7 @@ export type RateLimitRecord = {
   attempts: number;
   windowStartedAt: string;
   blockedUntil: string | null;
+  penaltyLevel: number;
   updatedAt: string;
 };
 

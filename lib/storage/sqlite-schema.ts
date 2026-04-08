@@ -59,6 +59,7 @@ export function createSqliteSchema(db: Database) {
       attempts INTEGER NOT NULL,
       window_started_at TEXT NOT NULL,
       blocked_until TEXT,
+      penalty_level INTEGER NOT NULL DEFAULT 0,
       updated_at TEXT NOT NULL,
       PRIMARY KEY (scope, identifier)
     );
@@ -84,4 +85,10 @@ export function createSqliteSchema(db: Database) {
 
   ensureColumnExists(db, "alerts", "kind", "TEXT");
   ensureColumnExists(db, "alerts", "source_document_id", "TEXT");
+  ensureColumnExists(
+    db,
+    "auth_rate_limits",
+    "penalty_level",
+    "INTEGER NOT NULL DEFAULT 0",
+  );
 }

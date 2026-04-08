@@ -7,6 +7,7 @@ import { SqliteAuthRateLimitRepository } from "@/features/data/repositories/auth
 import {
   resetSqliteDatabase,
   resetSqliteStorageState,
+  withSqliteWriteLock,
 } from "@/lib/storage/sqlite-storage";
 
 describe("repositories", () => {
@@ -197,7 +198,8 @@ describe("repositories", () => {
     const policy = {
       windowMs: 15 * 60 * 1000,
       maxAttempts: 3,
-      blockDurationMs: 15 * 60 * 1000,
+      baseBlockDurationMs: 15 * 60 * 1000,
+      maxBlockDurationMs: 15 * 60 * 1000,
     };
 
     await authRateLimitRepository.registerFailure(
@@ -218,13 +220,15 @@ describe("repositories", () => {
 
     expect(blocked.allowed).toBe(false);
     expect(blocked.retryAfterSeconds).toBeGreaterThan(0);
+    expect(blocked.penaltyLevel).toBe(1);
   });
 
   it("clears login rate limit state after success path", async () => {
     const policy = {
       windowMs: 15 * 60 * 1000,
       maxAttempts: 3,
-      blockDurationMs: 15 * 60 * 1000,
+      baseBlockDurationMs: 15 * 60 * 1000,
+      maxBlockDurationMs: 15 * 60 * 1000,
     };
 
     await authRateLimitRepository.registerFailure(
@@ -241,5 +245,76 @@ describe("repositories", () => {
 
     expect(state.allowed).toBe(true);
     expect(state.attemptsRemaining).toBe(policy.maxAttempts);
+  });
+
+  it("applies progressive blocking with capped backoff without causing permanent lockout", async () => {
+    const identifier = "progressive@docfleet.local";
+    const policy = {
+      windowMs: 60 * 1000,
+      maxAttempts: 2,
+      baseBlockDurationMs: 1000,
+      maxBlockDurationMs: 4000,
+    };
+
+    await authRateLimitRepository.registerFailure("login", identifier, policy);
+    const firstBlocked = await authRateLimitRepository.registerFailure(
+      "login",
+      identifier,
+      policy,
+    );
+
+    expect(firstBlocked.allowed).toBe(false);
+    expect(firstBlocked.penaltyLevel).toBe(1);
+
+    await withSqliteWriteLock(async (db) => {
+      db.run(
+        `UPDATE auth_rate_limits
+         SET blocked_until = ?, window_started_at = ?
+         WHERE scope = ? AND identifier = ?`,
+        [
+          new Date(Date.now() - 1000).toISOString(),
+          new Date(Date.now() - policy.windowMs - 1000).toISOString(),
+          "login",
+          identifier,
+        ],
+      );
+    });
+
+    await authRateLimitRepository.registerFailure("login", identifier, policy);
+    const secondBlocked = await authRateLimitRepository.registerFailure(
+      "login",
+      identifier,
+      policy,
+    );
+
+    expect(secondBlocked.allowed).toBe(false);
+    expect(secondBlocked.penaltyLevel).toBe(2);
+    expect(secondBlocked.retryAfterSeconds).toBeGreaterThanOrEqual(
+      firstBlocked.retryAfterSeconds,
+    );
+
+    await withSqliteWriteLock(async (db) => {
+      db.run(
+        `UPDATE auth_rate_limits
+         SET blocked_until = ?, window_started_at = ?
+         WHERE scope = ? AND identifier = ?`,
+        [
+          new Date(Date.now() - 1000).toISOString(),
+          new Date(Date.now() - policy.windowMs - 1000).toISOString(),
+          "login",
+          identifier,
+        ],
+      );
+    });
+
+    const recoveredState = await authRateLimitRepository.getState(
+      "login",
+      identifier,
+      policy,
+    );
+
+    expect(recoveredState.allowed).toBe(true);
+    expect(recoveredState.attemptsRemaining).toBe(policy.maxAttempts);
+    expect(recoveredState.penaltyLevel).toBe(2);
   });
 });

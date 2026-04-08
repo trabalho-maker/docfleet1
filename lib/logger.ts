@@ -49,6 +49,32 @@ export function maskEmail(email: string) {
   return `${visible}***@${domain}`;
 }
 
+export function maskIp(ip: string) {
+  const normalizedIp = ip.trim();
+
+  if (!normalizedIp || normalizedIp === "unknown") {
+    return "unknown";
+  }
+
+  if (normalizedIp.includes(":")) {
+    const segments = normalizedIp.split(":").filter(Boolean);
+
+    if (segments.length <= 2) {
+      return normalizedIp;
+    }
+
+    return `${segments.slice(0, 2).join(":")}:***`;
+  }
+
+  const octets = normalizedIp.split(".");
+
+  if (octets.length !== 4) {
+    return "invalid-ip";
+  }
+
+  return `${octets[0]}.${octets[1]}.***.***`;
+}
+
 export const logger = {
   info(event: string, context?: LogContext) {
     writeLog("info", event, context);

@@ -1,14 +1,16 @@
 "use server";
 
+import { headers } from "next/headers";
 import { createDataLayer } from "@/features/data/repositories";
 import { EmailDeliveryError } from "@/lib/email/mailer";
-import { logger, maskEmail } from "@/lib/logger";
+import { logger, maskEmail, maskIp } from "@/lib/logger";
 import { validateEmailInput } from "@/features/auth/server/validation";
 import { sendPasswordResetEmail } from "@/features/auth/server/password-reset-email";
 import {
   AuthRateLimitError,
   consumePasswordResetAttempt,
 } from "@/features/auth/server/security";
+import { getClientIpFromHeaders } from "@/lib/security/request";
 
 export type RequestPasswordResetState = {
   error?: string;
@@ -22,10 +24,13 @@ export async function requestPasswordResetAction(
 ): Promise<RequestPasswordResetState> {
   const email = formData.get("email")?.toString() ?? "";
   const normalizedEmail = email.trim().toLowerCase();
+  const requestHeaders = await headers();
+  const ipAddress = getClientIpFromHeaders(requestHeaders);
   let createdTokenId: string | null = null;
 
   logger.info("auth.password_reset.request.attempt", {
     email: maskEmail(normalizedEmail),
+    ipAddress: maskIp(ipAddress),
   });
 
   if (!validateEmailInput(normalizedEmail)) {
@@ -35,7 +40,7 @@ export async function requestPasswordResetAction(
   }
 
   try {
-    await consumePasswordResetAttempt(normalizedEmail);
+    await consumePasswordResetAttempt(normalizedEmail, ipAddress);
 
     const dataLayer = createDataLayer();
     await dataLayer.passwordResetTokens.deleteExpired();
@@ -44,6 +49,7 @@ export async function requestPasswordResetAction(
     if (!user) {
       logger.warn("auth.password_reset.request.user_not_found", {
         email: maskEmail(normalizedEmail),
+        ipAddress: maskIp(ipAddress),
       });
 
       return {
@@ -65,6 +71,7 @@ export async function requestPasswordResetAction(
     logger.warn("auth.password_reset.request.created", {
       userId: user.id,
       email: maskEmail(user.email),
+      ipAddress: maskIp(ipAddress),
       expiresAt: token.expiresAt,
       delivery: delivery.transport,
       resetUrl:
@@ -85,6 +92,7 @@ export async function requestPasswordResetAction(
     if (error instanceof AuthRateLimitError) {
       logger.warn("auth.password_reset.request.rate_limited", {
         email: maskEmail(normalizedEmail),
+        ipAddress: maskIp(ipAddress),
         retryAfterSeconds: error.retryAfterSeconds,
       });
 
@@ -101,6 +109,7 @@ export async function requestPasswordResetAction(
 
       logger.error("auth.password_reset.request.delivery_failed", {
         email: maskEmail(normalizedEmail),
+        ipAddress: maskIp(ipAddress),
         error,
       });
       return {
@@ -111,6 +120,7 @@ export async function requestPasswordResetAction(
 
     logger.error("auth.password_reset.request.error", {
       email: maskEmail(normalizedEmail),
+      ipAddress: maskIp(ipAddress),
       error,
     });
     throw error;

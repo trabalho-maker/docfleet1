@@ -7,13 +7,15 @@ import type { RateLimitRecord, RateLimitScope } from "@/features/data/types";
 export type RateLimitPolicy = {
   windowMs: number;
   maxAttempts: number;
-  blockDurationMs: number;
+  baseBlockDurationMs: number;
+  maxBlockDurationMs: number;
 };
 
 export type RateLimitState = {
   allowed: boolean;
   retryAfterSeconds: number;
   attemptsRemaining: number;
+  penaltyLevel: number;
 };
 
 function mapRecord(row: unknown[]): RateLimitRecord {
@@ -23,7 +25,8 @@ function mapRecord(row: unknown[]): RateLimitRecord {
     attempts: Number(row[2]),
     windowStartedAt: String(row[3]),
     blockedUntil: row[4] ? String(row[4]) : null,
-    updatedAt: String(row[5]),
+    penaltyLevel: Number(row[5] ?? 0),
+    updatedAt: String(row[6]),
   };
 }
 
@@ -33,6 +36,17 @@ function toIsoDate(timestamp: number) {
 
 function getRetryAfterSeconds(timestamp: number) {
   return Math.max(1, Math.ceil((timestamp - Date.now()) / 1000));
+}
+
+function getNextPenaltyLevel(currentPenaltyLevel: number) {
+  return currentPenaltyLevel + 1;
+}
+
+function getBlockDurationMs(policy: RateLimitPolicy, penaltyLevel: number) {
+  return Math.min(
+    policy.maxBlockDurationMs,
+    policy.baseBlockDurationMs * 2 ** Math.max(0, penaltyLevel - 1),
+  );
 }
 
 export interface AuthRateLimitRepository {
@@ -61,7 +75,7 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
   ): Promise<RateLimitRecord | null> {
     return withSqliteDatabase(async (db) => {
       const result = db.exec(
-        `SELECT scope, identifier, attempts, window_started_at, blocked_until, updated_at
+        `SELECT scope, identifier, attempts, window_started_at, blocked_until, penalty_level, updated_at
          FROM auth_rate_limits
          WHERE scope = ? AND identifier = ?
          LIMIT 1`,
@@ -86,6 +100,7 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
         allowed: true,
         retryAfterSeconds: 0,
         attemptsRemaining: policy.maxAttempts,
+        penaltyLevel: 0,
       };
     }
 
@@ -96,6 +111,7 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
         allowed: false,
         retryAfterSeconds: getRetryAfterSeconds(blockedUntilMs),
         attemptsRemaining: 0,
+        penaltyLevel: record.penaltyLevel,
       };
     }
 
@@ -106,6 +122,7 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
         allowed: true,
         retryAfterSeconds: 0,
         attemptsRemaining: policy.maxAttempts,
+        penaltyLevel: record.penaltyLevel,
       };
     }
 
@@ -113,6 +130,7 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
       allowed: true,
       retryAfterSeconds: 0,
       attemptsRemaining: Math.max(0, policy.maxAttempts - record.attempts),
+      penaltyLevel: record.penaltyLevel,
     };
   }
 
@@ -125,7 +143,7 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
       const now = Date.now();
       const nowIso = toIsoDate(now);
       const result = db.exec(
-        `SELECT scope, identifier, attempts, window_started_at, blocked_until, updated_at
+        `SELECT scope, identifier, attempts, window_started_at, blocked_until, penalty_level, updated_at
          FROM auth_rate_limits
          WHERE scope = ? AND identifier = ?
          LIMIT 1`,
@@ -136,6 +154,7 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
       let attempts = 1;
       let windowStartedAt = nowIso;
       let blockedUntil: string | null = null;
+      let penaltyLevel = existing?.penaltyLevel ?? 0;
 
       if (existing) {
         const blockedUntilMs = existing.blockedUntil
@@ -148,6 +167,7 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
             allowed: false,
             retryAfterSeconds: getRetryAfterSeconds(blockedUntilMs),
             attemptsRemaining: 0,
+            penaltyLevel: existing.penaltyLevel,
           };
         }
 
@@ -158,14 +178,25 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
       }
 
       if (attempts >= policy.maxAttempts) {
-        blockedUntil = toIsoDate(now + policy.blockDurationMs);
+        penaltyLevel = getNextPenaltyLevel(penaltyLevel);
+        blockedUntil = toIsoDate(now + getBlockDurationMs(policy, penaltyLevel));
+        attempts = 0;
+        windowStartedAt = nowIso;
       }
 
       db.run(
         `INSERT OR REPLACE INTO auth_rate_limits
-          (scope, identifier, attempts, window_started_at, blocked_until, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [scope, identifier, attempts, windowStartedAt, blockedUntil, nowIso],
+          (scope, identifier, attempts, window_started_at, blocked_until, penalty_level, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          scope,
+          identifier,
+          attempts,
+          windowStartedAt,
+          blockedUntil,
+          penaltyLevel,
+          nowIso,
+        ],
       );
 
       if (blockedUntil) {
@@ -173,6 +204,7 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
           allowed: false,
           retryAfterSeconds: getRetryAfterSeconds(Date.parse(blockedUntil)),
           attemptsRemaining: 0,
+          penaltyLevel,
         };
       }
 
@@ -180,6 +212,7 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
         allowed: true,
         retryAfterSeconds: 0,
         attemptsRemaining: Math.max(0, policy.maxAttempts - attempts),
+        penaltyLevel,
       };
     });
   }

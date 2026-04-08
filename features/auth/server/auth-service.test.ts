@@ -5,6 +5,8 @@ import {
 } from "@/lib/storage/sqlite-storage";
 
 describe("validateUserCredentials", () => {
+  const testIpAddress = "203.0.113.10";
+
   beforeEach(async () => {
     await resetSqliteStorageState();
     await resetSqliteDatabase();
@@ -18,6 +20,7 @@ describe("validateUserCredentials", () => {
     const user = await validateUserCredentials({
       email: "operacoes@docfleet.local",
       password: process.env.SEED_USER_PASSWORD ?? "admin123",
+      ipAddress: testIpAddress,
     });
 
     expect(user).not.toBeNull();
@@ -28,6 +31,7 @@ describe("validateUserCredentials", () => {
     const user = await validateUserCredentials({
       email: "operacoes@docfleet.local",
       password: "senha-invalida",
+      ipAddress: testIpAddress,
     });
 
     expect(user).toBeNull();
@@ -37,6 +41,7 @@ describe("validateUserCredentials", () => {
     const user = await validateUserCredentials({
       email: "inexistente@docfleet.local",
       password: "admin123",
+      ipAddress: testIpAddress,
     });
 
     expect(user).toBeNull();

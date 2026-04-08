@@ -5,7 +5,8 @@ import {
   AuthRateLimitError,
   validateUserCredentials,
 } from "@/features/auth/server/auth-service";
-import { logger, maskEmail } from "@/lib/logger";
+import { logger, maskEmail, maskIp } from "@/lib/logger";
+import { getClientIpFromHeaders } from "@/lib/security/request";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -15,20 +16,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Senha", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const email = credentials?.email?.toString() ?? "";
         const password = credentials?.password?.toString() ?? "";
+        const ipAddress = getClientIpFromHeaders(request.headers);
 
         logger.info("auth.authorize.attempt", {
           email: maskEmail(email),
+          ipAddress: maskIp(ipAddress),
         });
 
         try {
-          const user = await validateUserCredentials({ email, password });
+          const user = await validateUserCredentials({ email, password, ipAddress });
 
           if (!user) {
             logger.warn("auth.authorize.denied", {
               email: maskEmail(email),
+              ipAddress: maskIp(ipAddress),
             });
             return null;
           }
@@ -36,6 +40,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           logger.info("auth.authorize.success", {
             userId: user.id,
             email: maskEmail(user.email),
+            ipAddress: maskIp(ipAddress),
             role: user.role,
           });
 
@@ -49,6 +54,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (error instanceof AuthRateLimitError) {
             logger.warn("auth.authorize.rate_limited", {
               email: maskEmail(email),
+              ipAddress: maskIp(ipAddress),
               retryAfterSeconds: error.retryAfterSeconds,
             });
             throw error;
@@ -56,6 +62,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           logger.error("auth.authorize.error", {
             email: maskEmail(email),
+            ipAddress: maskIp(ipAddress),
             error,
           });
           throw error;
