@@ -1,5 +1,11 @@
 export type DocumentStatus = "Em dia" | "A vencer" | "Pendente";
 
+export const documentStatuses: DocumentStatus[] = [
+  "Em dia",
+  "A vencer",
+  "Pendente",
+];
+
 export type FleetDocument = {
   id: string;
   title: string;
@@ -7,6 +13,21 @@ export type FleetDocument = {
   category: string;
   status: DocumentStatus;
   dueDate: string;
+};
+
+export type CreateDocumentInput = {
+  name: string;
+  type: string;
+  dueDate: string;
+  status: DocumentStatus;
+  owner: string;
+};
+
+export type UpdateDocumentInput = {
+  name: string;
+  type: string;
+  dueDate: string;
+  status: DocumentStatus;
 };
 
 export type OperationalAlert = {

@@ -1,4 +1,5 @@
 import type { DashboardOverview } from "@/features/dashboard/types";
+import Link from "next/link";
 import { signOutAction } from "@/features/auth/actions/sign-out";
 import { MetricCard } from "@/features/dashboard/components/metric-card";
 
@@ -29,14 +30,22 @@ export function DashboardShell({ overview }: DashboardShellProps) {
               </p>
               <p>Camada ativa: `features/auth` + `features/data`</p>
             </div>
-            <form action={signOutAction}>
-              <button
-                type="submit"
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/documentos"
                 className="inline-flex h-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-white px-4 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:bg-[var(--color-surface-strong)]"
               >
-                Sair
-              </button>
-            </form>
+                Gerenciar documentos
+              </Link>
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-white px-4 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:bg-[var(--color-surface-strong)]"
+                >
+                  Sair
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </section>

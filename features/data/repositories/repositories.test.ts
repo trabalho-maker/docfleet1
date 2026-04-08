@@ -52,10 +52,12 @@ describe("repositories", () => {
 
   it("returns documents ordered by due date", async () => {
     const documents = await documentRepository.listRecent();
+    const allDocuments = await documentRepository.listAll();
     const totalDocuments = await documentRepository.countAll();
     const pendingDocuments = await documentRepository.countPending();
 
     expect(documents).toHaveLength(3);
+    expect(allDocuments).toHaveLength(3);
     expect(documents.map((item) => item.id)).toEqual([
       "doc_03",
       "doc_01",
@@ -63,6 +65,44 @@ describe("repositories", () => {
     ]);
     expect(totalDocuments).toBe(3);
     expect(pendingDocuments).toBe(2);
+  });
+
+  it("creates, updates and deletes a document", async () => {
+    const created = await documentRepository.create({
+      name: "Seguro da frota pesada",
+      type: "Seguros",
+      dueDate: "2026-05-10",
+      status: "A vencer",
+      owner: "Equipe Financeira",
+    });
+
+    expect(created.title).toBe("Seguro da frota pesada");
+    expect(created.category).toBe("Seguros");
+
+    const found = await documentRepository.findById(created.id);
+
+    expect(found).not.toBeNull();
+    expect(found?.owner).toBe("Equipe Financeira");
+
+    const updated = await documentRepository.update(created.id, {
+      name: "Seguro da frota pesada - renovado",
+      type: "Seguros",
+      dueDate: "2026-06-10",
+      status: "Em dia",
+    });
+
+    expect(updated.title).toBe("Seguro da frota pesada - renovado");
+    expect(updated.status).toBe("Em dia");
+
+    const afterUpdate = await documentRepository.findById(created.id);
+
+    expect(afterUpdate?.dueDate).toBe("2026-06-10");
+
+    await documentRepository.delete(created.id);
+
+    const afterDelete = await documentRepository.findById(created.id);
+
+    expect(afterDelete).toBeNull();
   });
 
   it("returns alerts ordered by most recent timestamp", async () => {
