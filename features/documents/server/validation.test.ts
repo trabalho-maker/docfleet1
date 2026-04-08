@@ -3,8 +3,8 @@ import { validateDocumentInput } from "@/features/documents/server/validation";
 describe("document validation", () => {
   it("accepts valid input and trims name/type", () => {
     const result = validateDocumentInput({
-      name: "  Licenciamento anual  ",
-      type: "  Veiculos  ",
+      name: "  Licenciamento \n anual  ",
+      type: "  Veiculos \t leves  ",
       dueDate: "2026-04-30",
     });
 
@@ -12,7 +12,7 @@ describe("document validation", () => {
       success: true,
       data: {
         name: "Licenciamento anual",
-        type: "Veiculos",
+        type: "Veiculos leves",
         dueDate: "2026-04-30",
       },
     });
@@ -57,5 +57,21 @@ describe("document validation", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("rejects document fields above the maximum allowed lengths", () => {
+    const result = validateDocumentInput({
+      name: "N".repeat(161),
+      type: "T".repeat(81),
+      dueDate: "2026-04-30",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result).toMatchObject({
+      errors: {
+        name: "Informe um nome com no maximo 160 caracteres.",
+        type: "Informe um tipo com no maximo 80 caracteres.",
+      },
+    });
   });
 });

@@ -1,3 +1,9 @@
+import {
+  hasExceededMaxLength,
+  normalizeEmailInput,
+  normalizePlainTextInput,
+} from "@/lib/security/input";
+
 export type SignUpInput = {
   name: string;
   email: string;
@@ -20,14 +26,21 @@ export type SignUpValidationResult =
     };
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_NAME_LENGTH = 120;
+const MAX_EMAIL_LENGTH = 254;
+const MAX_PASSWORD_LENGTH = 128;
 
 export function validateEmailInput(email: string) {
-  return emailPattern.test(email.trim().toLowerCase());
+  return emailPattern.test(normalizeEmailInput(email));
 }
 
 export function validatePasswordRules(password: string) {
   if (password.length < 8) {
     return "A senha deve ter pelo menos 8 caracteres.";
+  }
+
+  if (password.length > MAX_PASSWORD_LENGTH) {
+    return `A senha deve ter no maximo ${MAX_PASSWORD_LENGTH} caracteres.`;
   }
 
   if (!/[A-Z]/.test(password)) {
@@ -48,18 +61,22 @@ export function validatePasswordRules(password: string) {
 export function validateSignUpInput(
   input: SignUpInput,
 ): SignUpValidationResult {
-  const name = input.name.trim();
-  const email = input.email.trim().toLowerCase();
+  const name = normalizePlainTextInput(input.name);
+  const email = normalizeEmailInput(input.email);
   const password = input.password;
   const confirmPassword = input.confirmPassword;
   const errors: Partial<Record<keyof SignUpInput, string>> = {};
 
   if (name.length < 3) {
     errors.name = "Informe um nome com pelo menos 3 caracteres.";
+  } else if (hasExceededMaxLength(name, MAX_NAME_LENGTH)) {
+    errors.name = `Informe um nome com no maximo ${MAX_NAME_LENGTH} caracteres.`;
   }
 
   if (!validateEmailInput(email)) {
     errors.email = "Informe um email valido.";
+  } else if (hasExceededMaxLength(email, MAX_EMAIL_LENGTH)) {
+    errors.email = `Informe um email com no maximo ${MAX_EMAIL_LENGTH} caracteres.`;
   }
 
   const passwordError = validatePasswordRules(password);
