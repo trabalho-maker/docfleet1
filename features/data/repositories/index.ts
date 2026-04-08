@@ -1,9 +1,9 @@
 import {
-  LocalDocumentRepository,
+  SqliteDocumentRepository,
   type DocumentRepository,
 } from "@/features/data/repositories/document-repository";
 import {
-  LocalAlertRepository,
+  SqliteAlertRepository,
   type AlertRepository,
 } from "@/features/data/repositories/alert-repository";
 import {
@@ -32,7 +32,7 @@ export function createDataLayer(): DataLayer {
     users: new SqliteUserRepository(),
     passwordResetTokens: new SqlitePasswordResetTokenRepository(),
     authRateLimits: new SqliteAuthRateLimitRepository(),
-    documents: new LocalDocumentRepository(),
-    alerts: new LocalAlertRepository(),
+    documents: new SqliteDocumentRepository(),
+    alerts: new SqliteAlertRepository(),
   };
 }

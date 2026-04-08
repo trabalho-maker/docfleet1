@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { SqliteUserRepository } from "@/features/data/repositories/user-repository";
-import { LocalDocumentRepository } from "@/features/data/repositories/document-repository";
-import { LocalAlertRepository } from "@/features/data/repositories/alert-repository";
+import { SqliteDocumentRepository } from "@/features/data/repositories/document-repository";
+import { SqliteAlertRepository } from "@/features/data/repositories/alert-repository";
 import { SqlitePasswordResetTokenRepository } from "@/features/data/repositories/password-reset-token-repository";
 import { SqliteAuthRateLimitRepository } from "@/features/data/repositories/auth-rate-limit-repository";
 import {
@@ -11,8 +11,8 @@ import {
 
 describe("repositories", () => {
   const userRepository = new SqliteUserRepository();
-  const documentRepository = new LocalDocumentRepository();
-  const alertRepository = new LocalAlertRepository();
+  const documentRepository = new SqliteDocumentRepository();
+  const alertRepository = new SqliteAlertRepository();
   const passwordResetTokenRepository = new SqlitePasswordResetTokenRepository();
   const authRateLimitRepository = new SqliteAuthRateLimitRepository();
 
@@ -52,6 +52,8 @@ describe("repositories", () => {
 
   it("returns documents ordered by due date", async () => {
     const documents = await documentRepository.listRecent();
+    const totalDocuments = await documentRepository.countAll();
+    const pendingDocuments = await documentRepository.countPending();
 
     expect(documents).toHaveLength(3);
     expect(documents.map((item) => item.id)).toEqual([
@@ -59,10 +61,13 @@ describe("repositories", () => {
       "doc_01",
       "doc_02",
     ]);
+    expect(totalDocuments).toBe(3);
+    expect(pendingDocuments).toBe(2);
   });
 
   it("returns alerts ordered by most recent timestamp", async () => {
     const alerts = await alertRepository.listOpen();
+    const totalAlerts = await alertRepository.countOpen();
 
     expect(alerts).toHaveLength(3);
     expect(alerts.map((item) => item.id)).toEqual([
@@ -70,6 +75,7 @@ describe("repositories", () => {
       "alt_02",
       "alt_01",
     ]);
+    expect(totalAlerts).toBe(3);
   });
 
   it("creates and resolves a valid password reset token", async () => {

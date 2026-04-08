@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { AuthShowcasePanel } from "@/features/auth/components/auth-showcase-panel";
 import { SignUpCard } from "@/features/auth/components/sign-up-card";
 
 export const metadata: Metadata = {
@@ -16,21 +17,45 @@ export default async function SignUpPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 items-center px-6 py-10 sm:px-10 lg:px-12 lg:py-16">
-      <div className="grid w-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="space-y-5">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">
-            Cadastro
-          </p>
-          <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-[var(--color-foreground)] sm:text-5xl">
-            Crie um novo usuario com validacao de email e senha antes de entrar no DocFleet.
-          </h1>
-          <p className="max-w-2xl text-lg leading-8 text-[var(--color-muted)]">
-            O cadastro grava o usuario em SQLite local, aplica hash com `bcrypt` e reutiliza a mesma feature `auth` do fluxo de login.
-          </p>
+    <main className="min-h-screen bg-[linear-gradient(135deg,#0f172a_0%,#14213d_45%,#1d4ed8_100%)]">
+      <div className="grid min-h-screen lg:grid-cols-[1.08fr_0.92fr]">
+        <AuthShowcasePanel
+          badge="Provisionamento rapido de acessos para equipes e operacoes"
+          title="Crie um novo acesso e leve sua equipe para um fluxo mais seguro."
+          description="Cadastre usuarios com validacao de email, senha forte e autenticao integrada ao ambiente do DocFleet sem perder o padrao operacional."
+          panelEyebrow="Onboarding de acessos"
+          panelTitle="Um cadastro simples, seguro e pronto para escalar."
+          panelDescription="A base ja valida credenciais, aplica hash com bcrypt e integra o novo usuario ao fluxo autenticado do sistema."
+          metricLabel="Tempo medio"
+          metricValue="< 2 min"
+          rows={[
+            {
+              title: "Criacao de conta com validacao",
+              meta: "nome, email e senha forte",
+              tone: "orange",
+            },
+            {
+              title: "Persistencia centralizada",
+              meta: "usuarios gravados em SQLite",
+              tone: "sky",
+            },
+            {
+              title: "Acesso liberado imediatamente",
+              meta: "entrada direta no dashboard",
+              tone: "emerald",
+            },
+          ]}
+          stats={[
+            { value: "1", label: "fonte unica de usuarios" },
+            { value: "100%", label: "senhas com hash" },
+            { value: "24/7", label: "acesso ao painel" },
+          ]}
+        />
+
+        <section className="flex items-center justify-center bg-[#f8fafc] px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
+          <SignUpCard />
         </section>
-        <SignUpCard />
       </div>
-    </main>
+    </main> 
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useId, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   signUpAction,
   type SignUpFormState,
@@ -9,109 +11,198 @@ import {
 
 const initialState: SignUpFormState = {};
 
-function FieldError({ message }: { message?: string }) {
-  if (!message) {
-    return null;
-  }
-
-  return <p className="text-sm text-red-700">{message}</p>;
-}
-
 export function SignUpCard() {
+  const nameId = useId();
+  const emailId = useId();
+  const passwordId = useId();
+  const confirmPasswordId = useId();
   const [state, formAction, isPending] = useActionState(
     signUpAction,
     initialState,
   );
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
-    <section className="rounded-[32px] border border-[var(--color-border)] bg-[var(--color-card)] p-8 shadow-[0_30px_80px_rgba(15,23,42,0.08)]">
-      <div className="space-y-6">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
-            Novo usuario
-          </p>
-          <h2 className="mt-3 text-2xl font-semibold text-[var(--color-foreground)]">
-            Cadastro com validacao server-side
-          </h2>
-        </div>
-
-        <form action={formAction} className="grid gap-4">
-          <label className="grid gap-2 text-sm font-medium text-[var(--color-foreground)]">
-            Nome completo
-            <input
-              type="text"
-              name="name"
-              className="h-12 rounded-2xl border border-[var(--color-border)] bg-white px-4 text-base outline-none transition-colors focus:border-[var(--color-accent)]"
-              autoComplete="name"
-              required
-            />
-            <FieldError message={state.fieldErrors?.name} />
-          </label>
-
-          <label className="grid gap-2 text-sm font-medium text-[var(--color-foreground)]">
-            Email
-            <input
-              type="email"
-              name="email"
-              className="h-12 rounded-2xl border border-[var(--color-border)] bg-white px-4 text-base outline-none transition-colors focus:border-[var(--color-accent)]"
-              autoComplete="email"
-              required
-            />
-            <FieldError message={state.fieldErrors?.email} />
-          </label>
-
-          <label className="grid gap-2 text-sm font-medium text-[var(--color-foreground)]">
-            Senha
-            <input
-              type="password"
-              name="password"
-              className="h-12 rounded-2xl border border-[var(--color-border)] bg-white px-4 text-base outline-none transition-colors focus:border-[var(--color-accent)]"
-              autoComplete="new-password"
-              required
-            />
-            <FieldError message={state.fieldErrors?.password} />
-          </label>
-
-          <label className="grid gap-2 text-sm font-medium text-[var(--color-foreground)]">
-            Confirmar senha
-            <input
-              type="password"
-              name="confirmPassword"
-              className="h-12 rounded-2xl border border-[var(--color-border)] bg-white px-4 text-base outline-none transition-colors focus:border-[var(--color-accent)]"
-              autoComplete="new-password"
-              required
-            />
-            <FieldError message={state.fieldErrors?.confirmPassword} />
-          </label>
-
-          {state.formError ? (
-            <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {state.formError}
+    <section className="w-full max-w-[480px] rounded-[32px] border border-slate-200/80 bg-white p-8 shadow-[0_32px_80px_rgba(15,23,42,0.14)] sm:p-10">
+      <div className="space-y-8">
+        <header className="space-y-3">
+          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Novo acesso
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-950">
+              Criar conta no DocFleet
+            </h2>
+            <p className="text-sm leading-6 text-slate-500">
+              Cadastre um novo usuario para acompanhar documentos, alertas e
+              fluxos operacionais em um ambiente centralizado.
             </p>
-          ) : null}
+          </div>
+        </header>
 
-          <button
-            type="submit"
-            className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[var(--color-foreground)] px-6 text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isPending}
+        {state.formError ? (
+          <div
+            role="alert"
+            className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
           >
-            {isPending ? "Criando conta..." : "Criar conta"}
-          </button>
+            {state.formError}
+          </div>
+        ) : null}
+
+        <form action={formAction} className="grid gap-5">
+          <Input
+            id={nameId}
+            label="Nome completo"
+            name="name"
+            type="text"
+            placeholder="Seu nome"
+            autoComplete="name"
+            required
+            error={state.fieldErrors?.name}
+            icon={<UserIcon />}
+          />
+
+          <Input
+            id={emailId}
+            label="Email"
+            name="email"
+            type="email"
+            placeholder="voce@empresa.com"
+            autoComplete="email"
+            required
+            error={state.fieldErrors?.email}
+            icon={<MailIcon />}
+          />
+
+          <Input
+            id={passwordId}
+            label="Senha"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Crie uma senha"
+            autoComplete="new-password"
+            required
+            error={state.fieldErrors?.password}
+            icon={<LockIcon />}
+            trailingAction={
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="text-xs font-semibold text-slate-500 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showPassword ? "Ocultar" : "Mostrar"}
+              </button>
+            }
+          />
+
+          <Input
+            id={confirmPasswordId}
+            label="Confirmar senha"
+            name="confirmPassword"
+            type={showConfirmPassword ? "text" : "password"}
+            placeholder="Repita sua senha"
+            autoComplete="new-password"
+            required
+            error={state.fieldErrors?.confirmPassword}
+            icon={<LockIcon />}
+            trailingAction={
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((current) => !current)}
+                className="text-xs font-semibold text-slate-500 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                aria-label={
+                  showConfirmPassword ? "Ocultar confirmacao de senha" : "Mostrar confirmacao de senha"
+                }
+              >
+                {showConfirmPassword ? "Ocultar" : "Mostrar"}
+              </button>
+            }
+          />
+
+          <Button
+            type="submit"
+            isLoading={isPending}
+            loadingLabel="Criando conta..."
+          >
+            Criar conta
+          </Button>
         </form>
 
-        <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-white/70 p-4">
-          <p className="text-sm leading-6 text-[var(--color-muted)]">
-            Regras atuais: email valido, senha com 8+ caracteres, letra maiuscula, minuscula e numero.
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+            Requisitos da senha:
+            <span className="mt-1 block text-slate-700">
+              minimo de 8 caracteres, com letra maiuscula, minuscula e numero.
+            </span>
+          </div>
+
+          <p className="text-sm text-slate-500">
+            Ja possui acesso?{" "}
+            <Link
+              href="/login"
+              className="font-semibold text-slate-900 transition-colors hover:text-[#f97316]"
+            >
+              Entrar no sistema
+            </Link>
           </p>
         </div>
-
-        <p className="text-sm text-[var(--color-muted)]">
-          Ja possui acesso?{" "}
-          <Link href="/login" className="font-semibold text-[var(--color-accent)]">
-            Entrar no sistema
-          </Link>
-        </p>
       </div>
     </section>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M18 21a6 6 0 0 0-12 0" />
+      <circle cx="12" cy="8" r="4" />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 6h16v12H4z" />
+      <path d="m4 7 8 6 8-6" />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="4" y="11" width="16" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 1 1 8 0v3" />
+    </svg>
   );
 }

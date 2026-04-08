@@ -46,5 +46,17 @@ export function createSqliteSchema(db: Database) {
       updated_at TEXT NOT NULL,
       PRIMARY KEY (scope, identifier)
     );
+
+    CREATE INDEX IF NOT EXISTS idx_documents_due_date
+    ON documents(due_date);
+
+    CREATE INDEX IF NOT EXISTS idx_documents_status
+    ON documents(status);
+
+    CREATE INDEX IF NOT EXISTS idx_alerts_created_at
+    ON alerts(created_at DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id
+    ON password_reset_tokens(user_id);
   `);
 }

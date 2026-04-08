@@ -5,8 +5,14 @@ import type { DashboardOverview } from "@/features/dashboard/types";
 export async function getDashboardOverview(): Promise<DashboardOverview> {
   const user = await getCurrentUser();
   const dataLayer = createDataLayer();
-  const recentDocuments = await dataLayer.documents.listRecent();
-  const alerts = await dataLayer.alerts.listOpen();
+  const [recentDocuments, alerts, totalDocuments, totalAlerts, pendingDocuments] =
+    await Promise.all([
+      dataLayer.documents.listRecent(),
+      dataLayer.alerts.listOpen(),
+      dataLayer.documents.countAll(),
+      dataLayer.alerts.countOpen(),
+      dataLayer.documents.countPending(),
+    ]);
 
   return {
     user,
@@ -15,20 +21,18 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
     metrics: [
       {
         label: "Documentos ativos",
-        value: String(recentDocuments.length),
-        helper: "Fonte: SQLite local",
+        value: String(totalDocuments),
+        helper: "Consulta real em SQLite",
       },
       {
         label: "Alertas abertos",
-        value: String(alerts.length),
-        helper: "Fonte: SQLite local",
+        value: String(totalAlerts),
+        helper: "Consulta real em SQLite",
       },
       {
         label: "Pendencias criticas",
-        value: String(
-          recentDocuments.filter((item) => item.status !== "Em dia").length,
-        ),
-        helper: "Calculado na camada de dashboard",
+        value: String(pendingDocuments),
+        helper: "Documentos com status diferente de Em dia",
       },
     ],
   };
