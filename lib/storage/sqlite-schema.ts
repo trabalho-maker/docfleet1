@@ -1,5 +1,19 @@
 import type { Database } from "sql.js";
 
+function ensureColumnExists(
+  db: Database,
+  tableName: string,
+  columnName: string,
+  definition: string,
+) {
+  const columns = db.exec(`PRAGMA table_info(${tableName})`)[0]?.values ?? [];
+  const hasColumn = columns.some((column) => String(column[1]) === columnName);
+
+  if (!hasColumn) {
+    db.run(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+  }
+}
+
 export function createSqliteSchema(db: Database) {
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
@@ -24,7 +38,9 @@ export function createSqliteSchema(db: Database) {
       title TEXT NOT NULL,
       severity TEXT NOT NULL,
       team TEXT NOT NULL,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      kind TEXT,
+      source_document_id TEXT
     );
 
     CREATE TABLE IF NOT EXISTS password_reset_tokens (
@@ -56,7 +72,16 @@ export function createSqliteSchema(db: Database) {
     CREATE INDEX IF NOT EXISTS idx_alerts_created_at
     ON alerts(created_at DESC);
 
+    CREATE INDEX IF NOT EXISTS idx_alerts_kind
+    ON alerts(kind);
+
+    CREATE INDEX IF NOT EXISTS idx_alerts_source_document_id
+    ON alerts(source_document_id);
+
     CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id
     ON password_reset_tokens(user_id);
   `);
+
+  ensureColumnExists(db, "alerts", "kind", "TEXT");
+  ensureColumnExists(db, "alerts", "source_document_id", "TEXT");
 }

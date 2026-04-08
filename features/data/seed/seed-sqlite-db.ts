@@ -1,36 +1,49 @@
 import bcrypt from "bcryptjs";
 import type { Database } from "sql.js";
 import type { FleetDocument, OperationalAlert } from "@/features/data/types";
+import {
+  addUtcDays,
+  calculateDocumentStatus,
+  formatUtcDateOnly,
+} from "@/features/documents/lib/expiration";
 import { logger, maskEmail } from "@/lib/logger";
 
 const defaultSeedRole = "Gestor de frota";
 
-const seedDocuments: FleetDocument[] = [
-  {
-    id: "doc_01",
-    title: "Licenciamento da frota leve",
-    owner: "Equipe Operacional",
-    category: "Veiculos",
-    status: "A vencer",
-    dueDate: "2026-04-18",
-  },
-  {
-    id: "doc_02",
-    title: "Contratos de manutencao",
-    owner: "Suprimentos",
-    category: "Contratos",
-    status: "Em dia",
-    dueDate: "2026-06-01",
-  },
-  {
-    id: "doc_03",
-    title: "ASO dos motoristas",
-    owner: "RH",
-    category: "Pessoas",
-    status: "Pendente",
-    dueDate: "2026-04-12",
-  },
-];
+function buildSeedDocuments(now = new Date()): FleetDocument[] {
+  const dueDates = {
+    doc03: formatUtcDateOnly(addUtcDays(now, 4)),
+    doc01: formatUtcDateOnly(addUtcDays(now, 10)),
+    doc02: formatUtcDateOnly(addUtcDays(now, 45)),
+  };
+
+  return [
+    {
+      id: "doc_01",
+      title: "Licenciamento da frota leve",
+      owner: "Equipe Operacional",
+      category: "Veiculos",
+      status: calculateDocumentStatus(dueDates.doc01, { now }),
+      dueDate: dueDates.doc01,
+    },
+    {
+      id: "doc_02",
+      title: "Contratos de manutencao",
+      owner: "Suprimentos",
+      category: "Contratos",
+      status: calculateDocumentStatus(dueDates.doc02, { now }),
+      dueDate: dueDates.doc02,
+    },
+    {
+      id: "doc_03",
+      title: "ASO dos motoristas",
+      owner: "RH",
+      category: "Pessoas",
+      status: calculateDocumentStatus(dueDates.doc03, { now }),
+      dueDate: dueDates.doc03,
+    },
+  ];
+}
 
 const seedAlerts: OperationalAlert[] = [
   {
@@ -57,6 +70,7 @@ const seedAlerts: OperationalAlert[] = [
 ];
 
 export async function seedSqliteDatabase(db: Database) {
+  const seedDocuments = buildSeedDocuments();
   const seedUserName = process.env.SEED_USER_NAME?.trim();
   const seedUserEmail = process.env.SEED_USER_EMAIL?.trim().toLowerCase();
   const seedUserPassword = process.env.SEED_USER_PASSWORD;

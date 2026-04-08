@@ -1,9 +1,9 @@
-export type DocumentStatus = "Em dia" | "A vencer" | "Pendente";
+export type DocumentStatus = "Valido" | "Atencao" | "Vencido";
 
 export const documentStatuses: DocumentStatus[] = [
-  "Em dia",
-  "A vencer",
-  "Pendente",
+  "Valido",
+  "Atencao",
+  "Vencido",
 ];
 
 export type FleetDocument = {
@@ -19,7 +19,6 @@ export type CreateDocumentInput = {
   name: string;
   type: string;
   dueDate: string;
-  status: DocumentStatus;
   owner: string;
 };
 
@@ -27,7 +26,6 @@ export type UpdateDocumentInput = {
   name: string;
   type: string;
   dueDate: string;
-  status: DocumentStatus;
 };
 
 export type OperationalAlert = {
@@ -36,6 +34,17 @@ export type OperationalAlert = {
   severity: "Alta" | "Media" | "Baixa";
   team: string;
   createdAt: string;
+  kind?: "manual" | "document_expiration";
+  sourceDocumentId?: string | null;
+};
+
+export type GeneratedOperationalAlertInput = {
+  title: string;
+  severity: OperationalAlert["severity"];
+  team: string;
+  createdAt: string;
+  sourceDocumentId: string;
+  kind: "document_expiration";
 };
 
 export type DashboardMetric = {

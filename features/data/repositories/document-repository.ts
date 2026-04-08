@@ -9,6 +9,10 @@ import type {
   FleetDocument,
   UpdateDocumentInput,
 } from "@/features/data/types";
+import {
+  calculateDocumentStatus,
+  getDocumentAttentionThresholdDate,
+} from "@/features/documents/lib/expiration";
 import { logger } from "@/lib/logger";
 
 export interface DocumentRepository {
@@ -23,13 +27,15 @@ export interface DocumentRepository {
 }
 
 function mapDocument(row: unknown[]): FleetDocument {
+  const dueDate = String(row[5]);
+
   return {
     id: String(row[0]),
     title: String(row[1]),
     owner: String(row[2]),
     category: String(row[3]),
-    status: row[4] as FleetDocument["status"],
-    dueDate: String(row[5]),
+    status: calculateDocumentStatus(dueDate),
+    dueDate,
   };
 }
 
@@ -92,7 +98,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
         title: input.name.trim(),
         category: input.type.trim(),
         dueDate: input.dueDate,
-        status: input.status,
+        status: calculateDocumentStatus(input.dueDate),
         owner: input.owner.trim(),
       };
 
@@ -150,7 +156,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
           input.name.trim(),
           input.type.trim(),
           input.dueDate,
-          input.status,
+          calculateDocumentStatus(input.dueDate),
           documentId,
         ],
       );
@@ -160,7 +166,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
         title: input.name.trim(),
         owner: String(existingRow[2]),
         category: input.type.trim(),
-        status: input.status,
+        status: calculateDocumentStatus(input.dueDate),
         dueDate: input.dueDate,
       };
 
@@ -200,10 +206,10 @@ export class SqliteDocumentRepository implements DocumentRepository {
 
   async countPending(): Promise<number> {
     return withSqliteDatabase(async (db) => {
-      const result = db.exec(
-        "SELECT COUNT(*) FROM documents WHERE status <> ?",
-        ["Em dia"],
-      );
+      const attentionThresholdDate = getDocumentAttentionThresholdDate();
+      const result = db.exec("SELECT COUNT(*) FROM documents WHERE due_date <= ?", [
+        attentionThresholdDate,
+      ]);
       return Number(result[0]?.values?.[0]?.[0] ?? 0);
     });
   }

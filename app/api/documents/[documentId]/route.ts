@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { syncDocumentExpirationAlerts } from "@/features/alerts/server/document-expiration-alert-service";
 import { createDataLayer } from "@/features/data/repositories";
 import { validateDocumentInput } from "@/features/documents/server/validation";
 import { logger } from "@/lib/logger";
@@ -40,14 +41,12 @@ export async function PUT(request: Request, context: RouteContext) {
     name?: string;
     type?: string;
     dueDate?: string;
-    status?: string;
   };
 
   const validation = validateDocumentInput({
     name: body.name ?? "",
     type: body.type ?? "",
     dueDate: body.dueDate ?? "",
-    status: body.status as "Em dia" | "A vencer" | "Pendente",
   });
 
   if (!validation.success) {
@@ -60,6 +59,7 @@ export async function PUT(request: Request, context: RouteContext) {
   try {
     const dataLayer = createDataLayer();
     const document = await dataLayer.documents.update(documentId, validation.data);
+    await syncDocumentExpirationAlerts();
 
     logger.info("api.documents.update.success", {
       documentId,
@@ -91,6 +91,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
   try {
     const dataLayer = createDataLayer();
     await dataLayer.documents.delete(documentId);
+    await syncDocumentExpirationAlerts();
 
     logger.warn("api.documents.delete.success", {
       documentId,

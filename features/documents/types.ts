@@ -1,10 +1,9 @@
-import type { DocumentStatus, FleetDocument } from "@/features/data/types";
+import type { FleetDocument } from "@/features/data/types";
 
 export type DocumentFormValues = {
   name: string;
   type: string;
   dueDate: string;
-  status: DocumentStatus;
 };
 
 export type DocumentsApiResponse = {

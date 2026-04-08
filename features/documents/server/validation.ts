@@ -1,8 +1,5 @@
-import {
-  documentStatuses,
-  type DocumentStatus,
-} from "@/features/data/types";
 import type { DocumentFormValues } from "@/features/documents/types";
+import { parseDocumentDueDate } from "@/features/documents/lib/expiration";
 
 export type DocumentValidationResult =
   | {
@@ -30,17 +27,12 @@ function isValidDueDate(value: string) {
   );
 }
 
-function normalizeStatus(status: string): DocumentStatus | null {
-  return documentStatuses.find((item) => item === status) ?? null;
-}
-
 export function validateDocumentInput(
   input: DocumentFormValues,
 ): DocumentValidationResult {
   const name = input.name.trim();
   const type = input.type.trim();
   const dueDate = input.dueDate.trim();
-  const status = normalizeStatus(input.status);
   const errors: Partial<Record<keyof DocumentFormValues, string>> = {};
 
   if (name.length < 3) {
@@ -51,12 +43,8 @@ export function validateDocumentInput(
     errors.type = "Informe um tipo com pelo menos 2 caracteres.";
   }
 
-  if (!isValidDueDate(dueDate)) {
+  if (!isValidDueDate(dueDate) || !parseDocumentDueDate(dueDate)) {
     errors.dueDate = "Informe uma data de vencimento valida.";
-  }
-
-  if (!status) {
-    errors.status = "Selecione um status valido.";
   }
 
   if (Object.keys(errors).length > 0) {
@@ -72,7 +60,6 @@ export function validateDocumentInput(
       name,
       type,
       dueDate,
-      status: status as DocumentStatus,
     },
   };
 }

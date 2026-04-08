@@ -4,11 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  documentStatuses,
-  type DocumentStatus,
-  type FleetDocument,
-} from "@/features/data/types";
+import { type DocumentStatus, type FleetDocument } from "@/features/data/types";
+import { calculateDocumentStatus } from "@/features/documents/lib/expiration";
 import type {
   DocumentApiResponse,
   DocumentFormValues,
@@ -25,7 +22,6 @@ const initialValues: DocumentFormValues = {
   name: "",
   type: "",
   dueDate: "",
-  status: "Pendente",
 };
 
 export function DocumentManager({ userName }: DocumentManagerProps) {
@@ -89,15 +85,23 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
   }, []);
 
   const metrics = useMemo(() => {
-    const pending = documents.filter((item) => item.status !== "Em dia").length;
-    const overdueSoon = documents.filter((item) => item.status === "A vencer").length;
+    const requiringAttention = documents.filter((item) => item.status !== "Valido").length;
+    const attention = documents.filter((item) => item.status === "Atencao").length;
 
     return [
       { label: "Documentos", value: String(documents.length) },
-      { label: "Pendentes", value: String(pending) },
-      { label: "A vencer", value: String(overdueSoon) },
+      { label: "Requer atencao", value: String(requiringAttention) },
+      { label: "Em atencao", value: String(attention) },
     ];
   }, [documents]);
+
+  const calculatedStatus = useMemo(() => {
+    if (!formValues.dueDate) {
+      return null;
+    }
+
+    return calculateDocumentStatus(formValues.dueDate);
+  }, [formValues.dueDate]);
 
   function updateField<K extends keyof DocumentFormValues>(
     field: K,
@@ -124,7 +128,6 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
       name: document.title,
       type: document.category,
       dueDate: document.dueDate,
-      status: document.status,
     });
     setFormErrors({});
     setEditingId(document.id);
@@ -342,33 +345,24 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
               required
             />
 
-            <label
-              htmlFor="document-status"
-              className="grid gap-2 text-sm font-medium text-slate-700"
-            >
-              <span>Status</span>
-              <select
-                id="document-status"
-                value={formValues.status}
-                onChange={(event) =>
-                  updateField("status", event.target.value as DocumentStatus)
-                }
-                className={`h-12 rounded-2xl border bg-white px-4 text-sm text-slate-900 outline-none transition-colors ${
-                  formErrors.status
-                    ? "border-red-300 focus:border-red-400"
-                    : "border-slate-200 focus:border-slate-900"
-                }`}
-              >
-                {documentStatuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-              {formErrors.status ? (
-                <span className="text-sm text-red-600">{formErrors.status}</span>
-              ) : null}
-            </label>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+              <p className="text-sm font-medium text-slate-700">
+                Status calculado automaticamente
+              </p>
+              <div className="mt-3 flex items-center gap-3">
+                {calculatedStatus ? (
+                  <StatusBadge status={calculatedStatus} />
+                ) : (
+                  <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
+                    Informe a data
+                  </span>
+                )}
+                <p className="text-sm text-slate-500">
+                  O backend compara a data atual com o vencimento e define se o
+                  documento esta valido, em atencao ou vencido.
+                </p>
+              </div>
+            </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button
@@ -472,9 +466,9 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
 
 function StatusBadge({ status }: { status: DocumentStatus }) {
   const tone = {
-    "Em dia": "bg-emerald-100 text-emerald-700",
-    "A vencer": "bg-amber-100 text-amber-700",
-    Pendente: "bg-sky-100 text-sky-700",
+    Valido: "bg-emerald-100 text-emerald-700",
+    Atencao: "bg-amber-100 text-amber-700",
+    Vencido: "bg-red-100 text-red-700",
   }[status];
 
   return (

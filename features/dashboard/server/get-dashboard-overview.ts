@@ -1,9 +1,11 @@
+import { syncDocumentExpirationAlerts } from "@/features/alerts/server/document-expiration-alert-service";
 import { getCurrentUser } from "@/features/auth/server/session";
 import { createDataLayer } from "@/features/data/repositories";
 import type { DashboardOverview } from "@/features/dashboard/types";
 
 export async function getDashboardOverview(): Promise<DashboardOverview> {
   const user = await getCurrentUser();
+  await syncDocumentExpirationAlerts();
   const dataLayer = createDataLayer();
   const [recentDocuments, alerts, totalDocuments, totalAlerts, pendingDocuments] =
     await Promise.all([
@@ -32,7 +34,7 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
       {
         label: "Pendencias criticas",
         value: String(pendingDocuments),
-        helper: "Documentos com status diferente de Em dia",
+        helper: "Documentos em atencao ou vencidos",
       },
     ],
   };
