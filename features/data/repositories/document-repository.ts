@@ -1,9 +1,6 @@
-import type { QueryExecResult } from "sql.js";
 import { randomUUID } from "node:crypto";
-import {
-  withSqliteDatabase,
-  withSqliteWriteLock,
-} from "@/lib/storage/sqlite-storage";
+import type { DatabaseAdapter, DatabaseRow } from "@/lib/database/adapter";
+import { getDatabaseAdapter } from "@/lib/database/provider";
 import type {
   CreateDocumentInput,
   FleetDocument,
@@ -27,7 +24,7 @@ export interface DocumentRepository {
   countPending(): Promise<number>;
 }
 
-function mapDocument(row: unknown[]): FleetDocument {
+function mapDocument(row: DatabaseRow): FleetDocument {
   const dueDate = String(row[5]);
 
   return {
@@ -40,78 +37,68 @@ function mapDocument(row: unknown[]): FleetDocument {
   };
 }
 
-function readSingleNumber(result: QueryExecResult[] | undefined) {
-  return Number(result?.[0]?.values?.[0]?.[0] ?? 0);
+function readSingleNumber(value: unknown) {
+  return Number(value ?? 0);
 }
 
 export class SqliteDocumentRepository implements DocumentRepository {
+  constructor(private readonly database: DatabaseAdapter = getDatabaseAdapter()) {}
+
   async listAll(): Promise<FleetDocument[]> {
-    return withSqliteDatabase(async (db) => {
-      const result = db.exec(`
+    const rows = await this.database.query(`
         SELECT id, name, owner, type, status, due_date
         FROM documents
         ORDER BY due_date ASC, name ASC
       `);
-      const rows = result[0]?.values ?? [];
 
-      return rows.map(mapDocument);
-    });
+    return rows.map(mapDocument);
   }
 
   async listRecent(limit = 6): Promise<FleetDocument[]> {
-    return withSqliteDatabase(async (db) => {
-      const result = db.exec(
-        `
+    const rows = await this.database.query(
+      `
         SELECT id, name, owner, type, status, due_date
         FROM documents
         ORDER BY due_date ASC
         LIMIT ?
       `,
-        [limit],
-      );
-      const rows = result[0]?.values ?? [];
+      [limit],
+    );
 
-      return rows.map(mapDocument);
-    });
+    return rows.map(mapDocument);
   }
 
   async listRequiringAttention(now = new Date()): Promise<FleetDocument[]> {
-    return withSqliteDatabase(async (db) => {
-      const attentionThresholdDate = getDocumentAttentionThresholdDate(now);
-      const result = db.exec(
-        `
+    const attentionThresholdDate = getDocumentAttentionThresholdDate(now);
+    const rows = await this.database.query(
+      `
         SELECT id, name, owner, type, status, due_date
         FROM documents
         WHERE due_date <= ?
         ORDER BY due_date ASC, name ASC
       `,
-        [attentionThresholdDate],
-      );
-      const rows = result[0]?.values ?? [];
+      [attentionThresholdDate],
+    );
 
-      return rows.map(mapDocument);
-    });
+    return rows.map(mapDocument);
   }
 
   async findById(documentId: string): Promise<FleetDocument | null> {
-    return withSqliteDatabase(async (db) => {
-      const result = db.exec(
-        `
+    const row = await this.database.queryOne(
+      `
           SELECT id, name, owner, type, status, due_date
           FROM documents
           WHERE id = ?
           LIMIT 1
         `,
-        [documentId],
-      );
-      const row = result[0]?.values?.[0];
+      [documentId],
+    );
 
-      return row ? mapDocument(row) : null;
-    });
+    return row ? mapDocument(row) : null;
   }
 
   async create(input: CreateDocumentInput): Promise<FleetDocument> {
-    return withSqliteWriteLock(async (db) => {
+    return this.database.write(async (session) => {
       const document: FleetDocument = {
         id: randomUUID(),
         name: input.name.trim(),
@@ -121,7 +108,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
         owner: input.owner.trim(),
       };
 
-      db.run(
+      await session.execute(
         `
           INSERT INTO documents (id, name, owner, type, status, due_date)
           VALUES (?, ?, ?, ?, ?, ?)
@@ -149,8 +136,8 @@ export class SqliteDocumentRepository implements DocumentRepository {
     documentId: string,
     input: UpdateDocumentInput,
   ): Promise<FleetDocument> {
-    return withSqliteWriteLock(async (db) => {
-      const existingResult = db.exec(
+    return this.database.write(async (session) => {
+      const existingRow = await session.queryOne(
         `
           SELECT id, name, owner, type, status, due_date
           FROM documents
@@ -159,13 +146,12 @@ export class SqliteDocumentRepository implements DocumentRepository {
         `,
         [documentId],
       );
-      const existingRow = existingResult[0]?.values?.[0];
 
       if (!existingRow) {
         throw new Error("DOCUMENT_NOT_FOUND");
       }
 
-      db.run(
+      await session.execute(
         `
           UPDATE documents
           SET name = ?, type = ?, due_date = ?, status = ?
@@ -199,16 +185,18 @@ export class SqliteDocumentRepository implements DocumentRepository {
   }
 
   async delete(documentId: string): Promise<void> {
-    return withSqliteWriteLock(async (db) => {
+    return this.database.write(async (session) => {
       const deletedCount = readSingleNumber(
-        db.exec("SELECT COUNT(*) FROM documents WHERE id = ?", [documentId]),
+        await session.queryValue("SELECT COUNT(*) FROM documents WHERE id = ?", [
+          documentId,
+        ]),
       );
 
       if (deletedCount === 0) {
         throw new Error("DOCUMENT_NOT_FOUND");
       }
 
-      db.run("DELETE FROM documents WHERE id = ?", [documentId]);
+      await session.execute("DELETE FROM documents WHERE id = ?", [documentId]);
 
       logger.warn("data.documents.delete.success", {
         documentId,
@@ -217,19 +205,15 @@ export class SqliteDocumentRepository implements DocumentRepository {
   }
 
   async countAll(): Promise<number> {
-    return withSqliteDatabase(async (db) => {
-      const result = db.exec("SELECT COUNT(*) FROM documents");
-      return Number(result[0]?.values?.[0]?.[0] ?? 0);
-    });
+    return readSingleNumber(await this.database.queryValue("SELECT COUNT(*) FROM documents"));
   }
 
   async countPending(): Promise<number> {
-    return withSqliteDatabase(async (db) => {
-      const attentionThresholdDate = getDocumentAttentionThresholdDate();
-      const result = db.exec("SELECT COUNT(*) FROM documents WHERE due_date <= ?", [
+    const attentionThresholdDate = getDocumentAttentionThresholdDate();
+    return readSingleNumber(
+      await this.database.queryValue("SELECT COUNT(*) FROM documents WHERE due_date <= ?", [
         attentionThresholdDate,
-      ]);
-      return Number(result[0]?.values?.[0]?.[0] ?? 0);
-    });
+      ]),
+    );
   }
 }

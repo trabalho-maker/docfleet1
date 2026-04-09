@@ -1,8 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import {
-  withSqliteDatabase,
-  withSqliteWriteLock,
-} from "@/lib/storage/sqlite-storage";
+import type { DatabaseAdapter, DatabaseRow } from "@/lib/database/adapter";
+import { getDatabaseAdapter } from "@/lib/database/provider";
 import type {
   PasswordResetTokenRecord,
   PasswordResetTokenWithUser,
@@ -16,7 +14,7 @@ function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-function mapStoredUser(row: unknown[]): StoredUser {
+function mapStoredUser(row: DatabaseRow): StoredUser {
   return {
     id: String(row[6]),
     name: String(row[7]),
@@ -26,7 +24,7 @@ function mapStoredUser(row: unknown[]): StoredUser {
   };
 }
 
-function mapTokenRecord(row: unknown[]): PasswordResetTokenRecord {
+function mapTokenRecord(row: DatabaseRow): PasswordResetTokenRecord {
   return {
     id: String(row[0]),
     userId: String(row[1]),
@@ -49,10 +47,12 @@ export interface PasswordResetTokenRepository {
 export class SqlitePasswordResetTokenRepository
   implements PasswordResetTokenRepository
 {
+  constructor(private readonly database: DatabaseAdapter = getDatabaseAdapter()) {}
+
   async createForUser(
     user: StoredUser,
   ): Promise<{ id: string; token: string; expiresAt: string }> {
-    return withSqliteWriteLock(async (db) => {
+    return this.database.write(async (session) => {
       const rawToken = randomBytes(32).toString("hex");
       const tokenHash = hashToken(rawToken);
       const tokenId = randomUUID();
@@ -61,7 +61,7 @@ export class SqlitePasswordResetTokenRepository
         now.getTime() + TOKEN_TTL_MINUTES * 60 * 1000,
       ).toISOString();
 
-      db.run(
+      await session.execute(
         `INSERT INTO password_reset_tokens
           (id, user_id, token_hash, expires_at, created_at, consumed_at)
          VALUES (?, ?, ?, ?, ?, NULL)`,
@@ -86,9 +86,8 @@ export class SqlitePasswordResetTokenRepository
     const tokenHash = hashToken(token);
     const now = new Date().toISOString();
 
-    return withSqliteDatabase(async (db) => {
-      const result = db.exec(
-        `SELECT
+    const row = await this.database.queryOne(
+      `SELECT
            prt.id,
            prt.user_id,
            prt.token_hash,
@@ -106,25 +105,22 @@ export class SqlitePasswordResetTokenRepository
            AND prt.consumed_at IS NULL
            AND prt.expires_at > ?
          LIMIT 1`,
-        [tokenHash, now],
-      );
+      [tokenHash, now],
+    );
 
-      const row = result[0]?.values?.[0];
+    if (!row) {
+      return null;
+    }
 
-      if (!row) {
-        return null;
-      }
-
-      return {
-        ...mapTokenRecord(row),
-        user: mapStoredUser(row),
-      };
-    });
+    return {
+      ...mapTokenRecord(row),
+      user: mapStoredUser(row),
+    };
   }
 
   async consume(id: string): Promise<void> {
-    return withSqliteWriteLock(async (db) => {
-      db.run(
+    return this.database.write(async (session) => {
+      await session.execute(
         "UPDATE password_reset_tokens SET consumed_at = ? WHERE id = ?",
         [new Date().toISOString(), id],
       );
@@ -132,25 +128,25 @@ export class SqlitePasswordResetTokenRepository
   }
 
   async deleteById(id: string): Promise<void> {
-    return withSqliteWriteLock(async (db) => {
-      db.run("DELETE FROM password_reset_tokens WHERE id = ?", [id]);
-    });
+    return this.database.write((session) =>
+      session.execute("DELETE FROM password_reset_tokens WHERE id = ?", [id]),
+    );
   }
 
   async deleteExpired(): Promise<void> {
-    return withSqliteWriteLock(async (db) => {
-      db.run("DELETE FROM password_reset_tokens WHERE expires_at <= ?", [
+    return this.database.write((session) =>
+      session.execute("DELETE FROM password_reset_tokens WHERE expires_at <= ?", [
         new Date().toISOString(),
-      ]);
-    });
+      ]),
+    );
   }
 
   async deleteActiveForUser(userId: string): Promise<void> {
-    return withSqliteWriteLock(async (db) => {
-      db.run(
+    return this.database.write((session) =>
+      session.execute(
         "DELETE FROM password_reset_tokens WHERE user_id = ? AND consumed_at IS NULL",
         [userId],
-      );
-    });
+      ),
+    );
   }
 }

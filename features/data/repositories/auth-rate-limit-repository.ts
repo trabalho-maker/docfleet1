@@ -1,7 +1,5 @@
-import {
-  withSqliteDatabase,
-  withSqliteWriteLock,
-} from "@/lib/storage/sqlite-storage";
+import type { DatabaseAdapter, DatabaseRow } from "@/lib/database/adapter";
+import { getDatabaseAdapter } from "@/lib/database/provider";
 import type { RateLimitRecord, RateLimitScope } from "@/features/data/types";
 
 export type RateLimitPolicy = {
@@ -18,7 +16,7 @@ export type RateLimitState = {
   penaltyLevel: number;
 };
 
-function mapRecord(row: unknown[]): RateLimitRecord {
+function mapRecord(row: DatabaseRow): RateLimitRecord {
   return {
     scope: row[0] as RateLimitScope,
     identifier: String(row[1]),
@@ -69,22 +67,21 @@ export interface AuthRateLimitRepository {
 }
 
 export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
+  constructor(private readonly database: DatabaseAdapter = getDatabaseAdapter()) {}
+
   private async findRecord(
     scope: RateLimitScope,
     identifier: string,
   ): Promise<RateLimitRecord | null> {
-    return withSqliteDatabase(async (db) => {
-      const result = db.exec(
-        `SELECT scope, identifier, attempts, window_started_at, blocked_until, penalty_level, updated_at
+    const row = await this.database.queryOne(
+      `SELECT scope, identifier, attempts, window_started_at, blocked_until, penalty_level, updated_at
          FROM auth_rate_limits
          WHERE scope = ? AND identifier = ?
          LIMIT 1`,
-        [scope, identifier],
-      );
-      const row = result[0]?.values?.[0];
+      [scope, identifier],
+    );
 
-      return row ? mapRecord(row) : null;
-    });
+    return row ? mapRecord(row) : null;
   }
 
   async getState(
@@ -139,17 +136,17 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
     identifier: string,
     policy: RateLimitPolicy,
   ): Promise<RateLimitState> {
-    return withSqliteWriteLock(async (db) => {
+    return this.database.write(async (session) => {
       const now = Date.now();
       const nowIso = toIsoDate(now);
-      const result = db.exec(
+      const existingRow = await session.queryOne(
         `SELECT scope, identifier, attempts, window_started_at, blocked_until, penalty_level, updated_at
          FROM auth_rate_limits
          WHERE scope = ? AND identifier = ?
          LIMIT 1`,
         [scope, identifier],
       );
-      const existing = result[0]?.values?.[0] ? mapRecord(result[0].values[0]) : null;
+      const existing = existingRow ? mapRecord(existingRow) : null;
 
       let attempts = 1;
       let windowStartedAt = nowIso;
@@ -184,7 +181,7 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
         windowStartedAt = nowIso;
       }
 
-      db.run(
+      await session.execute(
         `INSERT OR REPLACE INTO auth_rate_limits
           (scope, identifier, attempts, window_started_at, blocked_until, penalty_level, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -226,11 +223,11 @@ export class SqliteAuthRateLimitRepository implements AuthRateLimitRepository {
   }
 
   async clear(scope: RateLimitScope, identifier: string): Promise<void> {
-    return withSqliteWriteLock(async (db) => {
-      db.run("DELETE FROM auth_rate_limits WHERE scope = ? AND identifier = ?", [
+    return this.database.write((session) =>
+      session.execute("DELETE FROM auth_rate_limits WHERE scope = ? AND identifier = ?", [
         scope,
         identifier,
-      ]);
-    });
+      ]),
+    );
   }
 }

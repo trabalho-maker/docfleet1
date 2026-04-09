@@ -1,8 +1,6 @@
 import { randomUUID } from "node:crypto";
-import {
-  withSqliteDatabase,
-  withSqliteWriteLock,
-} from "@/lib/storage/sqlite-storage";
+import type { DatabaseAdapter, DatabaseRow } from "@/lib/database/adapter";
+import { getDatabaseAdapter } from "@/lib/database/provider";
 import type {
   GeneratedOperationalAlertInput,
   OperationalAlert,
@@ -17,98 +15,72 @@ export interface AlertRepository {
   deleteGeneratedBySourceDocumentId(documentId: string): Promise<void>;
 }
 
+function mapAlert(row: DatabaseRow): OperationalAlert {
+  return {
+    id: String(row[0]),
+    title: String(row[1]),
+    severity: row[2] as OperationalAlert["severity"],
+    team: String(row[3]),
+    createdAt: String(row[4]),
+    kind: row[5] ? (String(row[5]) as OperationalAlert["kind"]) : "manual",
+    sourceDocumentId: row[6] ? String(row[6]) : null,
+  };
+}
+
 export class SqliteAlertRepository implements AlertRepository {
+  constructor(private readonly database: DatabaseAdapter = getDatabaseAdapter()) {}
+
   async listOpen(limit = 6): Promise<OperationalAlert[]> {
-    return withSqliteDatabase(async (db) => {
-      const result = db.exec(
-        `
+    const rows = await this.database.query(
+      `
         SELECT id, title, severity, team, created_at, kind, source_document_id
         FROM alerts
         ORDER BY created_at DESC
         LIMIT ?
       `,
-        [limit],
-      );
-      const rows = result[0]?.values ?? [];
+      [limit],
+    );
 
-      return rows.map((row) => ({
-        id: String(row[0]),
-        title: String(row[1]),
-        severity: row[2] as OperationalAlert["severity"],
-        team: String(row[3]),
-        createdAt: String(row[4]),
-        kind: row[5] ? (String(row[5]) as OperationalAlert["kind"]) : "manual",
-        sourceDocumentId: row[6] ? String(row[6]) : null,
-      }));
-    });
+    return rows.map(mapAlert);
   }
 
   async countOpen(): Promise<number> {
-    return withSqliteDatabase(async (db) => {
-      const result = db.exec("SELECT COUNT(*) FROM alerts");
-      return Number(result[0]?.values?.[0]?.[0] ?? 0);
-    });
+    return Number(await this.database.queryValue("SELECT COUNT(*) FROM alerts"));
   }
 
   async listGenerated(): Promise<OperationalAlert[]> {
-    return withSqliteDatabase(async (db) => {
-      const result = db.exec(
-        `
+    const rows = await this.database.query(
+      `
         SELECT id, title, severity, team, created_at, kind, source_document_id
         FROM alerts
         WHERE kind = ?
         ORDER BY created_at DESC
       `,
-        ["document_expiration"],
-      );
-      const rows = result[0]?.values ?? [];
+      ["document_expiration"],
+    );
 
-      return rows.map((row) => ({
-        id: String(row[0]),
-        title: String(row[1]),
-        severity: row[2] as OperationalAlert["severity"],
-        team: String(row[3]),
-        createdAt: String(row[4]),
-        kind: row[5] ? (String(row[5]) as OperationalAlert["kind"]) : "manual",
-        sourceDocumentId: row[6] ? String(row[6]) : null,
-      }));
-    });
+    return rows.map(mapAlert);
   }
 
   async findGeneratedBySourceDocumentId(
     documentId: string,
   ): Promise<OperationalAlert | null> {
-    return withSqliteDatabase(async (db) => {
-      const result = db.exec(
-        `
+    const row = await this.database.queryOne(
+      `
         SELECT id, title, severity, team, created_at, kind, source_document_id
         FROM alerts
         WHERE kind = ? AND source_document_id = ?
         LIMIT 1
       `,
-        ["document_expiration", documentId],
-      );
-      const row = result[0]?.values?.[0];
+      ["document_expiration", documentId],
+    );
 
-      if (!row) {
-        return null;
-      }
-
-      return {
-        id: String(row[0]),
-        title: String(row[1]),
-        severity: row[2] as OperationalAlert["severity"],
-        team: String(row[3]),
-        createdAt: String(row[4]),
-        kind: row[5] ? (String(row[5]) as OperationalAlert["kind"]) : "manual",
-        sourceDocumentId: row[6] ? String(row[6]) : null,
-      };
-    });
+    return row ? mapAlert(row) : null;
   }
 
   async upsertGeneratedForDocument(alert: GeneratedOperationalAlertInput): Promise<void> {
-    return withSqliteWriteLock(async (db) => {
-      const existingResult = db.exec(
+    return this.database.write(async (session) => {
+      const existingRow = await session.queryOne(
         `
         SELECT id
         FROM alerts
@@ -117,10 +89,10 @@ export class SqliteAlertRepository implements AlertRepository {
       `,
         [alert.kind, alert.sourceDocumentId],
       );
-      const existingId = existingResult[0]?.values?.[0]?.[0];
+      const existingId = existingRow?.[0];
 
       if (existingId) {
-        db.run(
+        await session.execute(
           `
             UPDATE alerts
             SET title = ?, severity = ?, team = ?, created_at = ?, kind = ?, source_document_id = ?
@@ -140,7 +112,7 @@ export class SqliteAlertRepository implements AlertRepository {
         return;
       }
 
-      db.run(
+      await session.execute(
         `
           INSERT INTO alerts
             (id, title, severity, team, created_at, kind, source_document_id)
@@ -160,8 +132,8 @@ export class SqliteAlertRepository implements AlertRepository {
   }
 
   async deleteGeneratedBySourceDocumentId(documentId: string): Promise<void> {
-    return withSqliteWriteLock(async (db) => {
-      db.run(
+    return this.database.write(async (session) => {
+      await session.execute(
         `
         DELETE FROM alerts
         WHERE kind = ? AND source_document_id = ?
