@@ -2,6 +2,9 @@ import type { DashboardOverview } from "@/features/dashboard/types";
 import { DashboardHeader } from "@/features/dashboard/components/dashboard-header";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
 import { MetricCard } from "@/features/dashboard/components/metric-card";
+import { StatusBadge } from "@/features/dashboard/components/status-badge";
+import { SeverityBadge } from "@/features/dashboard/components/severity-badge";
+import { EmptyState } from "@/features/dashboard/components/empty-state";
 
 type DashboardShellProps = {
   overview: DashboardOverview;
@@ -31,14 +34,14 @@ export function DashboardShell({ overview }: DashboardShellProps) {
                       Documentos recentes
                     </p>
                     <h3 className="mt-2 text-2xl font-semibold tracking-tight text-[#0F172A]">
-                      Operacao documental
+                      Operação documental
                     </h3>
                     <p className="mt-2 text-sm leading-6 text-[#64748B]">
                       Itens mais relevantes carregados da camada atual do dashboard.
                     </p>
                   </div>
                   <div className="rounded-2xl bg-[#FFF7ED] px-4 py-3 text-sm text-[#9A3412]">
-                    <p className="font-semibold">Atualizacao em tempo real</p>
+                    <p className="font-semibold">Atualização em tempo real</p>
                     <p className="mt-1 text-[#C2410C]">
                       Dados vindos diretamente do overview.
                     </p>
@@ -87,14 +90,14 @@ export function DashboardShell({ overview }: DashboardShellProps) {
                     Alertas operacionais
                   </p>
                   <h3 className="mt-2 text-2xl font-semibold tracking-tight text-[#0F172A]">
-                    Painel de atencao
+                    Painel de atenção
                   </h3>
 
                   <div className="mt-6 grid gap-4">
                     {overview.alerts.length === 0 ? (
                       <EmptyState
                         title="Sem alertas ativos"
-                        description="Quando surgirem vencimentos ou pendencias, o painel passa a destacar aqui."
+                        description="Quando surgirem vencimentos ou pendências, o painel passa a destacar aqui."
                       />
                     ) : (
                       overview.alerts.map((alert) => (
@@ -127,7 +130,7 @@ export function DashboardShell({ overview }: DashboardShellProps) {
                     Resumo executivo
                   </p>
                   <h3 className="mt-2 text-2xl font-semibold tracking-tight text-[#0F172A]">
-                    Visao do ambiente
+                    Visão do ambiente
                   </h3>
                   <div className="mt-6 grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
                     {overview.metrics.map((metric) => (
@@ -153,53 +156,6 @@ export function DashboardShell({ overview }: DashboardShellProps) {
           </div>
         </main>
       </div>
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: DashboardOverview["recentDocuments"][number]["status"] }) {
-  const tone = {
-    Valido: "bg-[#DCFCE7] text-[#166534]",
-    Atencao: "bg-[#FEF3C7] text-[#92400E]",
-    Vencido: "bg-[#FEE2E2] text-[#991B1B]",
-  }[status];
-
-  return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${tone}`}>
-      {status}
-    </span>
-  );
-}
-
-function SeverityBadge({
-  severity,
-}: {
-  severity: DashboardOverview["alerts"][number]["severity"];
-}) {
-  const tone = {
-    Alta: "bg-[#FEE2E2] text-[#991B1B]",
-    Media: "bg-[#FEF3C7] text-[#92400E]",
-    Baixa: "bg-[#DCFCE7] text-[#166534]",
-  }[severity];
-
-  return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${tone}`}>
-      {severity}
-    </span>
-  );
-}
-
-function EmptyState({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="rounded-[24px] border border-dashed border-[#D7DEE7] bg-[#F8FAFC] px-5 py-6">
-      <p className="text-base font-semibold text-[#0F172A]">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-[#64748B]">{description}</p>
     </div>
   );
 }

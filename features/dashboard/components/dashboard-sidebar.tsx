@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { signOutAction } from "@/features/auth/actions/sign-out";
 import type { AuthUser } from "@/features/auth/types";
 
@@ -7,12 +10,14 @@ type DashboardSidebarProps = {
 };
 
 const navigationItems = [
-  { label: "Dashboard", href: "/dashboard", active: true },
-  { label: "Documentos", href: "/documentos", active: false },
-  { label: "Recuperacao", href: "/recuperar-senha", active: false },
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Documentos", href: "/documentos" },
+  { label: "Recuperação", href: "/recuperar-senha" },
 ];
 
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
+  const pathname = usePathname();
+
   return (
     <aside className="flex h-full flex-col justify-between bg-[#1E3A5F] px-5 py-6 text-white lg:px-6 lg:py-8">
       <div className="space-y-8">
@@ -32,7 +37,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
 
         <div className="rounded-[28px] border border-white/10 bg-white/6 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/55">
-            Usuario ativo
+            Usuário ativo
           </p>
           <p className="mt-3 text-lg font-semibold">{user.name}</p>
           <p className="mt-1 text-sm text-white/70">{user.email}</p>
@@ -41,33 +46,23 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           </p>
         </div>
 
-        <nav aria-label="Navegacao principal" className="space-y-2">
+        <nav aria-label="Navegação principal" className="space-y-2">
           {navigationItems.map((item) => (
-            <Link
+            <NavigationItem
               key={item.href}
               href={item.href}
-              aria-current={item.active ? "page" : undefined}
-              className={`group flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
-                item.active
-                  ? "bg-[#F59E0B] text-slate-950"
-                  : "bg-transparent text-white/78 hover:bg-[#29476D] hover:text-white"
-              }`}
+              active={pathname === item.href}
             >
-              <span>{item.label}</span>
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${
-                  item.active ? "bg-slate-950/70" : "bg-white/25 group-hover:bg-white/60"
-                }`}
-              />
-            </Link>
+              {item.label}
+            </NavigationItem>
           ))}
         </nav>
 
         <div className="rounded-[28px] border border-white/10 bg-slate-950/16 p-4">
-          <p className="text-sm font-semibold text-white">Governanca documental</p>
+          <p className="text-sm font-semibold text-white">Governança documental</p>
           <p className="mt-2 text-sm leading-6 text-white/68">
-            Painel conectado a dados reais, alertas incrementais e autenticacao com
-            sessao ativa.
+            Painel conectado a dados reais, alertas incrementais e autenticação com
+            sessão ativa.
           </p>
         </div>
       </div>
@@ -81,6 +76,35 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
         </button>
       </form>
     </aside>
+  );
+}
+
+function NavigationItem({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: string;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={`group flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
+        active
+                  ? "bg-[#F59E0B] text-slate-950"
+                  : "bg-transparent text-white/78 hover:bg-[#29476D] hover:text-white"
+      }`}
+    >
+      <span>{children}</span>
+      <span
+        className={`h-2.5 w-2.5 rounded-full ${
+          active ? "bg-slate-950/70" : "bg-white/25 group-hover:bg-white/60"
+        }`}
+      />
+    </Link>
   );
 }
 

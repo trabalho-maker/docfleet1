@@ -15,10 +15,10 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           </p>
           <div>
             <h2 className="text-3xl font-semibold tracking-tight text-[#0F172A] lg:text-4xl">
-              Ola, {user.name}
+              Olá, {user.name}
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-7 text-[#64748B] lg:text-base">
-              Visao consolidada da operacao documental com dados reais de documentos,
+              Visão consolidada da operação documental com dados reais de documentos,
               vencimentos e alertas conectados ao core atual do DocFleet.
             </p>
           </div>
@@ -27,7 +27,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
         <div className="flex flex-col gap-3 rounded-[28px] border border-[#E5E7EB] bg-[#F8FAFC] p-4 text-sm text-[#64748B] sm:min-w-[280px]">
           <div>
             <p className="font-semibold text-[#0F172A]">{user.email}</p>
-            <p className="mt-1">Sessao autenticada com Auth.js e JWT.</p>
+            <p className="mt-1">Sessão autenticada com Auth.js e JWT.</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link

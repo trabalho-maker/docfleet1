@@ -1,4 +1,4 @@
-import type { DashboardMetric } from "@/features/data/types";
+import type { DashboardMetric } from "@/features/dashboard/types";
 
 type MetricCardProps = {
   metric: DashboardMetric;
