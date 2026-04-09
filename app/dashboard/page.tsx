@@ -10,9 +10,5 @@ export const metadata: Metadata = {
 export default async function DashboardPage() {
   const overview = await getDashboardOverview();
 
-  return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 px-6 py-10 sm:px-10 lg:px-12 lg:py-16">
-      <DashboardShell overview={overview} />
-    </main>
-  );
+  return <DashboardShell overview={overview} />;
 }
