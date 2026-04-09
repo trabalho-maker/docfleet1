@@ -1,5 +1,9 @@
 import { createDataLayer } from "@/features/data/repositories";
-import { syncDocumentExpirationAlerts } from "@/features/alerts/server/document-expiration-alert-service";
+import {
+  reconcileDocumentExpirationAlerts,
+  removeDocumentExpirationAlertsForDocument,
+  syncDocumentExpirationAlertForDocument,
+} from "@/features/alerts/server/document-expiration-alert-service";
 import {
   resetSqliteDatabase,
   resetSqliteStorageState,
@@ -15,13 +19,13 @@ describe("document expiration alert service", () => {
     await resetSqliteStorageState();
   });
 
-  it("generates alerts for documents approaching expiration", async () => {
-    const alerts = await syncDocumentExpirationAlerts();
+  it("reconciles only documents within the attention window and generates alerts for them", async () => {
+    const result = await reconcileDocumentExpirationAlerts();
 
-    expect(alerts).toHaveLength(2);
-    expect(alerts.map((alert) => alert.sourceDocumentId)).toEqual(
-      expect.arrayContaining(["doc_01", "doc_03"]),
-    );
+    expect(result.scannedDocuments).toBe(2);
+    expect(result.createdAlerts).toBe(2);
+    expect(result.updatedAlerts).toBe(0);
+    expect(result.deletedAlerts).toBe(0);
 
     const dataLayer = createDataLayer();
     const storedAlerts = await dataLayer.alerts.listOpen(10);
@@ -35,34 +39,50 @@ describe("document expiration alert service", () => {
     ).toBe(true);
   });
 
-  it("removes generated alerts when documents no longer require attention", async () => {
+  it("updates only the changed document alert instead of recalculating the full set", async () => {
     const dataLayer = createDataLayer();
-    await syncDocumentExpirationAlerts();
-
-    await dataLayer.documents.update("doc_01", {
+    await reconcileDocumentExpirationAlerts();
+    const updatedDocument = await dataLayer.documents.update("doc_01", {
       name: "Licenciamento da frota leve",
       type: "Veiculos",
       dueDate: "2099-12-31",
     });
-    await dataLayer.documents.update("doc_03", {
-      name: "ASO dos motoristas",
-      type: "Pessoas",
-      dueDate: "2099-12-31",
+
+    const result = await syncDocumentExpirationAlertForDocument(updatedDocument);
+
+    expect(result).toEqual({
+      documentId: "doc_01",
+      action: "deleted",
     });
-
-    const alerts = await syncDocumentExpirationAlerts();
-
-    expect(alerts).toHaveLength(0);
 
     const storedAlerts = await dataLayer.alerts.listOpen(10);
     const generatedAlerts = storedAlerts.filter(
       (alert) => alert.kind === "document_expiration",
     );
 
-    expect(generatedAlerts).toHaveLength(0);
+    expect(generatedAlerts).toHaveLength(1);
+    expect(
+      generatedAlerts.every((alert) => alert.sourceDocumentId !== "doc_01"),
+    ).toBe(true);
   });
 
-  it("preserves manual alerts while replacing only generated expiration alerts", async () => {
+  it("removes generated alerts when a document is deleted", async () => {
+    const dataLayer = createDataLayer();
+    await reconcileDocumentExpirationAlerts();
+
+    await removeDocumentExpirationAlertsForDocument("doc_03");
+
+    const remainingGeneratedAlerts = (await dataLayer.alerts.listOpen(10)).filter(
+      (alert) => alert.kind === "document_expiration",
+    );
+
+    expect(remainingGeneratedAlerts).toHaveLength(1);
+    expect(
+      remainingGeneratedAlerts.every((alert) => alert.sourceDocumentId !== "doc_03"),
+    ).toBe(true);
+  });
+
+  it("preserves manual alerts while reconciling only generated expiration alerts", async () => {
     const dataLayer = createDataLayer();
     const beforeSync = await dataLayer.alerts.listOpen(10);
     const manualAlertsBefore = beforeSync.filter(
@@ -71,7 +91,7 @@ describe("document expiration alert service", () => {
 
     expect(manualAlertsBefore).toHaveLength(3);
 
-    await syncDocumentExpirationAlerts();
+    const result = await reconcileDocumentExpirationAlerts();
 
     const afterSync = await dataLayer.alerts.listOpen(10);
     const manualAlertsAfter = afterSync.filter(
@@ -83,6 +103,7 @@ describe("document expiration alert service", () => {
 
     expect(manualAlertsAfter).toHaveLength(3);
     expect(generatedAlertsAfter.length).toBeGreaterThan(0);
+    expect(result.createdAlerts).toBeGreaterThan(0);
     expect(
       manualAlertsAfter.map((alert) => alert.id).sort(),
     ).toEqual(manualAlertsBefore.map((alert) => alert.id).sort());

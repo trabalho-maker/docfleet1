@@ -18,6 +18,7 @@ import { logger } from "@/lib/logger";
 export interface DocumentRepository {
   listAll(): Promise<FleetDocument[]>;
   listRecent(limit?: number): Promise<FleetDocument[]>;
+  listRequiringAttention(now?: Date): Promise<FleetDocument[]>;
   findById(documentId: string): Promise<FleetDocument | null>;
   create(input: CreateDocumentInput): Promise<FleetDocument>;
   update(documentId: string, input: UpdateDocumentInput): Promise<FleetDocument>;
@@ -31,9 +32,9 @@ function mapDocument(row: unknown[]): FleetDocument {
 
   return {
     id: String(row[0]),
-    title: String(row[1]),
+    name: String(row[1]),
     owner: String(row[2]),
-    category: String(row[3]),
+    type: String(row[3]),
     status: calculateDocumentStatus(dueDate),
     dueDate,
   };
@@ -47,9 +48,9 @@ export class SqliteDocumentRepository implements DocumentRepository {
   async listAll(): Promise<FleetDocument[]> {
     return withSqliteDatabase(async (db) => {
       const result = db.exec(`
-        SELECT id, title, owner, category, status, due_date
+        SELECT id, name, owner, type, status, due_date
         FROM documents
-        ORDER BY due_date ASC, title ASC
+        ORDER BY due_date ASC, name ASC
       `);
       const rows = result[0]?.values ?? [];
 
@@ -61,7 +62,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
     return withSqliteDatabase(async (db) => {
       const result = db.exec(
         `
-        SELECT id, title, owner, category, status, due_date
+        SELECT id, name, owner, type, status, due_date
         FROM documents
         ORDER BY due_date ASC
         LIMIT ?
@@ -74,11 +75,29 @@ export class SqliteDocumentRepository implements DocumentRepository {
     });
   }
 
+  async listRequiringAttention(now = new Date()): Promise<FleetDocument[]> {
+    return withSqliteDatabase(async (db) => {
+      const attentionThresholdDate = getDocumentAttentionThresholdDate(now);
+      const result = db.exec(
+        `
+        SELECT id, name, owner, type, status, due_date
+        FROM documents
+        WHERE due_date <= ?
+        ORDER BY due_date ASC, name ASC
+      `,
+        [attentionThresholdDate],
+      );
+      const rows = result[0]?.values ?? [];
+
+      return rows.map(mapDocument);
+    });
+  }
+
   async findById(documentId: string): Promise<FleetDocument | null> {
     return withSqliteDatabase(async (db) => {
       const result = db.exec(
         `
-          SELECT id, title, owner, category, status, due_date
+          SELECT id, name, owner, type, status, due_date
           FROM documents
           WHERE id = ?
           LIMIT 1
@@ -95,8 +114,8 @@ export class SqliteDocumentRepository implements DocumentRepository {
     return withSqliteWriteLock(async (db) => {
       const document: FleetDocument = {
         id: randomUUID(),
-        title: input.name.trim(),
-        category: input.type.trim(),
+        name: input.name.trim(),
+        type: input.type.trim(),
         dueDate: input.dueDate,
         status: calculateDocumentStatus(input.dueDate),
         owner: input.owner.trim(),
@@ -104,14 +123,14 @@ export class SqliteDocumentRepository implements DocumentRepository {
 
       db.run(
         `
-          INSERT INTO documents (id, title, owner, category, status, due_date)
+          INSERT INTO documents (id, name, owner, type, status, due_date)
           VALUES (?, ?, ?, ?, ?, ?)
         `,
         [
           document.id,
-          document.title,
+          document.name,
           document.owner,
-          document.category,
+          document.type,
           document.status,
           document.dueDate,
         ],
@@ -133,7 +152,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
     return withSqliteWriteLock(async (db) => {
       const existingResult = db.exec(
         `
-          SELECT id, title, owner, category, status, due_date
+          SELECT id, name, owner, type, status, due_date
           FROM documents
           WHERE id = ?
           LIMIT 1
@@ -149,7 +168,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
       db.run(
         `
           UPDATE documents
-          SET title = ?, category = ?, due_date = ?, status = ?
+          SET name = ?, type = ?, due_date = ?, status = ?
           WHERE id = ?
         `,
         [
@@ -163,9 +182,9 @@ export class SqliteDocumentRepository implements DocumentRepository {
 
       const updated: FleetDocument = {
         id: String(existingRow[0]),
-        title: input.name.trim(),
+        name: input.name.trim(),
         owner: String(existingRow[2]),
-        category: input.type.trim(),
+        type: input.type.trim(),
         status: calculateDocumentStatus(input.dueDate),
         dueDate: input.dueDate,
       };

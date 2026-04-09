@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { syncDocumentExpirationAlerts } from "@/features/alerts/server/document-expiration-alert-service";
+import { syncDocumentExpirationAlertForDocument } from "@/features/alerts/server/document-expiration-alert-service";
 import { createDataLayer } from "@/features/data/repositories";
 import { validateDocumentInput } from "@/features/documents/server/validation";
 import { logger } from "@/lib/logger";
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     ...validation.data,
     owner: session.user.name ?? session.user.email ?? "Usuario DocFleet",
   });
-  await syncDocumentExpirationAlerts();
+  await syncDocumentExpirationAlertForDocument(document);
 
   logger.info("api.documents.create.success", {
     documentId: document.id,

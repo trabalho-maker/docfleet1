@@ -1,16 +1,41 @@
 import type { Database } from "sql.js";
 
+function hasColumn(db: Database, tableName: string, columnName: string) {
+  const columns = db.exec(`PRAGMA table_info(${tableName})`)[0]?.values ?? [];
+  return columns.some((column) => String(column[1]) === columnName);
+}
+
 function ensureColumnExists(
   db: Database,
   tableName: string,
   columnName: string,
   definition: string,
 ) {
-  const columns = db.exec(`PRAGMA table_info(${tableName})`)[0]?.values ?? [];
-  const hasColumn = columns.some((column) => String(column[1]) === columnName);
-
-  if (!hasColumn) {
+  if (!hasColumn(db, tableName, columnName)) {
     db.run(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+  }
+}
+
+function migrateLegacyDocumentColumns(db: Database) {
+  const hasLegacyTitle = hasColumn(db, "documents", "title");
+  const hasLegacyCategory = hasColumn(db, "documents", "category");
+  const hasName = hasColumn(db, "documents", "name");
+  const hasType = hasColumn(db, "documents", "type");
+
+  if (!hasName) {
+    db.run("ALTER TABLE documents ADD COLUMN name TEXT");
+  }
+
+  if (!hasType) {
+    db.run("ALTER TABLE documents ADD COLUMN type TEXT");
+  }
+
+  if (hasLegacyTitle) {
+    db.run("UPDATE documents SET name = COALESCE(name, title) WHERE name IS NULL");
+  }
+
+  if (hasLegacyCategory) {
+    db.run("UPDATE documents SET type = COALESCE(type, category) WHERE type IS NULL");
   }
 }
 
@@ -26,9 +51,9 @@ export function createSqliteSchema(db: Database) {
 
     CREATE TABLE IF NOT EXISTS documents (
       id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
+      name TEXT NOT NULL,
       owner TEXT NOT NULL,
-      category TEXT NOT NULL,
+      type TEXT NOT NULL,
       status TEXT NOT NULL,
       due_date TEXT NOT NULL
     );
@@ -83,6 +108,7 @@ export function createSqliteSchema(db: Database) {
     ON password_reset_tokens(user_id);
   `);
 
+  migrateLegacyDocumentColumns(db);
   ensureColumnExists(db, "alerts", "kind", "TEXT");
   ensureColumnExists(db, "alerts", "source_document_id", "TEXT");
   ensureColumnExists(

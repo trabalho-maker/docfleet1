@@ -1,11 +1,11 @@
-import { syncDocumentExpirationAlerts } from "@/features/alerts/server/document-expiration-alert-service";
+import { reconcileDocumentExpirationAlerts } from "@/features/alerts/server/document-expiration-alert-service";
 import { getCurrentUser } from "@/features/auth/server/session";
 import { createDataLayer } from "@/features/data/repositories";
 import type { DashboardOverview } from "@/features/dashboard/types";
 
 export async function getDashboardOverview(): Promise<DashboardOverview> {
   const user = await getCurrentUser();
-  await syncDocumentExpirationAlerts();
+  await reconcileDocumentExpirationAlerts();
   const dataLayer = createDataLayer();
   const [recentDocuments, alerts, totalDocuments, totalAlerts, pendingDocuments] =
     await Promise.all([

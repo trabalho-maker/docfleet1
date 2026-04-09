@@ -76,8 +76,8 @@ describe("repositories", () => {
       owner: "Equipe Financeira",
     });
 
-    expect(created.title).toBe("Seguro da frota pesada");
-    expect(created.category).toBe("Seguros");
+    expect(created.name).toBe("Seguro da frota pesada");
+    expect(created.type).toBe("Seguros");
     expect(created.status).toBe("Valido");
 
     const found = await documentRepository.findById(created.id);
@@ -91,7 +91,7 @@ describe("repositories", () => {
       dueDate: "2000-06-10",
     });
 
-    expect(updated.title).toBe("Seguro da frota pesada - renovado");
+    expect(updated.name).toBe("Seguro da frota pesada - renovado");
     expect(updated.status).toBe("Vencido");
 
     const afterUpdate = await documentRepository.findById(created.id);

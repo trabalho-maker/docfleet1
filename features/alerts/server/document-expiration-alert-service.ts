@@ -9,6 +9,22 @@ import { logger } from "@/lib/logger";
 
 const URGENT_ALERT_WINDOW_DAYS = 7;
 
+type IncrementalAlertSyncAction = "created" | "updated" | "deleted" | "unchanged";
+
+export type IncrementalAlertSyncResult = {
+  documentId: string;
+  action: IncrementalAlertSyncAction;
+};
+
+export type AlertReconciliationResult = {
+  scannedDocuments: number;
+  scannedAlerts: number;
+  createdAlerts: number;
+  updatedAlerts: number;
+  deletedAlerts: number;
+  unchangedAlerts: number;
+};
+
 function formatAlertTimestamp(date: Date) {
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
@@ -37,22 +53,22 @@ function buildAlertTitle(document: FleetDocument, now: Date) {
   const daysUntilDue = getDaysUntilDocumentDueDate(document.dueDate, now);
 
   if (document.status === "Vencido" || (daysUntilDue !== null && daysUntilDue < 0)) {
-    return `${document.title} esta vencido`;
+    return `${document.name} esta vencido`;
   }
 
   if (daysUntilDue === 0) {
-    return `${document.title} vence hoje`;
+    return `${document.name} vence hoje`;
   }
 
   if (daysUntilDue === 1) {
-    return `${document.title} vence amanha`;
+    return `${document.name} vence amanha`;
   }
 
   if (typeof daysUntilDue === "number") {
-    return `${document.title} vence em ${daysUntilDue} dias`;
+    return `${document.name} vence em ${daysUntilDue} dias`;
   }
 
-  return `${document.title} requer atencao`;
+  return `${document.name} requer atencao`;
 }
 
 function toGeneratedAlert(
@@ -73,20 +89,147 @@ function toGeneratedAlert(
   };
 }
 
-export async function syncDocumentExpirationAlerts(options?: { now?: Date }) {
+function isSameGeneratedAlert(
+  existingAlert: OperationalAlert,
+  desiredAlert: GeneratedOperationalAlertInput,
+) {
+  return (
+    existingAlert.kind === desiredAlert.kind &&
+    existingAlert.sourceDocumentId === desiredAlert.sourceDocumentId &&
+    existingAlert.title === desiredAlert.title &&
+    existingAlert.severity === desiredAlert.severity &&
+    existingAlert.team === desiredAlert.team
+  );
+}
+
+export async function syncDocumentExpirationAlertForDocument(
+  document: FleetDocument,
+  options?: { now?: Date },
+): Promise<IncrementalAlertSyncResult> {
   const now = options?.now ?? new Date();
   const dataLayer = createDataLayer();
-  const documents = await dataLayer.documents.listAll();
-  const generatedAlerts = documents
-    .map((document) => toGeneratedAlert(document, now))
-    .filter((alert): alert is GeneratedOperationalAlertInput => Boolean(alert));
+  const existingAlert = await dataLayer.alerts.findGeneratedBySourceDocumentId(document.id);
+  const desiredAlert = toGeneratedAlert(document, now);
 
-  await dataLayer.alerts.replaceGenerated(generatedAlerts);
+  if (!desiredAlert) {
+    if (existingAlert) {
+      await dataLayer.alerts.deleteGeneratedBySourceDocumentId(document.id);
+      logger.info("alerts.document_expiration.document_synced", {
+        documentId: document.id,
+        action: "deleted",
+      });
+      return {
+        documentId: document.id,
+        action: "deleted",
+      };
+    }
 
-  logger.info("alerts.document_expiration.synced", {
-    documents: documents.length,
-    generatedAlerts: generatedAlerts.length,
+    return {
+      documentId: document.id,
+      action: "unchanged",
+    };
+  }
+
+  if (existingAlert && isSameGeneratedAlert(existingAlert, desiredAlert)) {
+    return {
+      documentId: document.id,
+      action: "unchanged",
+    };
+  }
+
+  await dataLayer.alerts.upsertGeneratedForDocument(desiredAlert);
+  const action: IncrementalAlertSyncAction = existingAlert ? "updated" : "created";
+
+  logger.info("alerts.document_expiration.document_synced", {
+    documentId: document.id,
+    action,
+    severity: desiredAlert.severity,
   });
 
-  return generatedAlerts;
+  return {
+    documentId: document.id,
+    action,
+  };
+}
+
+export async function removeDocumentExpirationAlertsForDocument(documentId: string) {
+  const dataLayer = createDataLayer();
+  await dataLayer.alerts.deleteGeneratedBySourceDocumentId(documentId);
+
+  logger.info("alerts.document_expiration.document_removed", {
+    documentId,
+  });
+}
+
+export async function reconcileDocumentExpirationAlerts(
+  options?: { now?: Date },
+): Promise<AlertReconciliationResult> {
+  const now = options?.now ?? new Date();
+  const dataLayer = createDataLayer();
+  const [documentsRequiringAttention, generatedAlerts] = await Promise.all([
+    dataLayer.documents.listRequiringAttention(now),
+    dataLayer.alerts.listGenerated(),
+  ]);
+
+  const generatedAlertsByDocumentId = new Map(
+    generatedAlerts
+      .filter((alert) => Boolean(alert.sourceDocumentId))
+      .map((alert) => [alert.sourceDocumentId as string, alert]),
+  );
+  const pendingDocumentIds = new Set(documentsRequiringAttention.map((document) => document.id));
+
+  let createdAlerts = 0;
+  let updatedAlerts = 0;
+  let deletedAlerts = 0;
+  let unchangedAlerts = 0;
+
+  for (const document of documentsRequiringAttention) {
+    const existingAlert = generatedAlertsByDocumentId.get(document.id);
+    const desiredAlert = toGeneratedAlert(document, now);
+
+    if (!desiredAlert) {
+      unchangedAlerts += 1;
+      continue;
+    }
+
+    if (existingAlert && isSameGeneratedAlert(existingAlert, desiredAlert)) {
+      unchangedAlerts += 1;
+      continue;
+    }
+
+    await dataLayer.alerts.upsertGeneratedForDocument(desiredAlert);
+
+    if (existingAlert) {
+      updatedAlerts += 1;
+      continue;
+    }
+
+    createdAlerts += 1;
+  }
+
+  for (const alert of generatedAlerts) {
+    if (!alert.sourceDocumentId || pendingDocumentIds.has(alert.sourceDocumentId)) {
+      continue;
+    }
+
+    await dataLayer.alerts.deleteGeneratedBySourceDocumentId(alert.sourceDocumentId);
+    deletedAlerts += 1;
+  }
+
+  const result = {
+    scannedDocuments: documentsRequiringAttention.length,
+    scannedAlerts: generatedAlerts.length,
+    createdAlerts,
+    updatedAlerts,
+    deletedAlerts,
+    unchangedAlerts,
+  };
+
+  logger.info("alerts.document_expiration.reconciled", result);
+
+  return result;
+}
+
+export async function syncDocumentExpirationAlerts(options?: { now?: Date }) {
+  return reconcileDocumentExpirationAlerts(options);
 }

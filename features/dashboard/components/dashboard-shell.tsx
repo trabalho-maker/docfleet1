@@ -78,10 +78,10 @@ export function DashboardShell({ overview }: DashboardShellProps) {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="text-base font-semibold text-[var(--color-foreground)]">
-                      {document.title}
+                      {document.name}
                     </p>
                     <p className="mt-1 text-sm text-[var(--color-muted)]">
-                      {document.category} · {document.owner}
+                      {document.type} · {document.owner}
                     </p>
                   </div>
                   <div className="text-sm text-[var(--color-muted)]">

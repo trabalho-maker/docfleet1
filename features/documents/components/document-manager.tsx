@@ -125,8 +125,8 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
 
   function fillForm(document: FleetDocument) {
     setFormValues({
-      name: document.title,
-      type: document.category,
+      name: document.name,
+      type: document.type,
       dueDate: document.dueDate,
     });
     setFormErrors({});
@@ -422,12 +422,12 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-3">
                         <p className="text-base font-semibold text-[var(--color-foreground)]">
-                          {document.title}
+                          {document.name}
                         </p>
                         <StatusBadge status={document.status} />
                       </div>
                       <p className="text-sm text-[var(--color-muted)]">
-                        Tipo: {document.category}
+                        Tipo: {document.type}
                       </p>
                       <p className="text-sm text-[var(--color-muted)]">
                         Responsavel: {document.owner}

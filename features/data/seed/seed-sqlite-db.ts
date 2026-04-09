@@ -20,25 +20,25 @@ function buildSeedDocuments(now = new Date()): FleetDocument[] {
   return [
     {
       id: "doc_01",
-      title: "Licenciamento da frota leve",
+      name: "Licenciamento da frota leve",
       owner: "Equipe Operacional",
-      category: "Veiculos",
+      type: "Veiculos",
       status: calculateDocumentStatus(dueDates.doc01, { now }),
       dueDate: dueDates.doc01,
     },
     {
       id: "doc_02",
-      title: "Contratos de manutencao",
+      name: "Contratos de manutencao",
       owner: "Suprimentos",
-      category: "Contratos",
+      type: "Contratos",
       status: calculateDocumentStatus(dueDates.doc02, { now }),
       dueDate: dueDates.doc02,
     },
     {
       id: "doc_03",
-      title: "ASO dos motoristas",
+      name: "ASO dos motoristas",
       owner: "RH",
-      category: "Pessoas",
+      type: "Pessoas",
       status: calculateDocumentStatus(dueDates.doc03, { now }),
       dueDate: dueDates.doc03,
     },
@@ -109,12 +109,12 @@ export async function seedSqliteDatabase(db: Database) {
 
     for (const document of seedDocuments) {
       db.run(
-        "INSERT INTO documents (id, title, owner, category, status, due_date) VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO documents (id, name, owner, type, status, due_date) VALUES (?, ?, ?, ?, ?, ?)",
         [
           document.id,
-          document.title,
+          document.name,
           document.owner,
-          document.category,
+          document.type,
           document.status,
           document.dueDate,
         ],

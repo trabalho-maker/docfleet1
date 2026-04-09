@@ -8,9 +8,9 @@ export const documentStatuses: DocumentStatus[] = [
 
 export type FleetDocument = {
   id: string;
-  title: string;
+  name: string;
   owner: string;
-  category: string;
+  type: string;
   status: DocumentStatus;
   dueDate: string;
 };
