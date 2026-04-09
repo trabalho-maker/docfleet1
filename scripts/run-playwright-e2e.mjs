@@ -4,7 +4,6 @@ import path from "node:path";
 import process from "node:process";
 
 const projectRoot = process.cwd();
-const e2eRuntimeDirectory = path.join(projectRoot, ".e2e");
 const e2eUser = {
   name: "Operacoes DocFleet",
   email: "operacoes@docfleet.local",
@@ -92,9 +91,7 @@ async function run() {
     AUTH_SECRET: process.env.AUTH_SECRET || "docfleet-e2e-secret",
     AUTH_TRUST_HOST: "true",
     NEXT_PUBLIC_APP_URL: e2eBaseUrl,
-    SQLITE_DB_PATH: path.join(e2eRuntimeDirectory, "app.db"),
     EMAIL_TRANSPORT: "file",
-    EMAIL_FILE_OUTBOX_PATH: path.join(e2eRuntimeDirectory, "email-outbox.json"),
     E2E_TEST_MODE: "true",
     E2E_RESET_TOKEN: e2eResetToken,
     SEED_USER_NAME: e2eUser.name,

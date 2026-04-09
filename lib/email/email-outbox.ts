@@ -1,6 +1,3 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-
 export type EmailOutboxEntry = {
   id: string;
   createdAt: string;
@@ -12,35 +9,34 @@ export type EmailOutboxEntry = {
   metadata?: Record<string, string>;
 };
 
-function getDefaultOutboxPath() {
-  return path.join(/*turbopackIgnore: true*/ process.cwd(), "data", "email-outbox.json");
+type EmailOutboxRuntime = typeof import("./email-outbox-runtime");
+
+let runtimePromise: Promise<EmailOutboxRuntime> | null = null;
+
+function getEmailOutboxRuntime() {
+  if (!runtimePromise) {
+    runtimePromise = import("./email-outbox-runtime");
+  }
+
+  return runtimePromise;
 }
 
-export function getEmailOutboxPath() {
-  return process.env.EMAIL_FILE_OUTBOX_PATH?.trim() || getDefaultOutboxPath();
+export async function getEmailOutboxPath() {
+  const runtime = await getEmailOutboxRuntime();
+  return runtime.getEmailOutboxPath();
 }
 
 export async function readEmailOutbox(): Promise<EmailOutboxEntry[]> {
-  const outboxPath = getEmailOutboxPath();
-
-  try {
-    const raw = await readFile(outboxPath, "utf8");
-    return JSON.parse(raw) as EmailOutboxEntry[];
-  } catch {
-    return [];
-  }
+  const runtime = await getEmailOutboxRuntime();
+  return runtime.readEmailOutbox();
 }
 
 export async function appendEmailOutboxEntry(entry: EmailOutboxEntry) {
-  const outboxPath = getEmailOutboxPath();
-  await mkdir(path.dirname(outboxPath), { recursive: true });
-  const current = await readEmailOutbox();
-  current.unshift(entry);
-  await writeFile(outboxPath, JSON.stringify(current, null, 2), "utf8");
+  const runtime = await getEmailOutboxRuntime();
+  return runtime.appendEmailOutboxEntry(entry);
 }
 
 export async function clearEmailOutbox() {
-  const outboxPath = getEmailOutboxPath();
-  await mkdir(path.dirname(outboxPath), { recursive: true });
-  await writeFile(outboxPath, "[]", "utf8");
+  const runtime = await getEmailOutboxRuntime();
+  return runtime.clearEmailOutbox();
 }

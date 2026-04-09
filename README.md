@@ -65,10 +65,10 @@ Em desenvolvimento e nos testes E2E, voce pode usar:
 
 ```text
 EMAIL_TRANSPORT=file
-EMAIL_FILE_OUTBOX_PATH=data/email-outbox.json
 ```
 
 Nesse modo, os emails enviados ficam registrados em arquivo local para inspecao e automacao.
+Em runtime normal o outbox fica em `data/email-outbox.json`, e no E2E em `.e2e/email-outbox.json`.
 
 ## Estrutura inicial
 

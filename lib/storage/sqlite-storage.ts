@@ -1,130 +1,32 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-import initSqlJs, { type Database } from "sql.js";
-import { createSqliteSchema } from "@/lib/storage/sqlite-schema";
-import { seedSqliteDatabase } from "@/features/data/seed/seed-sqlite-db";
-import { logger } from "@/lib/logger";
+import type { Database } from "sql.js";
 
-let sqlJsPromise: ReturnType<typeof initSqlJs> | null = null;
-let writeQueue = Promise.resolve();
-let databasePromise: Promise<Database> | null = null;
-let databaseInstance: Database | null = null;
-let isDatabaseDirty = false;
-let persistTimer: ReturnType<typeof setTimeout> | null = null;
+type SqliteStorageRuntime = typeof import("./sqlite-storage-runtime");
 
-const SQLITE_PERSIST_DEBOUNCE_MS = Number.parseInt(
-  process.env.SQLITE_PERSIST_DEBOUNCE_MS ?? "100",
-  10,
-);
+let runtimePromise: Promise<SqliteStorageRuntime> | null = null;
 
-function getDataDirectory() {
-  return path.join(/*turbopackIgnore: true*/ process.cwd(), "data");
-}
-
-function getDatabasePath() {
-  return process.env.SQLITE_DB_PATH?.trim() || path.join(getDataDirectory(), "app.db");
-}
-
-function getSqlWasmDirectory() {
-  return path.join(/*turbopackIgnore: true*/ process.cwd(), "node_modules", "sql.js", "dist");
-}
-
-async function getSqlJs() {
-  if (!sqlJsPromise) {
-    sqlJsPromise = initSqlJs({
-      locateFile: (file) => path.join(getSqlWasmDirectory(), file),
-    });
+function getSqliteStorageRuntime() {
+  if (!runtimePromise) {
+    runtimePromise = import("./sqlite-storage-runtime");
   }
 
-  return sqlJsPromise;
+  return runtimePromise;
 }
 
-async function writeDatabaseSnapshot(db: Database, reason: string) {
-  const databasePath = getDatabasePath();
-  await mkdir(path.dirname(databasePath), { recursive: true });
-  await writeFile(databasePath, Buffer.from(db.export()));
-  logger.info("storage.sqlite.persisted", {
-    databasePath,
-    reason,
-  });
-}
-
-async function loadSqliteDatabase(): Promise<Database> {
-  const databasePath = getDatabasePath();
-  await mkdir(path.dirname(databasePath), { recursive: true });
-
-  const SQL = await getSqlJs();
-
-  try {
-    const file = await readFile(databasePath);
-    const db = new SQL.Database(new Uint8Array(file));
-    createSqliteSchema(db);
-    logger.info("storage.sqlite.loaded", {
-      databasePath,
-      source: "disk",
-      mode: "singleton",
-    });
-    return db;
-  } catch {
-    const db = new SQL.Database();
-    createSqliteSchema(db);
-    await seedSqliteDatabase(db);
-    await writeDatabaseSnapshot(db, "seed");
-    logger.info("storage.sqlite.loaded", {
-      databasePath,
-      source: "seed",
-      mode: "singleton",
-    });
-    return db;
-  }
-}
-
-export async function getSqliteDatabase(): Promise<Database> {
-  if (databaseInstance) {
-    return databaseInstance;
-  }
-
-  if (!databasePromise) {
-    databasePromise = loadSqliteDatabase().then((db) => {
-      databaseInstance = db;
-      return db;
-    });
-  }
-
-  return databasePromise;
-}
-
-async function runPersistInCurrentTask(reason: string) {
-  if (!isDatabaseDirty) {
-    return;
-  }
-
-  const db = await getSqliteDatabase();
-  isDatabaseDirty = false;
-  await writeDatabaseSnapshot(db, reason);
-}
-
-function schedulePersist(reason: string) {
-  if (persistTimer) {
-    return;
-  }
-
-  persistTimer = setTimeout(() => {
-    persistTimer = null;
-    void flushSqliteDatabase(reason);
-  }, SQLITE_PERSIST_DEBOUNCE_MS);
+export async function getSqliteDatabase() {
+  const runtime = await getSqliteStorageRuntime();
+  return runtime.getSqliteDatabase();
 }
 
 export async function persistSqliteDatabase(reason = "manual") {
-  return flushSqliteDatabase(reason);
+  const runtime = await getSqliteStorageRuntime();
+  return runtime.persistSqliteDatabase(reason);
 }
 
 export async function withSqliteDatabase<T>(
   operation: (db: Database) => Promise<T> | T,
 ): Promise<T> {
-  await writeQueue;
-  const db = await getSqliteDatabase();
-  return operation(db);
+  const runtime = await getSqliteStorageRuntime();
+  return runtime.withSqliteDatabase(operation);
 }
 
 export async function withSqliteWriteLock<T>(
@@ -134,83 +36,21 @@ export async function withSqliteWriteLock<T>(
     reason?: string;
   },
 ): Promise<T> {
-  const persistMode = options?.persist ?? "deferred";
-  const persistReason = options?.reason ?? "write";
-  const run = async () => {
-    const db = await getSqliteDatabase();
-    const result = await operation(db);
-    isDatabaseDirty = true;
-
-    if (persistMode === "immediate") {
-      await runPersistInCurrentTask(persistReason);
-    } else {
-      schedulePersist(persistReason);
-    }
-
-    return result;
-  };
-
-  const next = writeQueue.then(run, run);
-  writeQueue = next.then(
-    () => undefined,
-    () => undefined,
-  );
-
-  return next;
+  const runtime = await getSqliteStorageRuntime();
+  return runtime.withSqliteWriteLock(operation, options);
 }
 
 export async function flushSqliteDatabase(reason = "flush") {
-  if (persistTimer) {
-    clearTimeout(persistTimer);
-    persistTimer = null;
-  }
-
-  const flushTask = async () => {
-    await runPersistInCurrentTask(reason);
-  };
-
-  const next = writeQueue.then(flushTask, flushTask);
-  writeQueue = next.then(
-    () => undefined,
-    () => undefined,
-  );
-
-  return next;
+  const runtime = await getSqliteStorageRuntime();
+  return runtime.flushSqliteDatabase(reason);
 }
 
 export async function resetSqliteDatabase() {
-  return withSqliteWriteLock(
-    async (db) => {
-      db.run("DROP TABLE IF EXISTS users");
-      db.run("DROP TABLE IF EXISTS documents");
-      db.run("DROP TABLE IF EXISTS alerts");
-      db.run("DROP TABLE IF EXISTS password_reset_tokens");
-      db.run("DROP TABLE IF EXISTS auth_rate_limits");
-      createSqliteSchema(db);
-      await seedSqliteDatabase(db);
-      logger.warn("storage.sqlite.reset");
-    },
-    {
-      persist: "immediate",
-      reason: "reset",
-    },
-  );
+  const runtime = await getSqliteStorageRuntime();
+  return runtime.resetSqliteDatabase();
 }
 
 export async function resetSqliteStorageState() {
-  if (persistTimer) {
-    clearTimeout(persistTimer);
-    persistTimer = null;
-  }
-
-  await writeQueue;
-
-  if (databaseInstance) {
-    databaseInstance.close();
-  }
-
-  writeQueue = Promise.resolve();
-  databaseInstance = null;
-  databasePromise = null;
-  isDatabaseDirty = false;
+  const runtime = await getSqliteStorageRuntime();
+  return runtime.resetSqliteStorageState();
 }
