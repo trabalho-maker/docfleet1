@@ -49,7 +49,24 @@ export class SqliteDatabaseAdapter implements DatabaseAdapter {
     options?: DatabaseWriteOptions,
   ): Promise<T> {
     return withSqliteWriteLock(
-      async (db) => operation(createSqliteWriteSession(db)),
+      async (db) => {
+        const session = createSqliteWriteSession(db);
+        await session.execute("BEGIN IMMEDIATE TRANSACTION");
+
+        try {
+          const result = await operation(session);
+          await session.execute("COMMIT");
+          return result;
+        } catch (error) {
+          try {
+            await session.execute("ROLLBACK");
+          } catch {
+            // The rollback itself should never hide the original failure.
+          }
+
+          throw error;
+        }
+      },
       options,
     );
   }

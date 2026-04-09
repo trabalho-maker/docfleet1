@@ -10,6 +10,7 @@ export default auth(() => {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/documentos/:path*",
     "/login",
     "/cadastro",
     "/recuperar-senha",

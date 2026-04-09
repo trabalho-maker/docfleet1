@@ -1,4 +1,4 @@
-import { createDataLayer } from "@/features/data/repositories";
+import { createDataLayer, type DataLayer } from "@/features/data/repositories";
 import type {
   FleetDocument,
   GeneratedOperationalAlertInput,
@@ -104,10 +104,10 @@ function isSameGeneratedAlert(
 
 export async function syncDocumentExpirationAlertForDocument(
   document: FleetDocument,
-  options?: { now?: Date },
+  options?: { now?: Date; dataLayer?: DataLayer },
 ): Promise<IncrementalAlertSyncResult> {
   const now = options?.now ?? new Date();
-  const dataLayer = createDataLayer();
+  const dataLayer = options?.dataLayer ?? createDataLayer();
   const existingAlert = await dataLayer.alerts.findGeneratedBySourceDocumentId(document.id);
   const desiredAlert = toGeneratedAlert(document, now);
 
@@ -152,8 +152,11 @@ export async function syncDocumentExpirationAlertForDocument(
   };
 }
 
-export async function removeDocumentExpirationAlertsForDocument(documentId: string) {
-  const dataLayer = createDataLayer();
+export async function removeDocumentExpirationAlertsForDocument(
+  documentId: string,
+  options?: { dataLayer?: DataLayer },
+) {
+  const dataLayer = options?.dataLayer ?? createDataLayer();
   await dataLayer.alerts.deleteGeneratedBySourceDocumentId(documentId);
 
   logger.info("alerts.document_expiration.document_removed", {
@@ -162,10 +165,10 @@ export async function removeDocumentExpirationAlertsForDocument(documentId: stri
 }
 
 export async function reconcileDocumentExpirationAlerts(
-  options?: { now?: Date },
+  options?: { now?: Date; dataLayer?: DataLayer },
 ): Promise<AlertReconciliationResult> {
   const now = options?.now ?? new Date();
-  const dataLayer = createDataLayer();
+  const dataLayer = options?.dataLayer ?? createDataLayer();
   const [documentsRequiringAttention, generatedAlerts] = await Promise.all([
     dataLayer.documents.listRequiringAttention(now),
     dataLayer.alerts.listGenerated(),

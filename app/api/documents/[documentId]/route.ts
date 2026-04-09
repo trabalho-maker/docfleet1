@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import {
-  removeDocumentExpirationAlertsForDocument,
-  syncDocumentExpirationAlertForDocument,
-} from "@/features/alerts/server/document-expiration-alert-service";
+  deleteDocumentWithAlerts,
+  updateDocumentWithAlerts,
+} from "@/features/documents/server/document-service";
 import { createDataLayer } from "@/features/data/repositories";
 import { validateDocumentInput } from "@/features/documents/server/validation";
 import { logger } from "@/lib/logger";
@@ -60,9 +60,7 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   try {
-    const dataLayer = createDataLayer();
-    const document = await dataLayer.documents.update(documentId, validation.data);
-    await syncDocumentExpirationAlertForDocument(document);
+    const document = await updateDocumentWithAlerts(documentId, validation.data);
 
     logger.info("api.documents.update.success", {
       documentId,
@@ -92,9 +90,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const { documentId } = await context.params;
 
   try {
-    const dataLayer = createDataLayer();
-    await dataLayer.documents.delete(documentId);
-    await removeDocumentExpirationAlertsForDocument(documentId);
+    await deleteDocumentWithAlerts(documentId);
 
     logger.warn("api.documents.delete.success", {
       documentId,

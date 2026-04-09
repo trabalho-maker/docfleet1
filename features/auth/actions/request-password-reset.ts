@@ -10,7 +10,10 @@ import {
   AuthRateLimitError,
   consumePasswordResetAttempt,
 } from "@/features/auth/server/security";
-import { getClientIpFromHeaders } from "@/lib/security/request";
+import {
+  getClientIpFromHeaders,
+  getRequestOriginFromHeaders,
+} from "@/lib/security/request";
 
 export type RequestPasswordResetState = {
   error?: string;
@@ -41,6 +44,20 @@ export async function requestPasswordResetAction(
 
   try {
     await consumePasswordResetAttempt(normalizedEmail, ipAddress);
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL?.trim() || getRequestOriginFromHeaders(requestHeaders);
+
+    if (!baseUrl) {
+      logger.error("auth.password_reset.request.missing_base_url", {
+        email: maskEmail(normalizedEmail),
+        ipAddress: maskIp(ipAddress),
+      });
+
+      return {
+        error:
+          "Nao foi possivel preparar o link de recuperacao agora. Tente novamente em instantes.",
+      };
+    }
 
     const dataLayer = createDataLayer();
     await dataLayer.passwordResetTokens.deleteExpired();
@@ -60,7 +77,6 @@ export async function requestPasswordResetAction(
 
     const token = await dataLayer.passwordResetTokens.createForUser(user);
     createdTokenId = token.id;
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
     const resetUrl = `${baseUrl}/redefinir-senha?token=${token.token}`;
     const delivery = await sendPasswordResetEmail({
       user,

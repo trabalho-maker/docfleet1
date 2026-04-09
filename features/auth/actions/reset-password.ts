@@ -1,8 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createDataLayer } from "@/features/data/repositories";
 import { logger, maskEmail } from "@/lib/logger";
+import { resetPasswordWithToken } from "@/features/auth/server/password-reset-service";
 import { validatePasswordResetInput } from "@/features/auth/server/validation";
 
 export type ResetPasswordState = {
@@ -30,24 +30,18 @@ export async function resetPasswordAction(
     };
   }
 
-  const dataLayer = createDataLayer();
-  await dataLayer.passwordResetTokens.deleteExpired();
-  const resetToken = await dataLayer.passwordResetTokens.findValidByRawToken(token);
+  const result = await resetPasswordWithToken(token, password);
 
-  if (!resetToken) {
+  if (!result.success) {
     logger.warn("auth.password_reset.consume.invalid_token");
     return {
       error: "Token invalido ou expirado. Solicite uma nova recuperacao.",
     };
   }
 
-  await dataLayer.users.updatePassword(resetToken.user.id, password);
-  await dataLayer.passwordResetTokens.consume(resetToken.id);
-  await dataLayer.passwordResetTokens.deleteActiveForUser(resetToken.user.id);
-
   logger.warn("auth.password_reset.consume.success", {
-    userId: resetToken.user.id,
-    email: maskEmail(resetToken.user.email),
+    userId: result.user.id,
+    email: maskEmail(result.user.email),
   });
 
   redirect("/login?reset=success");

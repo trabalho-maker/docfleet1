@@ -8,6 +8,17 @@ export type DocumentFormValues = {
 
 export type DocumentsApiResponse = {
   documents: FleetDocument[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+  summary: {
+    total: number;
+    requiringAttention: number;
+    attention: number;
+  };
 };
 
 export type DocumentApiResponse = {

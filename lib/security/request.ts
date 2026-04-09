@@ -31,3 +31,18 @@ export function getClientIpFromHeaders(headers: HeaderBag) {
       headers.get("cf-connecting-ip"),
   );
 }
+
+export function getRequestOriginFromHeaders(headers: HeaderBag) {
+  const forwardedHost = headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwardedHost || headers.get("host")?.trim();
+
+  if (!host) {
+    return null;
+  }
+
+  const forwardedProto = headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const protocol =
+    forwardedProto || (host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https");
+
+  return `${protocol}://${host}`;
+}

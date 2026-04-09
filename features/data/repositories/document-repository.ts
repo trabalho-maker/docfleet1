@@ -8,12 +8,14 @@ import type {
 } from "@/features/data/types";
 import {
   calculateDocumentStatus,
+  formatUtcDateOnly,
   getDocumentAttentionThresholdDate,
 } from "@/features/documents/lib/expiration";
 import { logger } from "@/lib/logger";
 
 export interface DocumentRepository {
   listAll(): Promise<FleetDocument[]>;
+  listPage(page: number, pageSize: number): Promise<FleetDocument[]>;
   listRecent(limit?: number): Promise<FleetDocument[]>;
   listRequiringAttention(now?: Date): Promise<FleetDocument[]>;
   findById(documentId: string): Promise<FleetDocument | null>;
@@ -22,6 +24,7 @@ export interface DocumentRepository {
   delete(documentId: string): Promise<void>;
   countAll(): Promise<number>;
   countPending(): Promise<number>;
+  countAttention(now?: Date): Promise<number>;
 }
 
 function mapDocument(row: DatabaseRow): FleetDocument {
@@ -50,6 +53,23 @@ export class SqliteDocumentRepository implements DocumentRepository {
         FROM documents
         ORDER BY due_date ASC, name ASC
       `);
+
+    return rows.map(mapDocument);
+  }
+
+  async listPage(page: number, pageSize: number): Promise<FleetDocument[]> {
+    const normalizedPage = Math.max(1, Math.floor(page));
+    const normalizedPageSize = Math.max(1, Math.min(100, Math.floor(pageSize)));
+    const offset = (normalizedPage - 1) * normalizedPageSize;
+    const rows = await this.database.query(
+      `
+        SELECT id, name, owner, type, status, due_date
+        FROM documents
+        ORDER BY due_date ASC, name ASC
+        LIMIT ? OFFSET ?
+      `,
+      [normalizedPageSize, offset],
+    );
 
     return rows.map(mapDocument);
   }
@@ -214,6 +234,18 @@ export class SqliteDocumentRepository implements DocumentRepository {
       await this.database.queryValue("SELECT COUNT(*) FROM documents WHERE due_date <= ?", [
         attentionThresholdDate,
       ]),
+    );
+  }
+
+  async countAttention(now = new Date()): Promise<number> {
+    const today = formatUtcDateOnly(now);
+    const attentionThresholdDate = getDocumentAttentionThresholdDate(now);
+
+    return readSingleNumber(
+      await this.database.queryValue(
+        "SELECT COUNT(*) FROM documents WHERE due_date >= ? AND due_date <= ?",
+        [today, attentionThresholdDate],
+      ),
     );
   }
 }

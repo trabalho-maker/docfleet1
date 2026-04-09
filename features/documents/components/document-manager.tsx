@@ -25,7 +25,14 @@ const initialValues: DocumentFormValues = {
 };
 
 export function DocumentManager({ userName }: DocumentManagerProps) {
+  const pageSize = 25;
   const [documents, setDocuments] = useState<FleetDocument[]>([]);
+  const [page, setPage] = useState(1);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [totalDocuments, setTotalDocuments] = useState(0);
+  const [documentsRequiringAttention, setDocumentsRequiringAttention] = useState(0);
+  const [documentsInAttention, setDocumentsInAttention] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [formValues, setFormValues] = useState<DocumentFormValues>(initialValues);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -39,12 +46,15 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
   useEffect(() => {
     let active = true;
 
-    async function loadDocuments() {
+    async function loadDocuments(targetPage: number) {
       try {
         setIsLoading(true);
-        const response = await fetch("/api/documents", {
-          credentials: "include",
-        });
+        const response = await fetch(
+          `/api/documents?page=${targetPage}&pageSize=${pageSize}`,
+          {
+            credentials: "include",
+          },
+        );
         const payload = (await response.json()) as
           | DocumentsApiResponse
           | { error?: string };
@@ -59,6 +69,11 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
 
         if (active) {
           setDocuments(payload.documents);
+          setPage(payload.pagination.page);
+          setTotalDocuments(payload.summary.total);
+          setDocumentsRequiringAttention(payload.summary.requiringAttention);
+          setDocumentsInAttention(payload.summary.attention);
+          setTotalPages(payload.pagination.totalPages);
         }
       } catch (error) {
         if (active) {
@@ -77,23 +92,20 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
       }
     }
 
-    void loadDocuments();
+    void loadDocuments(page);
 
     return () => {
       active = false;
     };
-  }, []);
+  }, [page, pageSize, reloadKey]);
 
   const metrics = useMemo(() => {
-    const requiringAttention = documents.filter((item) => item.status !== "Valido").length;
-    const attention = documents.filter((item) => item.status === "Atencao").length;
-
     return [
-      { label: "Documentos", value: String(documents.length) },
-      { label: "Requer atencao", value: String(requiringAttention) },
-      { label: "Em atencao", value: String(attention) },
+      { label: "Documentos", value: String(totalDocuments) },
+      { label: "Requer atencao", value: String(documentsRequiringAttention) },
+      { label: "Em atencao", value: String(documentsInAttention) },
     ];
-  }, [documents]);
+  }, [documentsInAttention, documentsRequiringAttention, totalDocuments]);
 
   const calculatedStatus = useMemo(() => {
     if (!formValues.dueDate) {
@@ -169,17 +181,8 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
         throw new Error("Resposta invalida ao salvar o documento.");
       }
 
-      setDocuments((current) => {
-        if (editingId) {
-          return current
-            .map((item) => (item.id === payload.document.id ? payload.document : item))
-            .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
-        }
-
-        return [...current, payload.document].sort((a, b) =>
-          a.dueDate.localeCompare(b.dueDate),
-        );
-      });
+      setPage(1);
+      setReloadKey((current) => current + 1);
 
       setMessage({
         type: "success",
@@ -223,9 +226,13 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
         throw new Error(payload.error || "Nao foi possivel excluir o documento.");
       }
 
-      setDocuments((current) => current.filter((item) => item.id !== documentId));
       if (editingId === documentId) {
         resetForm();
+      }
+      if (documents.length === 1 && page > 1) {
+        setPage((current) => Math.max(1, current - 1));
+      } else {
+        setReloadKey((current) => current + 1);
       }
       setMessage({
         type: "success",
@@ -398,7 +405,7 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
               </h2>
             </div>
             <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600">
-              {documents.length} itens
+              {documents.length} de {totalDocuments} itens
             </span>
           </div>
 
@@ -457,6 +464,30 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
                 </div>
               ))
             )}
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3 border-t border-[var(--color-border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-[var(--color-muted)]">
+              Pagina {page} de {totalPages}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={page <= 1 || isLoading}
+                className="inline-flex h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Anterior
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                disabled={page >= totalPages || isLoading}
+                className="inline-flex h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Proxima
+              </button>
+            </div>
           </div>
         </article>
       </section>

@@ -92,11 +92,12 @@ public/             assets estaticos
 - persistencia local em SQLite para ambiente inicial
 - cadastro de usuario com validacao server-side
 - recuperacao de senha com token seguro e entrega via SMTP
-- testes automatizados com Jest e Playwright
+- CRUD de documentos, logica de vencimento e alertas incrementais
+- testes unitarios, de integracao e E2E com Jest e Playwright
 - scripts de validacao prontos para uso local ou CI
 
 ## Proximos passos sugeridos
 
-- trocar repositorios em memoria por banco real ou SDK
 - trocar SQLite local por banco gerenciado ou API externa se necessario
-- adicionar testes para componentes, repositories e fluxos criticos
+- adicionar autorizacao por papel nas rotas e mutacoes sensiveis
+- expandir testes de componentes e fluxos de permissao

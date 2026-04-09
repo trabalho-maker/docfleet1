@@ -29,7 +29,7 @@ describe("documents api integration", () => {
   it("rejects unauthenticated access to the documents API", async () => {
     mockedAuth.mockResolvedValueOnce(null);
 
-    const response = await GET();
+    const response = await GET(new Request("http://localhost/api/documents"));
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({
@@ -38,13 +38,17 @@ describe("documents api integration", () => {
   });
 
   it("executes the full document CRUD flow and keeps alerts in sync", async () => {
-    const listBeforeResponse = await GET();
+    const listBeforeResponse = await GET(new Request("http://localhost/api/documents"));
     const listBeforePayload = (await listBeforeResponse.json()) as {
       documents: Array<{ id: string }>;
+      pagination: { total: number; page: number; totalPages: number };
+      summary: { total: number };
     };
 
     expect(listBeforeResponse.status).toBe(200);
     expect(listBeforePayload.documents).toHaveLength(3);
+    expect(listBeforePayload.pagination.total).toBe(3);
+    expect(listBeforePayload.summary.total).toBe(3);
 
     const createResponse = await POST(
       createJsonRequest("http://localhost/api/documents", {
