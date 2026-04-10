@@ -75,6 +75,16 @@ export function maskIp(ip: string) {
   return `${octets[0]}.${octets[1]}.***.***`;
 }
 
+export function maskCpf(cpf: string) {
+  const digits = cpf.replace(/\D/g, "");
+
+  if (digits.length !== 11) {
+    return "invalid-cpf";
+  }
+
+  return `***.***.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
 export const logger = {
   info(event: string, context?: LogContext) {
     writeLog("info", event, context);

@@ -7,6 +7,7 @@ import {
   formatUtcDateOnly,
 } from "@/features/documents/lib/expiration";
 import { logger, maskEmail } from "@/lib/logger";
+import type { Associate } from "@/src/features/associates/types";
 
 const defaultSeedRole = "Gestor de frota";
 
@@ -69,6 +70,42 @@ const seedAlerts: OperationalAlert[] = [
   },
 ];
 
+const seedAssociates: Associate[] = [
+  {
+    id: "asc_01",
+    name: "Maria de Souza",
+    cpf: "39053344705",
+    category: "Titular",
+    registrationNumber: "MAT-2026-0001",
+    status: "Ativo",
+    admissionDate: "2023-02-15",
+    createdAt: "2026-04-06T08:15:00.000Z",
+    updatedAt: "2026-04-06T08:15:00.000Z",
+  },
+  {
+    id: "asc_02",
+    name: "Joao Pereira",
+    cpf: "16899535009",
+    category: "Contribuinte",
+    registrationNumber: "MAT-2026-0002",
+    status: "Suspenso",
+    admissionDate: "2022-09-01",
+    createdAt: "2026-04-06T08:20:00.000Z",
+    updatedAt: "2026-04-06T08:20:00.000Z",
+  },
+  {
+    id: "asc_03",
+    name: "Ana Beatriz Lima",
+    cpf: "93541134780",
+    category: "Dependente",
+    registrationNumber: "MAT-2026-0003",
+    status: "Ativo",
+    admissionDate: "2024-01-10",
+    createdAt: "2026-04-06T08:25:00.000Z",
+    updatedAt: "2026-04-06T08:25:00.000Z",
+  },
+];
+
 export async function seedSqliteDatabase(db: Database) {
   const seedDocuments = buildSeedDocuments();
   const seedUserName = process.env.SEED_USER_NAME?.trim();
@@ -95,6 +132,7 @@ export async function seedSqliteDatabase(db: Database) {
     db.run("DELETE FROM alerts");
     db.run("DELETE FROM password_reset_tokens");
     db.run("DELETE FROM auth_rate_limits");
+    db.run("DELETE FROM associates");
 
     db.run(
       "INSERT INTO users (id, name, email, role, password_hash) VALUES (?, ?, ?, ?, ?)",
@@ -128,11 +166,39 @@ export async function seedSqliteDatabase(db: Database) {
       );
     }
 
+    for (const associate of seedAssociates) {
+      db.run(
+        `INSERT INTO associates (
+          id,
+          name,
+          cpf,
+          category,
+          registration_number,
+          status,
+          admission_date,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          associate.id,
+          associate.name,
+          associate.cpf,
+          associate.category,
+          associate.registrationNumber,
+          associate.status,
+          associate.admissionDate,
+          associate.createdAt,
+          associate.updatedAt,
+        ],
+      );
+    }
+
     db.run("COMMIT");
     logger.info("data.seed.completed", {
       userEmail: maskEmail(seedUserEmail),
       documents: seedDocuments.length,
       alerts: seedAlerts.length,
+      associates: seedAssociates.length,
     });
   } catch (error) {
     db.run("ROLLBACK");

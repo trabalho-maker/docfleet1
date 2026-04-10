@@ -89,6 +89,18 @@ export function createSqliteSchema(db: Database) {
       PRIMARY KEY (scope, identifier)
     );
 
+    CREATE TABLE IF NOT EXISTS associates (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      cpf TEXT NOT NULL UNIQUE,
+      category TEXT NOT NULL,
+      registration_number TEXT NOT NULL UNIQUE,
+      status TEXT NOT NULL,
+      admission_date TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_documents_due_date
     ON documents(due_date);
 
@@ -106,6 +118,18 @@ export function createSqliteSchema(db: Database) {
 
     CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id
     ON password_reset_tokens(user_id);
+
+    CREATE INDEX IF NOT EXISTS idx_associates_name
+    ON associates(name);
+
+    CREATE INDEX IF NOT EXISTS idx_associates_category
+    ON associates(category);
+
+    CREATE INDEX IF NOT EXISTS idx_associates_status
+    ON associates(status);
+
+    CREATE INDEX IF NOT EXISTS idx_associates_admission_date
+    ON associates(admission_date);
   `);
 
   migrateLegacyDocumentColumns(db);

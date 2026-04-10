@@ -11,6 +11,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/documentos/:path*",
+    "/associados/:path*",
     "/login",
     "/cadastro",
     "/recuperar-senha",
