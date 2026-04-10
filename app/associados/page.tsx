@@ -1,17 +1,31 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { logger } from "@/lib/logger";
+import { MetricCard } from "@/features/dashboard/components/metric-card";
 import { getCurrentUser } from "@/features/auth/server/session";
 import {
   AssociatesFilters,
   type AssociatesFilterValues,
 } from "@/src/features/associates/components/associates-filters";
 import { AssociatesListSection } from "@/src/features/associates/components/associates-list-section";
+import { AssociatesPageHeader } from "@/src/features/associates/components/associates-page-header";
+import { FeedbackAlert } from "@/src/features/associates/components/feedback-alert";
 import { associateCategories, associateStatuses } from "@/src/features/associates/constants";
+import {
+  canCreateAssociate,
+  canDeleteAssociate,
+  canEditAssociate,
+  canViewAssociates,
+  getAssociateAccessMessage,
+} from "@/src/features/associates/lib/associate-authorization";
 import { createAssociateService } from "@/src/features/associates/server/associate.service";
 import type {
+  Associate,
   AssociateCategory,
+  AssociateCategoryCounts,
   AssociateFilters,
   AssociateStatus,
+  AssociateStatusCounts,
 } from "@/src/features/associates/types";
 
 export const metadata: Metadata = {
@@ -25,10 +39,15 @@ type AssociatesPageProps = {
 
 export default async function AssociatesPage({ searchParams }: AssociatesPageProps) {
   const user = await getCurrentUser();
+  const canView = canViewAssociates(user);
+  const canCreate = canCreateAssociate(user);
+  const canEdit = canEditAssociate(user);
+  const canDelete = canDeleteAssociate(user);
+  const accessMessage = getAssociateAccessMessage(user);
   const associateService = createAssociateService();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const filterValues = parseAssociatesFilterValues(resolvedSearchParams);
-  const successFeedback = parseSuccessFeedback(resolvedSearchParams);
+  const feedback = parseFeedback(resolvedSearchParams);
   const filters: AssociateFilters = {
     page: 1,
     pageSize: 50,
@@ -37,89 +56,127 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
     ...(filterValues.category ? { category: filterValues.category } : {}),
     ...(filterValues.status ? { status: filterValues.status } : {}),
   };
-  const associates = await associateService.listAssociates(filters);
+
+  let associates: Associate[] = [];
+  let totalAssociates = 0;
+  let associatesByStatus = createEmptyStatusCounts();
+  let associatesByCategory = createEmptyCategoryCounts();
+  let loadError: string | null = null;
+
+  if (canView) {
+    try {
+      [associates, totalAssociates, associatesByStatus, associatesByCategory] =
+        await Promise.all([
+          associateService.listAssociates(filters),
+          associateService.countAllAssociates(),
+          associateService.countByStatus(),
+          associateService.countByCategory(),
+        ]);
+    } catch (error) {
+      logger.error("associates.page.load_error", {
+        userId: user.id,
+        error,
+      });
+      loadError =
+        "Tivemos um problema ao buscar os associados. Atualize a página para tentar novamente.";
+    }
+  }
+
   const hasActiveFilters = Boolean(
     filterValues.search ||
       filterValues.cpf ||
       filterValues.category ||
       filterValues.status,
   );
+  const activeCategories = Object.values(associatesByCategory).filter(
+    (count) => count > 0,
+  ).length;
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 px-6 py-10 sm:px-10 lg:px-12 lg:py-16">
-      <div className="flex w-full flex-col gap-8">
-        <section className="rounded-[32px] border border-[var(--color-border)] bg-[var(--color-card)] p-8 shadow-[0_30px_80px_rgba(15,23,42,0.08)]">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-3">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">
-                Gestao de associados
-              </p>
-              <div>
-                <h1 className="text-4xl font-semibold tracking-tight text-[var(--color-foreground)]">
-                  Base de associados
-                </h1>
-                <p className="mt-2 max-w-3xl text-base leading-7 text-[var(--color-muted)]">
-                  Visualize a relacao de associados, acompanhe categoria, situacao e
-                  data de entrada em uma interface preparada para crescer com a
-                  feature.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-white/80 px-5 py-4 text-sm text-[var(--color-muted)]">
-              <p className="font-semibold text-[var(--color-foreground)]">{user.name}</p>
-              <p>{user.email}</p>
+      <div className="flex w-full flex-col gap-6">
+        <AssociatesPageHeader
+          eyebrow="Gestão de associados"
+          title="Base de associados"
+          description="Visualize a relação de associados, acompanhe categoria, situação e data de entrada em uma interface alinhada ao centro operacional do DocFleet."
+          userName={user.name}
+          userEmail={user.email}
+          supportingBadge={
+            <span className="inline-flex h-10 w-fit items-center rounded-full bg-[#FFF7ED] px-4 text-sm font-semibold text-[#C2410C]">
+              {user.role}
+            </span>
+          }
+          action={
+            canCreate ? (
               <Link
                 href="/associados/novo"
-                className="inline-flex h-10 items-center justify-center rounded-full bg-[#f97316] px-4 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(249,115,22,0.28)] transition-colors hover:bg-[#ea580c]"
+                className="inline-flex h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#0F172A] transition-colors hover:bg-[#FFF7ED]"
               >
                 Novo associado
               </Link>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-5 md:grid-cols-3">
-          <MetricCard label="Associados" value={String(associates.length)} />
-          <MetricCard
-            label="Ativos"
-            value={String(associates.filter((associate) => associate.status === "Ativo").length)}
-          />
-          <MetricCard
-            label="Categorias"
-            value={String(new Set(associates.map((associate) => associate.category)).size)}
-          />
-        </section>
-
-        <AssociatesFilters values={filterValues} />
-
-        <AssociatesListSection
-          initialAssociates={associates}
-          hasActiveFilters={hasActiveFilters}
-          initialFeedback={
-            successFeedback
-              ? {
-                  type: "success",
-                  message: successFeedback,
-                }
-              : null
+            ) : (
+              <button
+                type="button"
+                disabled
+                title={accessMessage ?? undefined}
+                className="inline-flex h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-slate-100 px-4 text-sm font-semibold text-slate-400"
+              >
+                Novo associado
+              </button>
+            )
           }
         />
+
+        {!canView ? (
+          <FeedbackAlert
+            type="error"
+            title="Acesso negado"
+            message={accessMessage ?? "Acesso negado ao módulo de associados."}
+          />
+        ) : null}
+
+        {canView ? (
+          <>
+            <section className="grid gap-5 xl:grid-cols-3">
+              <MetricCard
+                metric={{
+                  label: "Associados",
+                  value: totalAssociates,
+                  helper: "Quantidade total de associados cadastrados no sistema.",
+                }}
+              />
+              <MetricCard
+                metric={{
+                  label: "Ativos",
+                  value: associatesByStatus.Ativo,
+                  helper: "Associados em situação ativa na base completa.",
+                }}
+              />
+              <MetricCard
+                metric={{
+                  label: "Categorias",
+                  value: activeCategories,
+                  helper: "Categorias com pelo menos um associado na base atual.",
+                }}
+              />
+            </section>
+
+            <AssociatesFilters values={filterValues} />
+
+            <AssociatesListSection
+              initialAssociates={associates}
+              hasActiveFilters={hasActiveFilters}
+              canCreate={canCreate}
+              canEdit={canEdit}
+              canDelete={canDelete}
+              accessMessage={accessMessage}
+              loadError={loadError}
+              initialFeedback={feedback}
+            />
+          </>
+        ) : null}
       </div>
     </main>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <article className="rounded-[28px] border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-sm">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
-        {label}
-      </p>
-      <p className="mt-4 text-4xl font-semibold tracking-tight text-[var(--color-foreground)]">
-        {value}
-      </p>
-    </article>
   );
 }
 
@@ -139,17 +196,33 @@ function parseAssociatesFilterValues(
   };
 }
 
-function parseSuccessFeedback(
+function parseFeedback(
   searchParams?: Record<string, string | string[] | undefined>,
-) {
+): {
+  type: "success" | "error" | "info";
+  message: string;
+} | null {
   const success = getSingleSearchParam(searchParams?.success);
 
   if (success === "created") {
-    return "Associado cadastrado com sucesso.";
+    return {
+      type: "success",
+      message: "Associado cadastrado com sucesso.",
+    };
   }
 
   if (success === "updated") {
-    return "Associado atualizado com sucesso.";
+    return {
+      type: "success",
+      message: "Associado atualizado com sucesso.",
+    };
+  }
+
+  if (success === "deleted") {
+    return {
+      type: "success",
+      message: "Associado excluído com sucesso.",
+    };
   }
 
   return null;
@@ -169,4 +242,16 @@ function isAssociateCategory(value: string): value is AssociateCategory {
 
 function isAssociateStatus(value: string): value is AssociateStatus {
   return associateStatuses.includes(value as AssociateStatus);
+}
+
+function createEmptyStatusCounts(): AssociateStatusCounts {
+  return Object.fromEntries(
+    associateStatuses.map((status) => [status, 0]),
+  ) as AssociateStatusCounts;
+}
+
+function createEmptyCategoryCounts(): AssociateCategoryCounts {
+  return Object.fromEntries(
+    associateCategories.map((category) => [category, 0]),
+  ) as AssociateCategoryCounts;
 }

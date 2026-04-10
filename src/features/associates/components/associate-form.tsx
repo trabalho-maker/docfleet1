@@ -93,22 +93,22 @@ export function AssociateForm({
   }
 
   const resolvedSubmitLabel =
-    submitLabel ?? (mode === "edit" ? "Salvar alteracoes" : "Criar associado");
+    submitLabel ?? (mode === "edit" ? "Salvar alterações" : "Criar associado");
 
   return (
-    <article className="rounded-[32px] border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-sm lg:p-8">
+    <article className="rounded-[32px] border border-[#E5E7EB] bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.04)] lg:p-7">
       <div className="space-y-2">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
+        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#64748B]">
           {mode === "edit" ? "Editar associado" : "Novo associado"}
         </p>
-        <h2 className="text-2xl font-semibold text-[var(--color-foreground)]">
+        <h2 className="text-2xl font-semibold tracking-tight text-[#0F172A]">
           {mode === "edit"
             ? "Atualize os dados do associado selecionado"
             : "Cadastre um novo associado"}
         </h2>
-        <p className="text-sm leading-6 text-[var(--color-muted)]">
+        <p className="text-sm leading-6 text-[#64748B]">
           Preencha os dados principais para manter a base de associados organizada e
-          pronta para operacao.
+          pronta para operação.
         </p>
       </div>
 
@@ -163,7 +163,7 @@ export function AssociateForm({
 
           <SelectField
             id="associate-status"
-            label="Situacao"
+            label="Situação"
             value={values.status}
             error={errors.status}
             options={associateStatuses}
@@ -176,7 +176,7 @@ export function AssociateForm({
         <div className="grid gap-5 md:grid-cols-2">
           <Input
             id="associate-registration-number"
-            label="Matricula"
+            label="Matrícula"
             value={values.registrationNumber}
             onChange={(event) => updateField("registrationNumber", event.target.value)}
             placeholder="Ex.: MAT-2026-0042"

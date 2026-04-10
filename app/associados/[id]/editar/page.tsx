@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/features/auth/server/session";
+import { FeedbackAlert } from "@/src/features/associates/components/feedback-alert";
 import { EditAssociateSection } from "@/src/features/associates/components/edit-associate-section";
+import {
+  canEditAssociate,
+  getAssociateAccessMessage,
+} from "@/src/features/associates/lib/associate-authorization";
 import {
   AssociateNotFoundError,
   createAssociateService,
@@ -22,6 +27,8 @@ export default async function EditAssociatePage({
   params,
 }: EditAssociatePageProps) {
   const user = await getCurrentUser();
+  const canEdit = canEditAssociate(user);
+  const accessMessage = getAssociateAccessMessage(user);
   const { id } = await params;
   const associateService = createAssociateService();
   let associate;
@@ -38,19 +45,28 @@ export default async function EditAssociatePage({
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 px-6 py-10 sm:px-10 lg:px-12 lg:py-16">
-      <EditAssociateSection
-        associateId={associate.id}
-        initialValues={{
-          name: associate.name,
-          cpf: associate.cpf,
-          category: associate.category,
-          registrationNumber: associate.registrationNumber,
-          status: associate.status,
-          admissionDate: associate.admissionDate,
-        }}
-        userName={user.name}
-        userEmail={user.email}
-      />
+      {canEdit ? (
+        <EditAssociateSection
+          associateId={associate.id}
+          initialValues={{
+            name: associate.name,
+            cpf: associate.cpf,
+            category: associate.category,
+            registrationNumber: associate.registrationNumber,
+            status: associate.status,
+            admissionDate: associate.admissionDate,
+          }}
+          userName={user.name}
+          userEmail={user.email}
+        />
+      ) : (
+        <div className="w-full">
+          <FeedbackAlert
+            type="error"
+            message={accessMessage ?? "Seu perfil não pode editar associados."}
+          />
+        </div>
+      )}
     </main>
   );
 }

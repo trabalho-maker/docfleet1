@@ -1,10 +1,16 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseAdapter, DatabaseRow } from "@/lib/database/adapter";
 import { getDatabaseAdapter } from "@/lib/database/provider";
+import {
+  associateCategories,
+  associateStatuses,
+} from "@/src/features/associates/constants";
 import type {
   Associate,
-  AssociateFilters,
   AssociateCategory,
+  AssociateCategoryCounts,
+  AssociateFilters,
+  AssociateStatusCounts,
   AssociateStatus,
   CreateAssociateInput,
   UpdateAssociateInput,
@@ -27,6 +33,9 @@ export interface AssociateRepository {
   findById(id: string): Promise<Associate | null>;
   findByCpf(cpf: string): Promise<Associate | null>;
   findByRegistrationNumber(registrationNumber: string): Promise<Associate | null>;
+  countAll(): Promise<number>;
+  countByStatus(): Promise<AssociateStatusCounts>;
+  countByCategory(): Promise<AssociateCategoryCounts>;
   create(data: CreateAssociateInput): Promise<Associate>;
   update(id: string, data: UpdateAssociateInput): Promise<Associate>;
   remove(id: string): Promise<void>;
@@ -133,6 +142,18 @@ function buildSelectQuery(whereClause: string) {
   `;
 }
 
+function createEmptyStatusCounts(): AssociateStatusCounts {
+  return Object.fromEntries(
+    associateStatuses.map((status) => [status, 0]),
+  ) as AssociateStatusCounts;
+}
+
+function createEmptyCategoryCounts(): AssociateCategoryCounts {
+  return Object.fromEntries(
+    associateCategories.map((category) => [category, 0]),
+  ) as AssociateCategoryCounts;
+}
+
 export class SqliteAssociateRepository implements AssociateRepository {
   constructor(private readonly database: DatabaseAdapter = getDatabaseAdapter()) {}
 
@@ -188,6 +209,58 @@ export class SqliteAssociateRepository implements AssociateRepository {
     );
 
     return row ? mapAssociate(row) : null;
+  }
+
+  async countAll(): Promise<number> {
+    const total = await this.database.queryValue("SELECT COUNT(*) FROM associates");
+
+    return Number(total ?? 0);
+  }
+
+  async countByStatus(): Promise<AssociateStatusCounts> {
+    const rows = await this.database.query(
+      `
+        SELECT status, COUNT(*)
+        FROM associates
+        GROUP BY status
+      `,
+    );
+
+    const counts = createEmptyStatusCounts();
+
+    for (const row of rows) {
+      const status = row[0] as AssociateStatus;
+      const total = Number(row[1] ?? 0);
+
+      if (status in counts) {
+        counts[status] = total;
+      }
+    }
+
+    return counts;
+  }
+
+  async countByCategory(): Promise<AssociateCategoryCounts> {
+    const rows = await this.database.query(
+      `
+        SELECT category, COUNT(*)
+        FROM associates
+        GROUP BY category
+      `,
+    );
+
+    const counts = createEmptyCategoryCounts();
+
+    for (const row of rows) {
+      const category = row[0] as AssociateCategory;
+      const total = Number(row[1] ?? 0);
+
+      if (category in counts) {
+        counts[category] = total;
+      }
+    }
+
+    return counts;
   }
 
   async create(data: CreateAssociateInput): Promise<Associate> {

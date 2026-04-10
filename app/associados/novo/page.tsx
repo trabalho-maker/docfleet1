@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/features/auth/server/session";
+import { FeedbackAlert } from "@/src/features/associates/components/feedback-alert";
 import { CreateAssociateSection } from "@/src/features/associates/components/create-associate-section";
+import {
+  canCreateAssociate,
+  getAssociateAccessMessage,
+} from "@/src/features/associates/lib/associate-authorization";
 
 export const metadata: Metadata = {
   title: "Novo associado",
@@ -9,10 +14,21 @@ export const metadata: Metadata = {
 
 export default async function NewAssociatePage() {
   const user = await getCurrentUser();
+  const canCreate = canCreateAssociate(user);
+  const accessMessage = getAssociateAccessMessage(user);
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 px-6 py-10 sm:px-10 lg:px-12 lg:py-16">
-      <CreateAssociateSection userName={user.name} userEmail={user.email} />
+      {canCreate ? (
+        <CreateAssociateSection userName={user.name} userEmail={user.email} />
+      ) : (
+        <div className="w-full">
+          <FeedbackAlert
+            type="error"
+            message={accessMessage ?? "Seu perfil não pode cadastrar associados."}
+          />
+        </div>
+      )}
     </main>
   );
 }

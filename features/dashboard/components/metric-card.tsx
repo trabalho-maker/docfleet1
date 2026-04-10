@@ -1,7 +1,11 @@
-import type { DashboardMetric } from "@/features/dashboard/types";
+type MetricCardData = {
+  label: string;
+  value: string | number;
+  helper?: string;
+};
 
 type MetricCardProps = {
-  metric: DashboardMetric;
+  metric: MetricCardData;
 };
 
 export function MetricCard({ metric }: MetricCardProps) {
@@ -24,9 +28,11 @@ export function MetricCard({ metric }: MetricCardProps) {
       <p className="relative mt-4 text-4xl font-semibold tracking-tight text-[#0F172A]">
         {metric.value}
       </p>
-      <p className="relative mt-3 text-sm leading-6 text-[#64748B]">
-        {metric.helper}
-      </p>
+      {metric.helper ? (
+        <p className="relative mt-3 text-sm leading-6 text-[#64748B]">
+          {metric.helper}
+        </p>
+      ) : null}
     </article>
   );
 }

@@ -7,21 +7,27 @@ import type { Associate } from "@/src/features/associates/types";
 
 type AssociatesTableProps = {
   associates: Associate[];
+  canEdit: boolean;
+  canDelete: boolean;
+  deniedReason?: string | null;
   deletingId?: string | null;
   onDeleteAssociate?: (associate: Associate) => Promise<void> | void;
 };
 
 export function AssociatesTable({
   associates,
+  canEdit,
+  canDelete,
+  deniedReason = null,
   deletingId = null,
   onDeleteAssociate,
 }: AssociatesTableProps) {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-[var(--color-border)] bg-white">
+    <div className="overflow-hidden rounded-[28px] border border-[#E5E7EB] bg-white">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-[var(--color-border)]">
-          <thead className="bg-slate-50/90">
-            <tr className="text-left text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+        <table className="min-w-full divide-y divide-[#E5E7EB]">
+          <thead className="bg-[#F8FAFC]">
+            <tr className="text-left text-xs font-semibold uppercase tracking-[0.18em] text-[#64748B]">
               <th className="px-5 py-4">Nome</th>
               <th className="px-5 py-4">CPF</th>
               <th className="px-5 py-4">Categoria</th>
@@ -31,41 +37,42 @@ export function AssociatesTable({
               <th className="px-5 py-4 text-right">Ações</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[var(--color-border)]">
+          <tbody className="divide-y divide-[#E5E7EB]">
             {associates.map((associate) => (
-              <tr key={associate.id} className="align-top transition-colors hover:bg-slate-50/70">
+              <tr key={associate.id} className="align-top transition-colors hover:bg-[#FCFDFE]">
                 <td className="px-5 py-4">
-                  <p className="font-semibold text-[var(--color-foreground)]">
-                    {associate.name}
-                  </p>
+                  <p className="font-semibold text-[#0F172A]">{associate.name}</p>
                 </td>
-                <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
+                <td className="px-5 py-4 text-sm text-[#64748B]">
                   {formatCpf(associate.cpf)}
                 </td>
-                <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
+                <td className="px-5 py-4 text-sm text-[#64748B]">
                   {associate.category}
                 </td>
-                <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
+                <td className="px-5 py-4 text-sm text-[#64748B]">
                   {associate.registrationNumber}
                 </td>
                 <td className="px-5 py-4">
                   <AssociateStatusBadge status={associate.status} />
                 </td>
-                <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
+                <td className="px-5 py-4 text-sm text-[#64748B]">
                   {formatDate(associate.admissionDate)}
                 </td>
                 <td className="px-5 py-4">
                   <div className="flex justify-end gap-3">
-                    <Link
+                    <ActionLink
                       href={`/associados/${associate.id}/editar`}
-                      className="inline-flex h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                      disabled={!canEdit}
+                      deniedReason={deniedReason}
                     >
                       Editar
-                    </Link>
+                    </ActionLink>
+
                     {onDeleteAssociate ? (
                       <DeleteAssociateButton
                         isLoading={deletingId === associate.id}
-                        disabled={Boolean(deletingId && deletingId !== associate.id)}
+                        disabled={!canDelete || Boolean(deletingId && deletingId !== associate.id)}
+                        deniedReason={!canDelete ? deniedReason : null}
                         onConfirm={() => onDeleteAssociate(associate)}
                       />
                     ) : null}
@@ -77,6 +84,39 @@ export function AssociatesTable({
         </table>
       </div>
     </div>
+  );
+}
+
+function ActionLink({
+  href,
+  disabled,
+  deniedReason,
+  children,
+}: {
+  href: string;
+  disabled: boolean;
+  deniedReason?: string | null;
+  children: string;
+}) {
+  if (disabled) {
+    return (
+      <span
+        aria-disabled="true"
+        title={deniedReason ?? undefined}
+        className="inline-flex h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-slate-100 px-4 text-sm font-semibold text-slate-400"
+      >
+        {children}
+      </span>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      className="inline-flex h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#0F172A] transition-colors hover:bg-[#FFF7ED]"
+    >
+      {children}
+    </Link>
   );
 }
 

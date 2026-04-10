@@ -82,4 +82,26 @@ describe("associate service", () => {
     expect(byCategoryAndStatus).toHaveLength(1);
     expect(byCategoryAndStatus[0]?.id).toBe("asc_02");
   });
+
+  it("returns aggregate metrics from the full base", async () => {
+    const [total, byStatus, byCategory] = await Promise.all([
+      service.countAllAssociates(),
+      service.countByStatus(),
+      service.countByCategory(),
+    ]);
+
+    expect(total).toBe(3);
+    expect(byStatus).toMatchObject({
+      Ativo: 2,
+      Inativo: 0,
+      Suspenso: 1,
+      Bloqueado: 0,
+    });
+    expect(byCategory).toMatchObject({
+      Titular: 1,
+      Dependente: 1,
+      Pensionista: 0,
+      Contribuinte: 1,
+    });
+  });
 });

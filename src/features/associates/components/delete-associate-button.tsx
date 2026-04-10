@@ -5,12 +5,14 @@ import { useState } from "react";
 type DeleteAssociateButtonProps = {
   disabled?: boolean;
   isLoading?: boolean;
+  deniedReason?: string | null;
   onConfirm: () => Promise<void> | void;
 };
 
 export function DeleteAssociateButton({
   disabled = false,
   isLoading = false,
+  deniedReason = null,
   onConfirm,
 }: DeleteAssociateButtonProps) {
   const [isConfirming, setIsConfirming] = useState(false);
@@ -44,12 +46,13 @@ export function DeleteAssociateButton({
   }
 
   return (
-    <button
-      type="button"
-      disabled={disabled || isLoading}
-      onClick={() => setIsConfirming(true)}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-70"
-    >
+        <button
+          type="button"
+          disabled={disabled || isLoading}
+          title={deniedReason ?? undefined}
+          onClick={() => setIsConfirming(true)}
+          className="inline-flex h-10 items-center justify-center rounded-full border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-70"
+        >
       Excluir
     </button>
   );

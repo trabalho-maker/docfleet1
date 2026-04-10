@@ -44,3 +44,7 @@ export type AssociateFilters = {
   page?: number;
   pageSize?: number;
 };
+
+export type AssociateStatusCounts = Record<AssociateStatus, number>;
+
+export type AssociateCategoryCounts = Record<AssociateCategory, number>;

@@ -61,7 +61,7 @@ export async function createAssociateAction(
       return {
         success: false,
         fieldErrors: {
-          cpf: "Ja existe um associado cadastrado com este CPF.",
+          cpf: "Já existe um associado cadastrado com este CPF.",
         },
       };
     }
@@ -79,7 +79,7 @@ export async function createAssociateAction(
         success: false,
         fieldErrors: {
           registrationNumber:
-            "Ja existe um associado cadastrado com esta matricula.",
+            "Já existe um associado cadastrado com esta matrícula.",
         },
       };
     }
@@ -99,7 +99,8 @@ export async function createAssociateAction(
 
     return {
       success: false,
-      formError: "Nao foi possivel cadastrar o associado.",
+      formError:
+        "Não foi possível cadastrar o associado agora. Tente novamente em instantes.",
     };
   }
 }

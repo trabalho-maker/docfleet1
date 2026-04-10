@@ -19,24 +19,24 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
   );
 
   return (
-    <section className="rounded-[32px] border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-sm lg:p-8">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <section className="rounded-[32px] border border-[#E5E7EB] bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.04)] lg:p-7">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#64748B]">
             Busca e filtros
           </p>
-          <h2 className="mt-2 text-2xl font-semibold text-[var(--color-foreground)]">
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#0F172A]">
             Refine a listagem
           </h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-            Combine nome, CPF, categoria e situacao para localizar associados com
-            rapidez.
+          <p className="mt-2 text-sm leading-6 text-[#64748B]">
+            Combine nome, CPF, categoria e situação para localizar associados com
+            rapidez e manter a operação mais previsível.
           </p>
         </div>
         {hasActiveFilters ? (
           <Link
             href="/associados"
-            className="inline-flex h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            className="inline-flex h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#0F172A] transition-colors hover:bg-[#FFF7ED]"
           >
             Limpar filtros
           </Link>
@@ -48,51 +48,33 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
         method="get"
         className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_1fr_0.8fr_0.8fr_auto]"
       >
-        <div className="grid gap-2">
-          <label
-            htmlFor="associate-search"
-            className="text-sm font-medium text-[var(--color-foreground)]"
-          >
-            Buscar por nome
-          </label>
+        <Field label="Buscar por nome" htmlFor="associate-search">
           <input
             id="associate-search"
             name="search"
             defaultValue={values.search}
             placeholder="Ex.: Maria Silva"
-            className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-slate-900"
+            className={inputClassName}
           />
-        </div>
+        </Field>
 
-        <div className="grid gap-2">
-          <label
-            htmlFor="associate-cpf"
-            className="text-sm font-medium text-[var(--color-foreground)]"
-          >
-            Buscar por CPF
-          </label>
+        <Field label="Buscar por CPF" htmlFor="associate-cpf">
           <input
             id="associate-cpf"
             name="cpf"
             defaultValue={values.cpf}
             placeholder="000.000.000-00"
             inputMode="numeric"
-            className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-slate-900"
+            className={inputClassName}
           />
-        </div>
+        </Field>
 
-        <div className="grid gap-2">
-          <label
-            htmlFor="associate-category"
-            className="text-sm font-medium text-[var(--color-foreground)]"
-          >
-            Categoria
-          </label>
+        <Field label="Categoria" htmlFor="associate-category">
           <select
             id="associate-category"
             name="category"
             defaultValue={values.category}
-            className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-colors focus:border-slate-900"
+            className={inputClassName}
           >
             <option value="">Todas</option>
             {associateCategories.map((category) => (
@@ -101,20 +83,14 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
               </option>
             ))}
           </select>
-        </div>
+        </Field>
 
-        <div className="grid gap-2">
-          <label
-            htmlFor="associate-status"
-            className="text-sm font-medium text-[var(--color-foreground)]"
-          >
-            Situacao
-          </label>
+        <Field label="Situação" htmlFor="associate-status">
           <select
             id="associate-status"
             name="status"
             defaultValue={values.status}
-            className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-colors focus:border-slate-900"
+            className={inputClassName}
           >
             <option value="">Todas</option>
             {associateStatuses.map((status) => (
@@ -123,7 +99,7 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
               </option>
             ))}
           </select>
-        </div>
+        </Field>
 
         <div className="flex items-end">
           <button
@@ -137,3 +113,23 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
     </section>
   );
 }
+
+function Field({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label htmlFor={htmlFor} className="grid gap-2">
+      <span className="text-sm font-medium text-[#0F172A]">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+const inputClassName =
+  "h-12 rounded-2xl border border-[#E5E7EB] bg-[#FCFDFE] px-4 text-sm text-[#0F172A] outline-none transition-colors placeholder:text-[#94A3B8] focus:border-[#1E3A5F] focus:bg-white";

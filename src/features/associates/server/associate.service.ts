@@ -9,7 +9,9 @@ import {
 } from "@/src/features/associates/lib/associate.validators";
 import type {
   Associate,
+  AssociateCategoryCounts,
   AssociateFilters,
+  AssociateStatusCounts,
   CreateAssociateInput,
   UpdateAssociateInput,
 } from "@/src/features/associates/types";
@@ -55,6 +57,18 @@ export function createAssociateService(options: AssociateServiceOptions = {}) {
       }
 
       return repository.findMany(validation.data);
+    },
+
+    countAllAssociates() {
+      return repository.countAll();
+    },
+
+    countByStatus(): Promise<AssociateStatusCounts> {
+      return repository.countByStatus();
+    },
+
+    countByCategory(): Promise<AssociateCategoryCounts> {
+      return repository.countByCategory();
     },
 
     getAssociateById(id: string) {
@@ -175,4 +189,11 @@ function getFirstErrorMessage(errors: Record<string, string | undefined>) {
 }
 
 export type AssociateService = ReturnType<typeof createAssociateService>;
-export type { Associate, AssociateFilters, CreateAssociateInput, UpdateAssociateInput };
+export type {
+  Associate,
+  AssociateCategoryCounts,
+  AssociateFilters,
+  AssociateStatusCounts,
+  CreateAssociateInput,
+  UpdateAssociateInput,
+};

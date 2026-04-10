@@ -44,7 +44,7 @@ export async function deleteAssociateAction(
       return {
         success: false,
         notFound: true,
-        formError: "O associado informado nao foi encontrado.",
+        formError: "O associado informado não foi encontrado.",
       };
     }
 
@@ -56,7 +56,8 @@ export async function deleteAssociateAction(
 
     return {
       success: false,
-      formError: "Nao foi possivel excluir o associado.",
+      formError:
+        "Não foi possível excluir o associado agora. Tente novamente em instantes.",
     };
   }
 }
