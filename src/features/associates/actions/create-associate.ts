@@ -6,9 +6,15 @@ import {
   AssociateValidationError,
   createAssociateService,
 } from "@/src/features/associates/server/associate.service";
-import { requireAssociateModuleAccess } from "@/src/features/associates/server/access";
+import {
+  AssociateAccessDeniedError,
+  requireAssociateModuleAccess,
+} from "@/src/features/associates/server/access";
 import { validateCreateAssociateInput } from "@/src/features/associates/lib/associate.validators";
-import type { AssociateFieldErrors, AssociateFormValues } from "@/src/features/associates/types";
+import type {
+  AssociateFieldErrors,
+  AssociateFormValues,
+} from "@/src/features/associates/types";
 
 export type CreateAssociateActionResult =
   | {
@@ -23,7 +29,21 @@ export type CreateAssociateActionResult =
 export async function createAssociateAction(
   input: AssociateFormValues,
 ): Promise<CreateAssociateActionResult> {
-  const user = await requireAssociateModuleAccess();
+  let user;
+
+  try {
+    user = await requireAssociateModuleAccess("create");
+  } catch (error) {
+    if (error instanceof AssociateAccessDeniedError) {
+      return {
+        success: false,
+        formError: error.message,
+      };
+    }
+
+    throw error;
+  }
+
   const validation = validateCreateAssociateInput(input);
 
   if (!validation.success) {

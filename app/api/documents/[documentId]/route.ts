@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import {
+  canManageOperationalData,
+  canViewOperationalData,
+} from "@/features/auth/lib/role-authorization";
+import {
   deleteDocumentWithAlerts,
   updateDocumentWithAlerts,
 } from "@/features/documents/server/document-service";
 import { createDataLayer } from "@/features/data/repositories";
 import { validateDocumentInput } from "@/features/documents/server/validation";
 import { logger } from "@/lib/logger";
+import { parseJsonBody } from "@/lib/server/request-body";
 
 type RouteContext = {
   params: Promise<{
@@ -19,6 +24,10 @@ export async function GET(_request: Request, context: RouteContext) {
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+  }
+
+  if (!canViewOperationalData(session.user)) {
+    return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
   }
 
   const { documentId } = await context.params;
@@ -39,12 +48,25 @@ export async function PUT(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
   }
 
+  if (!canManageOperationalData(session.user)) {
+    return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+  }
+
   const { documentId } = await context.params;
-  const body = (await request.json()) as {
+  const bodyResult = await parseJsonBody<{
     name?: string;
     type?: string;
     dueDate?: string;
-  };
+  }>(request);
+
+  if (!bodyResult.success) {
+    return NextResponse.json(
+      { error: "Corpo JSON invalido." },
+      { status: 400 },
+    );
+  }
+
+  const body = bodyResult.data;
 
   const validation = validateDocumentInput({
     name: body.name ?? "",
@@ -85,6 +107,10 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+  }
+
+  if (!canManageOperationalData(session.user)) {
+    return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
   }
 
   const { documentId } = await context.params;

@@ -29,6 +29,20 @@ export default async function EditAssociatePage({
   const user = await getCurrentUser();
   const canEdit = canEditAssociate(user);
   const accessMessage = getAssociateAccessMessage(user);
+
+  if (!canEdit) {
+    return (
+      <main className="mx-auto flex w-full max-w-7xl flex-1 px-6 py-10 sm:px-10 lg:px-12 lg:py-16">
+        <div className="w-full">
+          <FeedbackAlert
+            type="error"
+            message={accessMessage ?? "Seu perfil não pode editar associados."}
+          />
+        </div>
+      </main>
+    );
+  }
+
   const { id } = await params;
   const associateService = createAssociateService();
   let associate;
@@ -45,28 +59,19 @@ export default async function EditAssociatePage({
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 px-6 py-10 sm:px-10 lg:px-12 lg:py-16">
-      {canEdit ? (
-        <EditAssociateSection
-          associateId={associate.id}
-          initialValues={{
-            name: associate.name,
-            cpf: associate.cpf,
-            category: associate.category,
-            registrationNumber: associate.registrationNumber,
-            status: associate.status,
-            admissionDate: associate.admissionDate,
-          }}
-          userName={user.name}
-          userEmail={user.email}
-        />
-      ) : (
-        <div className="w-full">
-          <FeedbackAlert
-            type="error"
-            message={accessMessage ?? "Seu perfil não pode editar associados."}
-          />
-        </div>
-      )}
+      <EditAssociateSection
+        associateId={associate.id}
+        initialValues={{
+          name: associate.name,
+          cpf: associate.cpf,
+          category: associate.category,
+          registrationNumber: associate.registrationNumber,
+          status: associate.status,
+          admissionDate: associate.admissionDate,
+        }}
+        userName={user.name}
+        userEmail={user.email}
+      />
     </main>
   );
 }

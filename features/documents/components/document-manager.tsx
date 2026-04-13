@@ -14,6 +14,9 @@ import type {
 
 type DocumentManagerProps = {
   userName: string;
+  canViewDocuments: boolean;
+  canManageDocuments: boolean;
+  accessMessage?: string | null;
 };
 
 type FormErrors = Partial<Record<keyof DocumentFormValues, string>>;
@@ -24,7 +27,12 @@ const initialValues: DocumentFormValues = {
   dueDate: "",
 };
 
-export function DocumentManager({ userName }: DocumentManagerProps) {
+export function DocumentManager({
+  userName,
+  canViewDocuments,
+  canManageDocuments,
+  accessMessage = null,
+}: DocumentManagerProps) {
   const pageSize = 25;
   const [documents, setDocuments] = useState<FleetDocument[]>([]);
   const [page, setPage] = useState(1);
@@ -44,6 +52,12 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
   } | null>(null);
 
   useEffect(() => {
+    if (!canViewDocuments) {
+      setIsLoading(false);
+      setDocuments([]);
+      return;
+    }
+
     let active = true;
 
     async function loadDocuments(targetPage: number) {
@@ -97,7 +111,7 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
     return () => {
       active = false;
     };
-  }, [page, pageSize, reloadKey]);
+  }, [canViewDocuments, page, pageSize, reloadKey]);
 
   const metrics = useMemo(() => {
     return [
@@ -148,6 +162,15 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canManageDocuments) {
+      setMessage({
+        type: "error",
+        text:
+          accessMessage ??
+          "Seu perfil não pode criar ou editar documentos.",
+      });
+      return;
+    }
     setIsSubmitting(true);
     setMessage(null);
 
@@ -205,6 +228,16 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
   }
 
   async function handleDelete(documentId: string) {
+    if (!canManageDocuments) {
+      setMessage({
+        type: "error",
+        text:
+          accessMessage ??
+          "Seu perfil não pode excluir documentos.",
+      });
+      return;
+    }
+
     const confirmed = window.confirm(
       "Deseja realmente excluir este documento?",
     );
@@ -299,12 +332,18 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
         <article className="rounded-[32px] border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-sm">
           <div className="space-y-2">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
-              {editingId ? "Editar documento" : "Novo documento"}
+              {canManageDocuments
+                ? editingId
+                  ? "Editar documento"
+                  : "Novo documento"
+                : "Permissoes do modulo"}
             </p>
             <h2 className="text-2xl font-semibold text-[var(--color-foreground)]">
-              {editingId
-                ? "Atualize os dados do documento selecionado"
-                : "Cadastre um documento da operacao"}
+              {canManageDocuments
+                ? editingId
+                  ? "Atualize os dados do documento selecionado"
+                  : "Cadastre um documento da operacao"
+                : "Visualizacao somente leitura"}
             </h2>
           </div>
 
@@ -321,6 +360,19 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
             </div>
           ) : null}
 
+          {!canViewDocuments ? (
+            <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
+              {accessMessage ?? "Seu perfil não pode acessar os documentos."}
+            </div>
+          ) : null}
+
+          {canViewDocuments && !canManageDocuments ? (
+            <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+              {accessMessage ??
+                "Seu perfil pode consultar documentos, mas não pode criar, editar ou excluir registros."}
+            </div>
+          ) : null}
+
           <form className="mt-6 grid gap-5" onSubmit={handleSubmit} noValidate>
             <Input
               id="document-name"
@@ -329,6 +381,7 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
               onChange={(event) => updateField("name", event.target.value)}
               placeholder="Ex.: Licenciamento da frota leve"
               error={formErrors.name}
+              disabled={!canManageDocuments}
               required
             />
 
@@ -339,6 +392,7 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
               onChange={(event) => updateField("type", event.target.value)}
               placeholder="Ex.: Veiculos"
               error={formErrors.type}
+              disabled={!canManageDocuments}
               required
             />
 
@@ -349,6 +403,7 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
               value={formValues.dueDate}
               onChange={(event) => updateField("dueDate", event.target.value)}
               error={formErrors.dueDate}
+              disabled={!canManageDocuments}
               required
             />
 
@@ -376,6 +431,7 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
                 type="submit"
                 isLoading={isSubmitting}
                 loadingLabel={editingId ? "Salvando..." : "Criando..."}
+                disabled={!canManageDocuments}
                 className="sm:flex-1"
               >
                 {editingId ? "Salvar alteracoes" : "Criar documento"}
@@ -385,6 +441,7 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
                 <button
                   type="button"
                   onClick={resetForm}
+                  disabled={!canManageDocuments}
                   className="inline-flex h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                 >
                   Cancelar
@@ -410,7 +467,11 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
           </div>
 
           <div className="mt-6 grid gap-4">
-            {isLoading ? (
+            {!canViewDocuments ? (
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+                {accessMessage ?? "Seu perfil não pode acessar os documentos."}
+              </div>
+            ) : isLoading ? (
               <div className="rounded-2xl border border-[var(--color-border)] bg-white/90 p-6 text-sm text-[var(--color-muted)]">
                 Carregando documentos...
               </div>
@@ -448,14 +509,18 @@ export function DocumentManager({ userName }: DocumentManagerProps) {
                       <button
                         type="button"
                         onClick={() => fillForm(document)}
-                        className="inline-flex h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                        disabled={!canManageDocuments}
+                        title={canManageDocuments ? undefined : accessMessage ?? undefined}
+                        className="inline-flex h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Editar
                       </button>
                       <button
                         type="button"
                         onClick={() => void handleDelete(document.id)}
-                        className="inline-flex h-10 items-center justify-center rounded-full border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"
+                        disabled={!canManageDocuments}
+                        title={canManageDocuments ? undefined : accessMessage ?? undefined}
+                        className="inline-flex h-10 items-center justify-center rounded-full border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Excluir
                       </button>

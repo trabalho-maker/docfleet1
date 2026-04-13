@@ -1,32 +1,23 @@
 import type { AuthUser } from "@/features/auth/types";
-
-const MANAGER_ROLE = "Gestor de frota";
-const VIEWER_ROLES = new Set([MANAGER_ROLE, "Operador"]);
-
-function normalizeRole(user: AuthUser | null | undefined) {
-  return user?.role.trim().toLowerCase() ?? "";
-}
-
-function isManager(user: AuthUser | null | undefined) {
-  return normalizeRole(user) === MANAGER_ROLE.toLowerCase();
-}
+import {
+  canManageOperationalData,
+  canViewOperationalData,
+} from "@/features/auth/lib/role-authorization";
 
 export function canViewAssociates(user: AuthUser | null | undefined) {
-  const role = user?.role?.trim();
-
-  return role ? VIEWER_ROLES.has(role) : false;
+  return canViewOperationalData(user);
 }
 
 export function canCreateAssociate(user: AuthUser | null | undefined) {
-  return isManager(user);
+  return canManageOperationalData(user);
 }
 
 export function canEditAssociate(user: AuthUser | null | undefined) {
-  return isManager(user);
+  return canManageOperationalData(user);
 }
 
 export function canDeleteAssociate(user: AuthUser | null | undefined) {
-  return isManager(user);
+  return canManageOperationalData(user);
 }
 
 export function getAssociateAccessMessage(user: AuthUser | null | undefined) {

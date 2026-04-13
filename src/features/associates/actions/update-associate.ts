@@ -7,7 +7,10 @@ import {
   AssociateValidationError,
   createAssociateService,
 } from "@/src/features/associates/server/associate.service";
-import { requireAssociateModuleAccess } from "@/src/features/associates/server/access";
+import {
+  AssociateAccessDeniedError,
+  requireAssociateModuleAccess,
+} from "@/src/features/associates/server/access";
 import { validateUpdateAssociateInput } from "@/src/features/associates/lib/associate.validators";
 import type {
   AssociateFieldErrors,
@@ -29,7 +32,21 @@ export async function updateAssociateAction(
   id: string,
   input: AssociateFormValues,
 ): Promise<UpdateAssociateActionResult> {
-  const user = await requireAssociateModuleAccess();
+  let user;
+
+  try {
+    user = await requireAssociateModuleAccess("edit");
+  } catch (error) {
+    if (error instanceof AssociateAccessDeniedError) {
+      return {
+        success: false,
+        formError: error.message,
+      };
+    }
+
+    throw error;
+  }
+
   const validation = validateUpdateAssociateInput(input);
 
   if (!validation.success) {

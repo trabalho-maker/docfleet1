@@ -37,6 +37,71 @@ describe("documents api integration", () => {
     });
   });
 
+  it("allows operators to read documents but blocks mutations", async () => {
+    mockedAuth.mockResolvedValue({
+      user: {
+        ...authenticatedSession.user,
+        role: "Operador",
+      },
+    });
+
+    const listResponse = await GET(new Request("http://localhost/api/documents"));
+    expect(listResponse.status).toBe(200);
+
+    const createResponse = await POST(
+      createJsonRequest("http://localhost/api/documents", {
+        method: "POST",
+        body: {
+          name: "Seguro operacional",
+          type: "Seguros",
+          dueDate: "2099-01-03",
+        },
+      }),
+    );
+
+    expect(createResponse.status).toBe(403);
+    await expect(createResponse.json()).resolves.toEqual({
+      error: "Acesso negado.",
+    });
+  });
+
+  it("returns 400 when the create payload is invalid JSON", async () => {
+    const response = await POST(
+      new Request("http://localhost/api/documents", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: "{",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Corpo JSON invalido.",
+    });
+  });
+
+  it("returns 400 when the update payload is invalid JSON", async () => {
+    const response = await PUT(
+      new Request("http://localhost/api/documents/doc_01", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: "{",
+      }),
+      {
+        params: Promise.resolve({ documentId: "doc_01" }),
+      },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Corpo JSON invalido.",
+    });
+  });
+
   it("executes the full document CRUD flow and keeps alerts in sync", async () => {
     const listBeforeResponse = await GET(new Request("http://localhost/api/documents"));
     const listBeforePayload = (await listBeforeResponse.json()) as {

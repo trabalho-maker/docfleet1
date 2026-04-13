@@ -5,7 +5,10 @@ import {
   AssociateNotFoundError,
   createAssociateService,
 } from "@/src/features/associates/server/associate.service";
-import { requireAssociateModuleAccess } from "@/src/features/associates/server/access";
+import {
+  AssociateAccessDeniedError,
+  requireAssociateModuleAccess,
+} from "@/src/features/associates/server/access";
 
 export type DeleteAssociateActionResult =
   | {
@@ -20,7 +23,20 @@ export type DeleteAssociateActionResult =
 export async function deleteAssociateAction(
   associateId: string,
 ): Promise<DeleteAssociateActionResult> {
-  const user = await requireAssociateModuleAccess();
+  let user;
+
+  try {
+    user = await requireAssociateModuleAccess("delete");
+  } catch (error) {
+    if (error instanceof AssociateAccessDeniedError) {
+      return {
+        success: false,
+        formError: error.message,
+      };
+    }
+
+    throw error;
+  }
 
   try {
     const associateService = createAssociateService();
