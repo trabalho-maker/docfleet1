@@ -15,18 +15,18 @@ export async function sendPasswordResetEmail({
 }: PasswordResetEmailInput) {
   const subject = "Redefina sua senha do DocFleet";
   const text = [
-    `Ola, ${user.name}.`,
+    `Olá, ${user.name}.`,
     "",
-    "Recebemos uma solicitacao para redefinir a senha da sua conta no DocFleet.",
+    "Recebemos uma solicitação para redefinir a senha da sua conta no DocFleet.",
     `Use o link abaixo para criar uma nova senha: ${resetUrl}`,
     `Este link expira em: ${expiresAt}.`,
     "",
-    "Se voce nao fez esta solicitacao, ignore este email.",
+    "Se você não fez esta solicitação, ignore este email.",
   ].join("\n");
   const html = `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #0f172a;">
-      <p>Ola, <strong>${escapeHtml(user.name)}</strong>.</p>
-      <p>Recebemos uma solicitacao para redefinir a senha da sua conta no DocFleet.</p>
+      <p>Olá, <strong>${escapeHtml(user.name)}</strong>.</p>
+      <p>Recebemos uma solicitação para redefinir a senha da sua conta no DocFleet.</p>
       <p>
         <a href="${resetUrl}" style="display: inline-block; padding: 12px 20px; border-radius: 999px; background: #0f172a; color: #ffffff; text-decoration: none; font-weight: 600;">
           Redefinir senha
@@ -35,7 +35,7 @@ export async function sendPasswordResetEmail({
       <p>Se preferir, copie e cole este link no navegador:</p>
       <p><a href="${resetUrl}">${resetUrl}</a></p>
       <p>Este link expira em: <strong>${expiresAt}</strong>.</p>
-      <p>Se voce nao fez esta solicitacao, ignore este email.</p>
+      <p>Se você não fez esta solicitação, ignore este email.</p>
     </div>
   `.trim();
 

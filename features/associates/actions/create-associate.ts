@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { logger, maskCpf } from "@/lib/logger";
 import {
@@ -81,7 +81,7 @@ export async function createAssociateAction(
       return {
         success: false,
         fieldErrors: {
-          cpf: "JÃ¡ existe um associado cadastrado com este CPF.",
+          cpf: "Já existe um associado cadastrado com este CPF.",
         },
       };
     }
@@ -99,7 +99,7 @@ export async function createAssociateAction(
         success: false,
         fieldErrors: {
           registrationNumber:
-            "JÃ¡ existe um associado cadastrado com esta matrÃ­cula.",
+            "Já existe um associado cadastrado com esta matrícula.",
         },
       };
     }
@@ -120,8 +120,7 @@ export async function createAssociateAction(
     return {
       success: false,
       formError:
-        "NÃ£o foi possÃ­vel cadastrar o associado agora. Tente novamente em instantes.",
+        "Não foi possível cadastrar o associado agora. Tente novamente em instantes.",
     };
   }
 }
-

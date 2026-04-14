@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -70,9 +70,9 @@ export function EditAssociateSection({
   return (
     <div className="flex w-full flex-col gap-6">
       <AssociatesPageHeader
-        eyebrow="EdiÃ§Ã£o de associados"
+        eyebrow="Edição de associados"
         title="Editar associado"
-        description="Atualize os dados cadastrais do associado mantendo a consistÃªncia da base e as validaÃ§Ãµes do domÃ­nio."
+        description="Atualize os dados cadastrais do associado mantendo a consistência da base e as validações do domínio."
         userName={userName}
         userEmail={userEmail}
         action={
@@ -88,7 +88,7 @@ export function EditAssociateSection({
       <AssociateForm
         initialValues={initialValues}
         mode="edit"
-        submitLabel="Salvar alteraÃ§Ãµes"
+        submitLabel="Salvar alterações"
         isSubmitting={isSubmitting}
         serverErrors={serverErrors}
         message={message}
@@ -98,4 +98,3 @@ export function EditAssociateSection({
     </div>
   );
 }
-

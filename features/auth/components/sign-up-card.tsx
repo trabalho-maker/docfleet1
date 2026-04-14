@@ -35,7 +35,7 @@ export function SignUpCard() {
               Criar conta no DocFleet
             </h2>
             <p className="text-sm leading-6 text-slate-500">
-              Cadastre um novo usuario para acompanhar documentos, alertas e
+              Cadastre um novo usuário para acompanhar documentos, alertas e
               fluxos operacionais em um ambiente centralizado.
             </p>
           </div>
@@ -113,7 +113,7 @@ export function SignUpCard() {
                 onClick={() => setShowConfirmPassword((current) => !current)}
                 className="text-xs font-semibold text-slate-500 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                 aria-label={
-                  showConfirmPassword ? "Ocultar confirmacao de senha" : "Mostrar confirmacao de senha"
+                  showConfirmPassword ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"
                 }
               >
                 {showConfirmPassword ? "Ocultar" : "Mostrar"}
@@ -134,12 +134,12 @@ export function SignUpCard() {
           <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
             Requisitos da senha:
             <span className="mt-1 block text-slate-700">
-              minimo de 8 caracteres, com letra maiuscula, minuscula e numero.
+              mínimo de 8 caracteres, com letra maiúscula, minúscula e número.
             </span>
           </div>
 
           <p className="text-sm text-slate-500">
-            Ja possui acesso?{" "}
+            Já possui acesso?{" "}
             <Link
               href="/login"
               className="font-semibold text-slate-900 transition-colors hover:text-[#f97316]"

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -93,7 +93,7 @@ export function AssociateForm({
   }
 
   const resolvedSubmitLabel =
-    submitLabel ?? (mode === "edit" ? "Salvar alteraÃ§Ãµes" : "Criar associado");
+    submitLabel ?? (mode === "edit" ? "Salvar alterações" : "Criar associado");
 
   return (
     <article className="rounded-[32px] border border-[#E5E7EB] bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.04)] lg:p-7">
@@ -108,7 +108,7 @@ export function AssociateForm({
         </h2>
         <p className="text-sm leading-6 text-[#64748B]">
           Preencha os dados principais para manter a base de associados organizada e
-          pronta para operaÃ§Ã£o.
+          pronta para operação.
         </p>
       </div>
 
@@ -163,7 +163,7 @@ export function AssociateForm({
 
           <SelectField
             id="associate-status"
-            label="SituaÃ§Ã£o"
+            label="Situação"
             value={values.status}
             error={errors.status}
             options={associateStatuses}
@@ -176,7 +176,7 @@ export function AssociateForm({
         <div className="grid gap-5 md:grid-cols-2">
           <Input
             id="associate-registration-number"
-            label="MatrÃ­cula"
+            label="Matrícula"
             value={values.registrationNumber}
             onChange={(event) => updateField("registrationNumber", event.target.value)}
             placeholder="Ex.: MAT-2026-0042"
@@ -293,4 +293,3 @@ function formatCpfInput(value: string) {
 
   return digits.replace(/(\d{3})(\d{3})(\d{3})(\d+)/, "$1.$2.$3-$4");
 }
-

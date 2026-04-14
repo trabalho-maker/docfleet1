@@ -51,7 +51,7 @@ export async function signInAction(
         email: maskEmail(email),
       });
       return {
-        error: "Email ou senha invalidos.",
+        error: "Email ou senha inválidos.",
       };
     }
 

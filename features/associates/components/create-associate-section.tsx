@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -61,7 +61,7 @@ export function CreateAssociateSection({
       <AssociatesPageHeader
         eyebrow="Cadastro de associados"
         title="Novo associado"
-        description="Cadastre um novo associado na base do sistema com dados validados, tipagem forte e integraÃ§Ã£o direta com a camada de serviÃ§o."
+        description="Cadastre um novo associado na base do sistema com dados validados, tipagem forte e integração direta com a camada de serviço."
         userName={userName}
         userEmail={userEmail}
         action={
@@ -86,4 +86,3 @@ export function CreateAssociateSection({
     </div>
   );
 }
-

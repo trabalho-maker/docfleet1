@@ -12,7 +12,7 @@ type DashboardSidebarProps = {
 const navigationItems = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Documentos", href: "/documentos" },
-  { label: "Recuperação", href: "/recuperar-senha" },
+  { label: "Associados", href: "/associados" },
 ];
 
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
@@ -51,7 +51,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
             <NavigationItem
               key={item.href}
               href={item.href}
-              active={pathname === item.href}
+              active={isActivePath(pathname, item.href)}
             >
               {item.label}
             </NavigationItem>
@@ -61,8 +61,8 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
         <div className="rounded-[28px] border border-white/10 bg-slate-950/16 p-4">
           <p className="text-sm font-semibold text-white">Governança documental</p>
           <p className="mt-2 text-sm leading-6 text-white/68">
-            Painel conectado a dados reais, alertas incrementais e autenticação com
-            sessão ativa.
+            Painel conectado a dados reais, alertas incrementais, associados e
+            autenticação com sessão ativa.
           </p>
         </div>
       </div>
@@ -94,8 +94,8 @@ function NavigationItem({
       aria-current={active ? "page" : undefined}
       className={`group flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
         active
-                  ? "bg-[#F59E0B] text-slate-950"
-                  : "bg-transparent text-white/78 hover:bg-[#29476D] hover:text-white"
+          ? "bg-[#F59E0B] text-slate-950"
+          : "bg-transparent text-white/78 hover:bg-[#29476D] hover:text-white"
       }`}
     >
       <span>{children}</span>
@@ -106,6 +106,10 @@ function NavigationItem({
       />
     </Link>
   );
+}
+
+function isActivePath(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 function DocFleetMark() {

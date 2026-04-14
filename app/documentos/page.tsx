@@ -4,6 +4,7 @@ import {
   canViewOperationalData,
 } from "@/features/auth/lib/role-authorization";
 import { getCurrentUser } from "@/features/auth/server/session";
+import { AppShell } from "@/features/dashboard/components/app-shell";
 import { DocumentManager } from "@/features/documents/components/document-manager";
 
 export const metadata: Metadata = {
@@ -22,13 +23,15 @@ export default async function DocumentsPage() {
     : "Seu perfil não tem permissão para acessar o módulo de documentos.";
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-1 px-6 py-10 sm:px-10 lg:px-12 lg:py-16">
-      <DocumentManager
-        userName={user.name}
-        canViewDocuments={canViewDocuments}
-        canManageDocuments={canManageDocuments}
-        accessMessage={accessMessage}
-      />
-    </main>
+    <AppShell user={user}>
+      <div className="mx-auto flex w-full max-w-7xl flex-1 py-2 sm:py-4">
+        <DocumentManager
+          userName={user.name}
+          canViewDocuments={canViewDocuments}
+          canManageDocuments={canManageDocuments}
+          accessMessage={accessMessage}
+        />
+      </div>
+    </AppShell>
   );
 }

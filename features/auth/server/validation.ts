@@ -40,19 +40,19 @@ export function validatePasswordRules(password: string) {
   }
 
   if (password.length > MAX_PASSWORD_LENGTH) {
-    return `A senha deve ter no maximo ${MAX_PASSWORD_LENGTH} caracteres.`;
+    return `A senha deve ter no máximo ${MAX_PASSWORD_LENGTH} caracteres.`;
   }
 
   if (!/[A-Z]/.test(password)) {
-    return "A senha deve conter ao menos uma letra maiuscula.";
+    return "A senha deve conter ao menos uma letra maiúscula.";
   }
 
   if (!/[a-z]/.test(password)) {
-    return "A senha deve conter ao menos uma letra minuscula.";
+    return "A senha deve conter ao menos uma letra minúscula.";
   }
 
   if (!/\d/.test(password)) {
-    return "A senha deve conter ao menos um numero.";
+    return "A senha deve conter ao menos um número.";
   }
 
   return null;
@@ -70,13 +70,13 @@ export function validateSignUpInput(
   if (name.length < 3) {
     errors.name = "Informe um nome com pelo menos 3 caracteres.";
   } else if (hasExceededMaxLength(name, MAX_NAME_LENGTH)) {
-    errors.name = `Informe um nome com no maximo ${MAX_NAME_LENGTH} caracteres.`;
+    errors.name = `Informe um nome com no máximo ${MAX_NAME_LENGTH} caracteres.`;
   }
 
   if (!validateEmailInput(email)) {
-    errors.email = "Informe um email valido.";
+    errors.email = "Informe um email válido.";
   } else if (hasExceededMaxLength(email, MAX_EMAIL_LENGTH)) {
-    errors.email = `Informe um email com no maximo ${MAX_EMAIL_LENGTH} caracteres.`;
+    errors.email = `Informe um email com no máximo ${MAX_EMAIL_LENGTH} caracteres.`;
   }
 
   const passwordError = validatePasswordRules(password);
@@ -86,7 +86,7 @@ export function validateSignUpInput(
   }
 
   if (confirmPassword !== password) {
-    errors.confirmPassword = "A confirmacao de senha nao confere.";
+    errors.confirmPassword = "A confirmação de senha não confere.";
   }
 
   if (Object.keys(errors).length > 0) {
@@ -115,7 +115,7 @@ export function validatePasswordResetInput(password: string, confirmPassword: st
   }
 
   if (confirmPassword !== password) {
-    errors.confirmPassword = "A confirmacao de senha nao confere.";
+    errors.confirmPassword = "A confirmação de senha não confere.";
   }
 
   return errors;

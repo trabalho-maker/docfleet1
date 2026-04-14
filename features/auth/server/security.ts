@@ -177,7 +177,7 @@ export async function consumePasswordResetAttempt(identifier: string, ipAddress?
       penaltyLevel: state.penaltyLevel,
     });
     throw new AuthRateLimitError(
-      "Muitas solicitacoes de recuperacao. Tente novamente mais tarde.",
+      "Muitas solicitações de recuperação. Tente novamente mais tarde.",
       state.retryAfterSeconds,
     );
   }

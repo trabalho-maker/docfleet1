@@ -20,7 +20,7 @@ export function ResetPasswordCard({ token }: { token: string }) {
       <div className="space-y-6">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
-            Redefinicao
+            Redefinição
           </p>
           <h2 className="mt-3 text-2xl font-semibold text-[var(--color-foreground)]">
             Defina uma nova senha segura

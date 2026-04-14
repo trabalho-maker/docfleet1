@@ -33,14 +33,14 @@ describe("auth validation", () => {
     expect(result.success).toBe(false);
     expect(result).toMatchObject({
       errors: {
-        name: "Informe um nome com no maximo 120 caracteres.",
+        name: "Informe um nome com no máximo 120 caracteres.",
       },
     });
   });
 
   it("rejects passwords above the maximum allowed length", () => {
     expect(validatePasswordRules(`Senha${"1".repeat(124)}`)).toBe(
-      "A senha deve ter no maximo 128 caracteres.",
+      "A senha deve ter no máximo 128 caracteres.",
     );
   });
 });

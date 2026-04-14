@@ -1,12 +1,8 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { logger } from "@/lib/logger";
-import { MetricCard } from "@/features/dashboard/components/metric-card";
 import { getCurrentUser } from "@/features/auth/server/session";
-import {
-  AssociatesFilters,
-  type AssociatesFilterValues,
-} from "@/features/associates/components/associates-filters";
+import { AssociatesFilters, type AssociatesFilterValues } from "@/features/associates/components/associates-filters";
 import { AssociatesListSection } from "@/features/associates/components/associates-list-section";
 import { AssociatesPageHeader } from "@/features/associates/components/associates-page-header";
 import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
@@ -27,6 +23,8 @@ import type {
   AssociateStatus,
   AssociateStatusCounts,
 } from "@/features/associates/types";
+import { AppShell } from "@/features/dashboard/components/app-shell";
+import { MetricCard } from "@/features/dashboard/components/metric-card";
 
 export const metadata: Metadata = {
   title: "Associados",
@@ -78,7 +76,7 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
         error,
       });
       loadError =
-        "Tivemos um problema ao buscar os associados. Atualize a pÃ¡gina para tentar novamente.";
+        "Tivemos um problema ao buscar os associados. Atualize a página para tentar novamente.";
     }
   }
 
@@ -93,12 +91,12 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
   ).length;
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-1 px-6 py-10 sm:px-10 lg:px-12 lg:py-16">
-      <div className="flex w-full flex-col gap-6">
+    <AppShell user={user}>
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 py-2 sm:py-4">
         <AssociatesPageHeader
-          eyebrow="GestÃ£o de associados"
+          eyebrow="Gestão de associados"
           title="Base de associados"
-          description="Visualize a relaÃ§Ã£o de associados, acompanhe categoria, situaÃ§Ã£o e data de entrada em uma interface alinhada ao centro operacional do DocFleet."
+          description="Visualize a relação de associados, acompanhe categoria, situação e data de entrada em uma interface alinhada ao centro operacional do DocFleet."
           userName={user.name}
           userEmail={user.email}
           supportingBadge={
@@ -131,7 +129,7 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
           <FeedbackAlert
             type="error"
             title="Acesso negado"
-            message={accessMessage ?? "Acesso negado ao mÃ³dulo de associados."}
+            message={accessMessage ?? "Acesso negado ao módulo de associados."}
           />
         ) : null}
 
@@ -149,7 +147,7 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
                 metric={{
                   label: "Ativos",
                   value: associatesByStatus.Ativo,
-                  helper: "Associados em situaÃ§Ã£o ativa na base completa.",
+                  helper: "Associados em situação ativa na base completa.",
                 }}
               />
               <MetricCard
@@ -176,7 +174,7 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
           </>
         ) : null}
       </div>
-    </main>
+    </AppShell>
   );
 }
 
@@ -221,7 +219,7 @@ function parseFeedback(
   if (success === "deleted") {
     return {
       type: "success",
-      message: "Associado excluÃ­do com sucesso.",
+      message: "Associado excluído com sucesso.",
     };
   }
 
@@ -255,4 +253,3 @@ function createEmptyCategoryCounts(): AssociateCategoryCounts {
     associateCategories.map((category) => [category, 0]),
   ) as AssociateCategoryCounts;
 }
-

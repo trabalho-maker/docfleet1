@@ -35,7 +35,7 @@ export async function resetPasswordAction(
   if (!result.success) {
     logger.warn("auth.password_reset.consume.invalid_token");
     return {
-      error: "Token invalido ou expirado. Solicite uma nova recuperacao.",
+      error: "Token inválido ou expirado. Solicite uma nova recuperação.",
     };
   }
 

@@ -27,11 +27,11 @@ export default async function LoginPage({
         <AuthShowcasePanel
           badge="Monitoramento de vencimentos, alertas e conformidade em tempo real"
           title="Bem-vindo de volta ao centro de controle da sua frota."
-          description="Organize documentos criticos, acompanhe pendencias por equipe e mantenha auditorias sob controle com uma operacao mais previsivel."
-          panelEyebrow="Operacao documental"
-          panelTitle="Seus documentos, alertas e usuarios em um unico fluxo."
-          panelDescription="Auditoria de contratos, licencas e ASOs com uma visao pratica do que exige acao imediata."
-          metricLabel="SLA medio"
+          description="Organize documentos críticos, acompanhe pendências por equipe e mantenha auditorias sob controle com uma operação mais previsível."
+          panelEyebrow="Operação documental"
+          panelTitle="Seus documentos, alertas e usuários em um único fluxo."
+          panelDescription="Auditoria de contratos, licenças e ASOs com uma visão prática do que exige ação imediata."
+          metricLabel="SLA médio"
           metricValue="98.4%"
           rows={[
             {
@@ -41,11 +41,11 @@ export default async function LoginPage({
             },
             {
               title: "ASO dos motoristas",
-              meta: "pendente de aprovacao",
+              meta: "pendente de aprovação",
               tone: "sky",
             },
             {
-              title: "Contratos de manutencao",
+              title: "Contratos de manutenção",
               meta: "regularizado",
               tone: "emerald",
             },

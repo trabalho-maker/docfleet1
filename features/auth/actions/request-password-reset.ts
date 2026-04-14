@@ -38,7 +38,7 @@ export async function requestPasswordResetAction(
 
   if (!validateEmailInput(normalizedEmail)) {
     return {
-      error: "Informe um email valido.",
+      error: "Informe um email válido.",
     };
   }
 
@@ -55,7 +55,7 @@ export async function requestPasswordResetAction(
 
       return {
         error:
-          "Nao foi possivel preparar o link de recuperacao agora. Tente novamente em instantes.",
+          "Não foi possível preparar o link de recuperação agora. Tente novamente em instantes.",
       };
     }
 
@@ -71,7 +71,7 @@ export async function requestPasswordResetAction(
 
       return {
         success:
-          "Se existir uma conta com esse email, enviaremos as instrucoes de recuperacao.",
+          "Se existir uma conta com esse email, enviaremos as instruções de recuperação.",
       };
     }
 
@@ -98,7 +98,7 @@ export async function requestPasswordResetAction(
 
     return {
       success:
-        "Se existir uma conta com esse email, enviaremos as instrucoes de recuperacao.",
+        "Se existir uma conta com esse email, enviaremos as instruções de recuperação.",
       resetUrl:
         process.env.NODE_ENV === "development" && delivery.transport === "file"
           ? resetUrl
@@ -113,7 +113,7 @@ export async function requestPasswordResetAction(
       });
 
       return {
-        error: `Muitas solicitacoes de recuperacao. Tente novamente em ${error.retryAfterSeconds}s.`,
+        error: `Muitas solicitações de recuperação. Tente novamente em ${error.retryAfterSeconds}s.`,
       };
     }
 
@@ -130,7 +130,7 @@ export async function requestPasswordResetAction(
       });
       return {
         error:
-          "Nao foi possivel enviar o email de recuperacao agora. Tente novamente em instantes.",
+          "Não foi possível enviar o email de recuperação agora. Tente novamente em instantes.",
       };
     }
 

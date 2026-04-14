@@ -25,7 +25,7 @@ export default async function NewAssociatePage() {
         <div className="w-full">
           <FeedbackAlert
             type="error"
-            message={accessMessage ?? "Seu perfil nÃ£o pode cadastrar associados."}
+            message={accessMessage ?? "Seu perfil não pode cadastrar associados."}
           />
         </div>
       )}

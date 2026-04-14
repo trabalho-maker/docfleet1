@@ -18,10 +18,10 @@ export function DocumentManagerHeader({
           </p>
           <div>
             <h1 className="text-4xl font-semibold tracking-tight text-[var(--color-foreground)]">
-              Gestao documental
+              Gestão documental
             </h1>
             <p className="mt-2 max-w-3xl text-base leading-7 text-[var(--color-muted)]">
-              Crie, edite e exclua documentos com persistencia em SQLite e rotas
+              Crie, edite e exclua documentos com persistência em SQLite e rotas
               API protegidas. Tudo conectado ao core atual do DocFleet.
             </p>
           </div>

@@ -6,7 +6,7 @@ import { SignUpCard } from "@/features/auth/components/sign-up-card";
 
 export const metadata: Metadata = {
   title: "Cadastro",
-  description: "Criacao de novo acesso ao ambiente do DocFleet.",
+  description: "Criação de novo acesso ao ambiente do DocFleet.",
 };
 
 export default async function SignUpPage() {
@@ -20,23 +20,23 @@ export default async function SignUpPage() {
     <main className="min-h-screen bg-[linear-gradient(135deg,#0f172a_0%,#14213d_45%,#1d4ed8_100%)]">
       <div className="grid min-h-screen lg:grid-cols-[1.08fr_0.92fr]">
         <AuthShowcasePanel
-          badge="Provisionamento rapido de acessos para equipes e operacoes"
+          badge="Provisionamento rápido de acessos para equipes e operações"
           title="Crie um novo acesso e leve sua equipe para um fluxo mais seguro."
-          description="Cadastre usuarios com validacao de email, senha forte e autenticao integrada ao ambiente do DocFleet sem perder o padrao operacional."
+          description="Cadastre usuários com validação de email, senha forte e autenticação integrada ao ambiente do DocFleet sem perder o padrão operacional."
           panelEyebrow="Onboarding de acessos"
           panelTitle="Um cadastro simples, seguro e pronto para escalar."
-          panelDescription="A base ja valida credenciais, aplica hash com bcrypt e integra o novo usuario ao fluxo autenticado do sistema."
-          metricLabel="Tempo medio"
+          panelDescription="A base já valida credenciais, aplica hash com bcrypt e integra o novo usuário ao fluxo autenticado do sistema."
+          metricLabel="Tempo médio"
           metricValue="< 2 min"
           rows={[
             {
-              title: "Criacao de conta com validacao",
+              title: "Criação de conta com validação",
               meta: "nome, email e senha forte",
               tone: "orange",
             },
             {
-              title: "Persistencia centralizada",
-              meta: "usuarios gravados em SQLite",
+              title: "Persistência centralizada",
+              meta: "usuários gravados em SQLite",
               tone: "sky",
             },
             {
@@ -46,7 +46,7 @@ export default async function SignUpPage() {
             },
           ]}
           stats={[
-            { value: "1", label: "fonte unica de usuarios" },
+            { value: "1", label: "fonte única de usuários" },
             { value: "100%", label: "senhas com hash" },
             { value: "24/7", label: "acesso ao painel" },
           ]}
@@ -56,6 +56,6 @@ export default async function SignUpPage() {
           <SignUpCard />
         </section>
       </div>
-    </main> 
+    </main>
   );
 }

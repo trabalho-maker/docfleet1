@@ -23,14 +23,14 @@ export function RequestPasswordResetCard() {
       <div className="space-y-8">
         <header className="space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Recuperacao
+            Recuperação
           </div>
           <div className="space-y-2">
             <h2 className="text-3xl font-semibold tracking-tight text-slate-950">
               Esqueceu sua senha?
             </h2>
             <p className="text-sm leading-6 text-slate-500">
-              Informe seu email para receber um link seguro de redefinicao e
+              Informe seu email para receber um link seguro de redefinição e
               voltar ao ambiente do DocFleet.
             </p>
           </div>
@@ -75,13 +75,13 @@ export function RequestPasswordResetCard() {
             isLoading={isPending}
             loadingLabel="Enviando link..."
           >
-            Enviar link de recuperacao
+            Enviar link de recuperação
           </Button>
         </form>
 
         <div className="space-y-4">
           <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-            O link gerado possui expiracao curta e uso unico para reduzir risco
+            O link gerado possui expiração curta e uso único para reduzir risco
             operacional.
           </div>
 

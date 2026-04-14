@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { AssociateStatusBadge } from "@/features/associates/components/associate-status-badge";
@@ -31,10 +31,10 @@ export function AssociatesTable({
               <th className="px-5 py-4">Nome</th>
               <th className="px-5 py-4">CPF</th>
               <th className="px-5 py-4">Categoria</th>
-              <th className="px-5 py-4">MatrÃ­cula</th>
-              <th className="px-5 py-4">SituaÃ§Ã£o</th>
+              <th className="px-5 py-4">Matrícula</th>
+              <th className="px-5 py-4">Situação</th>
               <th className="px-5 py-4">Data de entrada</th>
-              <th className="px-5 py-4 text-right">AÃ§Ãµes</th>
+              <th className="px-5 py-4 text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E5E7EB]">
@@ -140,4 +140,3 @@ function formatDate(date: string) {
     return date;
   }
 }
-

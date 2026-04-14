@@ -20,17 +20,17 @@ export default async function RequestPasswordResetPage() {
     <main className="min-h-screen bg-[linear-gradient(135deg,#0f172a_0%,#14213d_45%,#1d4ed8_100%)]">
       <div className="grid min-h-screen lg:grid-cols-[1.08fr_0.92fr]">
         <AuthShowcasePanel
-          badge="Recuperacao segura de acesso com token temporario"
-          title="Recupere o acesso sem expor a seguranca da sua conta."
-          description="Solicite um link de redefinicao com expiracao curta, token protegido por hash e entrega integrada ao fluxo atual do DocFleet."
-          panelEyebrow="Redefinicao segura"
-          panelTitle="Menos atrito para o usuario, mais previsibilidade para a operacao."
-          panelDescription="O link de recuperacao e gerado sob demanda, enviado pelo provedor configurado e validado com uso unico."
+          badge="Recuperação segura de acesso com token temporário"
+          title="Recupere o acesso sem expor a segurança da sua conta."
+          description="Solicite um link de redefinição com expiração curta, token protegido por hash e entrega integrada ao fluxo atual do DocFleet."
+          panelEyebrow="Redefinição segura"
+          panelTitle="Menos atrito para o usuário, mais previsibilidade para a operação."
+          panelDescription="O link de recuperação é gerado sob demanda, enviado pelo provedor configurado e validado com uso único."
           metricLabel="Validade"
           metricValue="30 min"
           rows={[
             {
-              title: "Token aleatorio e temporario",
+              title: "Token aleatório e temporário",
               meta: "armazenado com hash",
               tone: "orange",
             },
@@ -40,15 +40,15 @@ export default async function RequestPasswordResetPage() {
               tone: "sky",
             },
             {
-              title: "Uso unico na redefinicao",
-              meta: "links antigos deixam de valer apos sucesso",
+              title: "Uso único na redefinição",
+              meta: "links antigos deixam de valer após sucesso",
               tone: "emerald",
             },
           ]}
           stats={[
-            { value: "1", label: "token por solicitacao" },
-            { value: "100%", label: "validacao server-side" },
-            { value: "24/7", label: "recuperacao de acesso" },
+            { value: "1", label: "token por solicitação" },
+            { value: "100%", label: "validação server-side" },
+            { value: "24/7", label: "recuperação de acesso" },
           ]}
         />
 

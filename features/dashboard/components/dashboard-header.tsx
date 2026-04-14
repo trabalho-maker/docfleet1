@@ -19,7 +19,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-7 text-[#64748B] lg:text-base">
               Visão consolidada da operação documental com dados reais de documentos,
-              vencimentos e alertas conectados ao core atual do DocFleet.
+              vencimentos, associados e alertas conectados ao core atual do DocFleet.
             </p>
           </div>
         </div>
@@ -35,6 +35,12 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
               className="inline-flex h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#0F172A] transition-colors hover:bg-[#FFF7ED]"
             >
               Abrir documentos
+            </Link>
+            <Link
+              href="/associados"
+              className="inline-flex h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#0F172A] transition-colors hover:bg-[#FFF7ED]"
+            >
+              Abrir associados
             </Link>
             <span className="inline-flex h-10 items-center rounded-full bg-[#FFF7ED] px-4 text-sm font-semibold text-[#C2410C]">
               {user.role}

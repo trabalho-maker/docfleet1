@@ -75,7 +75,7 @@ export async function signUpAction(
       });
       return {
         fieldErrors: {
-          email: "Ja existe um usuario cadastrado com este email.",
+          email: "Já existe um usuário cadastrado com este email.",
         },
       };
     }

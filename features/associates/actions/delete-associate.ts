@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { logger } from "@/lib/logger";
 import {
@@ -60,7 +60,7 @@ export async function deleteAssociateAction(
       return {
         success: false,
         notFound: true,
-        formError: "O associado informado nÃ£o foi encontrado.",
+        formError: "O associado informado não foi encontrado.",
       };
     }
 
@@ -73,8 +73,7 @@ export async function deleteAssociateAction(
     return {
       success: false,
       formError:
-        "NÃ£o foi possÃ­vel excluir o associado agora. Tente novamente em instantes.",
+        "Não foi possível excluir o associado agora. Tente novamente em instantes.",
     };
   }
 }
-
