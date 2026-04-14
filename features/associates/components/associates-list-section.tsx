@@ -1,17 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import {
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
-import { useState } from "react";
-import { deleteAssociateAction } from "@/src/features/associates/actions/delete-associate";
-import { AssociatesTable } from "@/src/features/associates/components/associates-table";
-import { EmptyState } from "@/src/features/associates/components/empty-state";
-import { FeedbackAlert } from "@/src/features/associates/components/feedback-alert";
-import type { Associate } from "@/src/features/associates/types";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { deleteAssociateAction } from "@/features/associates/actions/delete-associate";
+import { AssociatesTable } from "@/features/associates/components/associates-table";
+import { EmptyState } from "@/features/associates/components/empty-state";
+import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
+import type { Associate } from "@/features/associates/types";
 
 type AssociatesListSectionProps = {
   initialAssociates: Associate[];
@@ -47,11 +43,25 @@ export function AssociatesListSection({
     message: string;
   } | null>(initialFeedback);
 
+  useEffect(() => {
+    if (!initialFeedback || !searchParams.has("success")) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("success");
+    const nextQuery = params.toString();
+
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+      scroll: false,
+    });
+  }, [initialFeedback, pathname, router, searchParams]);
+
   async function handleDelete(associate: Associate) {
     if (!canDelete) {
       setFeedback({
         type: "info",
-        message: accessMessage ?? "Seu perfil não pode excluir associados.",
+        message: accessMessage ?? "Seu perfil nao pode excluir associados.",
       });
       return;
     }
@@ -82,19 +92,12 @@ export function AssociatesListSection({
       );
       setFeedback({
         type: "success",
-        message: "Associado excluído com sucesso.",
+        message: "Associado excluido com sucesso.",
       });
-      persistSuccessFeedback("deleted");
       router.refresh();
     } finally {
       setDeletingId(null);
     }
-  }
-
-  function persistSuccessFeedback(value: "deleted") {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("success", value);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
   const emptyState = hasActiveFilters
@@ -102,7 +105,7 @@ export function AssociatesListSection({
         eyebrow: "Sem resultados",
         title: "Nenhum associado corresponde aos filtros atuais",
         description:
-          "Revise a busca por nome, CPF, categoria ou situação. Limpar os filtros pode ajudar a reencontrar os registros da base.",
+          "Revise a busca por nome, CPF, categoria ou situacao. Limpar os filtros pode ajudar a reencontrar os registros da base.",
         action: (
           <Link
             href="/associados"
@@ -114,9 +117,9 @@ export function AssociatesListSection({
       }
     : {
         eyebrow: "Primeiros passos",
-        title: "Sua base de associados ainda está vazia",
+        title: "Sua base de associados ainda esta vazia",
         description:
-          "Comece cadastrando o primeiro associado para liberar a operação do módulo com histórico, filtros e ações administrativas.",
+          "Comece cadastrando o primeiro associado para liberar a operacao do modulo com historico, filtros e acoes administrativas.",
         action: canCreate ? (
           <Link
             href="/associados/novo"
@@ -139,11 +142,11 @@ export function AssociatesListSection({
           </h2>
           {hasActiveFilters ? (
             <p className="mt-2 text-sm leading-6 text-[#64748B]">
-              Exibindo resultados filtrados por busca e critérios selecionados.
+              Exibindo resultados filtrados por busca e criterios selecionados.
             </p>
           ) : (
             <p className="mt-2 text-sm leading-6 text-[#64748B]">
-              Acompanhe a base operacional de associados com ações administrativas e feedbacks consistentes.
+              Acompanhe a base operacional de associados com acoes administrativas e feedbacks consistentes.
             </p>
           )}
         </div>
@@ -156,7 +159,7 @@ export function AssociatesListSection({
         <div className="mt-6">
           <FeedbackAlert
             type="error"
-            title="Não foi possível carregar a listagem"
+            title="Nao foi possivel carregar a listagem"
             message={loadError}
             action={
               <Link
@@ -184,7 +187,7 @@ export function AssociatesListSection({
         <div className="mt-6">
           <FeedbackAlert
             type={feedback.type}
-            title={feedback.type === "success" ? "Operação concluída" : undefined}
+            title={feedback.type === "success" ? "Operacao concluida" : undefined}
             message={feedback.message}
           />
         </div>

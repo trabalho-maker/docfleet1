@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { getCurrentUser } from "@/features/auth/server/session";
-import { FeedbackAlert } from "@/src/features/associates/components/feedback-alert";
-import { CreateAssociateSection } from "@/src/features/associates/components/create-associate-section";
+import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
+import { CreateAssociateSection } from "@/features/associates/components/create-associate-section";
 import {
   canCreateAssociate,
   getAssociateAccessMessage,
-} from "@/src/features/associates/lib/associate-authorization";
+} from "@/features/associates/lib/associate-authorization";
 
 export const metadata: Metadata = {
   title: "Novo associado",
@@ -25,10 +25,11 @@ export default async function NewAssociatePage() {
         <div className="w-full">
           <FeedbackAlert
             type="error"
-            message={accessMessage ?? "Seu perfil não pode cadastrar associados."}
+            message={accessMessage ?? "Seu perfil nÃ£o pode cadastrar associados."}
           />
         </div>
       )}
     </main>
   );
 }
+

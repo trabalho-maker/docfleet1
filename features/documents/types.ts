@@ -6,6 +6,13 @@ export type DocumentFormValues = {
   dueDate: string;
 };
 
+export type DocumentFormErrors = Partial<Record<keyof DocumentFormValues, string>>;
+
+export type DocumentUiMessage = {
+  type: "success" | "error";
+  text: string;
+};
+
 export type DocumentsApiResponse = {
   documents: FleetDocument[];
   pagination: {

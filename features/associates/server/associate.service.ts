@@ -1,12 +1,12 @@
-import {
+﻿import {
   SqliteAssociateRepository,
   type AssociateRepository,
-} from "@/src/features/associates/server/associate.repository";
+} from "@/features/associates/server/associate.repository";
 import {
   validateAssociateFilters,
   validateCreateAssociateInput,
   validateUpdateAssociateInput,
-} from "@/src/features/associates/lib/associate.validators";
+} from "@/features/associates/lib/associate.validators";
 import type {
   Associate,
   AssociateCategoryCounts,
@@ -14,7 +14,7 @@ import type {
   AssociateStatusCounts,
   CreateAssociateInput,
   UpdateAssociateInput,
-} from "@/src/features/associates/types";
+} from "@/features/associates/types";
 
 export class AssociateValidationError extends Error {
   constructor(message: string) {
@@ -197,3 +197,4 @@ export type {
   CreateAssociateInput,
   UpdateAssociateInput,
 };
+

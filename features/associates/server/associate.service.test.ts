@@ -1,13 +1,13 @@
-import {
+﻿import {
   resetSqliteDatabase,
   resetSqliteStorageState,
 } from "@/lib/storage/sqlite-storage";
-import { SqliteAssociateRepository } from "@/src/features/associates/server/associate.repository";
+import { SqliteAssociateRepository } from "@/features/associates/server/associate.repository";
 import {
   AssociateConflictError,
   AssociateNotFoundError,
   createAssociateService,
-} from "@/src/features/associates/server/associate.service";
+} from "@/features/associates/server/associate.service";
 
 describe("associate service", () => {
   const repository = new SqliteAssociateRepository();
@@ -105,3 +105,4 @@ describe("associate service", () => {
     });
   });
 });
+

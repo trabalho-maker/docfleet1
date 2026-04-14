@@ -1,20 +1,20 @@
-"use server";
+﻿"use server";
 
 import { logger, maskCpf } from "@/lib/logger";
 import {
   AssociateConflictError,
   AssociateValidationError,
   createAssociateService,
-} from "@/src/features/associates/server/associate.service";
+} from "@/features/associates/server/associate.service";
 import {
   AssociateAccessDeniedError,
   requireAssociateModuleAccess,
-} from "@/src/features/associates/server/access";
-import { validateCreateAssociateInput } from "@/src/features/associates/lib/associate.validators";
+} from "@/features/associates/server/access";
+import { validateCreateAssociateInput } from "@/features/associates/lib/associate.validators";
 import type {
   AssociateFieldErrors,
   AssociateFormValues,
-} from "@/src/features/associates/types";
+} from "@/features/associates/types";
 
 export type CreateAssociateActionResult =
   | {
@@ -81,7 +81,7 @@ export async function createAssociateAction(
       return {
         success: false,
         fieldErrors: {
-          cpf: "Já existe um associado cadastrado com este CPF.",
+          cpf: "JÃ¡ existe um associado cadastrado com este CPF.",
         },
       };
     }
@@ -99,7 +99,7 @@ export async function createAssociateAction(
         success: false,
         fieldErrors: {
           registrationNumber:
-            "Já existe um associado cadastrado com esta matrícula.",
+            "JÃ¡ existe um associado cadastrado com esta matrÃ­cula.",
         },
       };
     }
@@ -120,7 +120,8 @@ export async function createAssociateAction(
     return {
       success: false,
       formError:
-        "Não foi possível cadastrar o associado agora. Tente novamente em instantes.",
+        "NÃ£o foi possÃ­vel cadastrar o associado agora. Tente novamente em instantes.",
     };
   }
 }
+

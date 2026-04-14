@@ -1,4 +1,4 @@
-jest.mock("@/features/auth/server/session", () => ({
+﻿jest.mock("@/features/auth/server/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/features/auth/server/session";
 import {
   AssociateAccessDeniedError,
   requireAssociateModuleAccess,
-} from "@/src/features/associates/server/access";
+} from "@/features/associates/server/access";
 
 const mockedGetCurrentUser = getCurrentUser as jest.MockedFunction<
   typeof getCurrentUser
@@ -56,3 +56,4 @@ describe("associate access", () => {
     });
   });
 });
+

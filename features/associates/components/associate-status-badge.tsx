@@ -1,4 +1,4 @@
-import type { AssociateStatus } from "@/src/features/associates/types";
+﻿import type { AssociateStatus } from "@/features/associates/types";
 
 type AssociateStatusBadgeProps = {
   status: AssociateStatus;
@@ -20,3 +20,4 @@ export function AssociateStatusBadge({ status }: AssociateStatusBadgeProps) {
     </span>
   );
 }
+

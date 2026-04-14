@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { logger, maskCpf } from "@/lib/logger";
 import {
@@ -6,16 +6,16 @@ import {
   AssociateNotFoundError,
   AssociateValidationError,
   createAssociateService,
-} from "@/src/features/associates/server/associate.service";
+} from "@/features/associates/server/associate.service";
 import {
   AssociateAccessDeniedError,
   requireAssociateModuleAccess,
-} from "@/src/features/associates/server/access";
-import { validateUpdateAssociateInput } from "@/src/features/associates/lib/associate.validators";
+} from "@/features/associates/server/access";
+import { validateUpdateAssociateInput } from "@/features/associates/lib/associate.validators";
 import type {
   AssociateFieldErrors,
   AssociateFormValues,
-} from "@/src/features/associates/types";
+} from "@/features/associates/types";
 
 export type UpdateAssociateActionResult =
   | {
@@ -84,7 +84,7 @@ export async function updateAssociateAction(
       return {
         success: false,
         fieldErrors: {
-          cpf: "Já existe um associado cadastrado com este CPF.",
+          cpf: "JÃ¡ existe um associado cadastrado com este CPF.",
         },
       };
     }
@@ -103,7 +103,7 @@ export async function updateAssociateAction(
         success: false,
         fieldErrors: {
           registrationNumber:
-            "Já existe um associado cadastrado com esta matrícula.",
+            "JÃ¡ existe um associado cadastrado com esta matrÃ­cula.",
         },
       };
     }
@@ -117,7 +117,7 @@ export async function updateAssociateAction(
       return {
         success: false,
         notFound: true,
-        formError: "O associado informado não foi encontrado.",
+        formError: "O associado informado nÃ£o foi encontrado.",
       };
     }
 
@@ -137,7 +137,8 @@ export async function updateAssociateAction(
     return {
       success: false,
       formError:
-        "Não foi possível atualizar o associado agora. Tente novamente em instantes.",
+        "NÃ£o foi possÃ­vel atualizar o associado agora. Tente novamente em instantes.",
     };
   }
 }
+

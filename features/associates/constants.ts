@@ -1,4 +1,4 @@
-import type { AssociateCategory, AssociateStatus } from "@/src/features/associates/types";
+﻿import type { AssociateCategory, AssociateStatus } from "@/features/associates/types";
 
 export const associateCategories: AssociateCategory[] = [
   "Titular",
@@ -18,3 +18,4 @@ export const associatesDefaults = {
   page: 1,
   pageSize: 20,
 } as const;
+

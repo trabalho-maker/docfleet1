@@ -1,4 +1,4 @@
-import {
+﻿import {
   hasExceededMaxLength,
   normalizePlainTextInput,
 } from "@/lib/security/input";
@@ -6,7 +6,7 @@ import {
   associateCategories,
   associatesDefaults,
   associateStatuses,
-} from "@/src/features/associates/constants";
+} from "@/features/associates/constants";
 import type {
   AssociateCategory,
   AssociateFieldErrors,
@@ -14,7 +14,7 @@ import type {
   AssociateStatus,
   CreateAssociateInput,
   UpdateAssociateInput,
-} from "@/src/features/associates/types";
+} from "@/features/associates/types";
 
 const MAX_ASSOCIATE_NAME_LENGTH = 160;
 const MAX_ASSOCIATE_CPF_LENGTH = 11;
@@ -393,3 +393,4 @@ function calculateCpfCheckDigit(baseDigits: number[], factor: number) {
 
   return remainder === 10 ? 0 : remainder;
 }
+

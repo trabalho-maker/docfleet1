@@ -1,11 +1,11 @@
-import { getCurrentUser } from "@/features/auth/server/session";
+﻿import { getCurrentUser } from "@/features/auth/server/session";
 import {
   canCreateAssociate,
   canDeleteAssociate,
   canEditAssociate,
   canViewAssociates,
   getAssociateAccessMessage,
-} from "@/src/features/associates/lib/associate-authorization";
+} from "@/features/associates/lib/associate-authorization";
 
 export type AssociateModuleAction = "view" | "create" | "edit" | "delete";
 
@@ -57,7 +57,7 @@ function getAssociateDeniedMessage(
   if (action === "view") {
     return (
       getAssociateAccessMessage(user) ??
-      "Seu perfil não pode acessar o módulo de associados."
+      "Seu perfil nÃ£o pode acessar o mÃ³dulo de associados."
     );
   }
 
@@ -68,5 +68,6 @@ function getAssociateDeniedMessage(
     delete: "excluir",
   }[action];
 
-  return `Seu perfil não pode ${verb} associados.`;
+  return `Seu perfil nÃ£o pode ${verb} associados.`;
 }
+

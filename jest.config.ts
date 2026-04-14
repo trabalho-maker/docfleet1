@@ -3,7 +3,7 @@ import type { Config } from "jest";
 const config: Config = {
   preset: "ts-jest",
   testEnvironment: "node",
-  roots: ["<rootDir>/features", "<rootDir>/src/features"],
+  roots: ["<rootDir>/features"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
   },
@@ -14,7 +14,7 @@ const config: Config = {
     "features/alerts/**/*.ts",
     "features/data/repositories/**/*.ts",
     "features/documents/**/*.ts",
-    "src/features/associates/**/*.ts",
+    "features/associates/**/*.ts",
     "!**/*.d.ts",
   ],
 };

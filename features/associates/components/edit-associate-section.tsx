@@ -1,15 +1,15 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AssociateForm } from "@/src/features/associates/components/associate-form";
-import { AssociatesPageHeader } from "@/src/features/associates/components/associates-page-header";
-import { updateAssociateAction } from "@/src/features/associates/actions/update-associate";
+import { AssociateForm } from "@/features/associates/components/associate-form";
+import { AssociatesPageHeader } from "@/features/associates/components/associates-page-header";
+import { updateAssociateAction } from "@/features/associates/actions/update-associate";
 import type {
   AssociateFieldErrors,
   AssociateFormValues,
-} from "@/src/features/associates/types";
+} from "@/features/associates/types";
 
 type EditAssociateSectionProps = {
   associateId: string;
@@ -70,9 +70,9 @@ export function EditAssociateSection({
   return (
     <div className="flex w-full flex-col gap-6">
       <AssociatesPageHeader
-        eyebrow="Edição de associados"
+        eyebrow="EdiÃ§Ã£o de associados"
         title="Editar associado"
-        description="Atualize os dados cadastrais do associado mantendo a consistência da base e as validações do domínio."
+        description="Atualize os dados cadastrais do associado mantendo a consistÃªncia da base e as validaÃ§Ãµes do domÃ­nio."
         userName={userName}
         userEmail={userEmail}
         action={
@@ -88,7 +88,7 @@ export function EditAssociateSection({
       <AssociateForm
         initialValues={initialValues}
         mode="edit"
-        submitLabel="Salvar alterações"
+        submitLabel="Salvar alteraÃ§Ãµes"
         isSubmitting={isSubmitting}
         serverErrors={serverErrors}
         message={message}
@@ -98,3 +98,4 @@ export function EditAssociateSection({
     </div>
   );
 }
+

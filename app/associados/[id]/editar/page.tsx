@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/features/auth/server/session";
-import { FeedbackAlert } from "@/src/features/associates/components/feedback-alert";
-import { EditAssociateSection } from "@/src/features/associates/components/edit-associate-section";
+import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
+import { EditAssociateSection } from "@/features/associates/components/edit-associate-section";
 import {
   canEditAssociate,
   getAssociateAccessMessage,
-} from "@/src/features/associates/lib/associate-authorization";
+} from "@/features/associates/lib/associate-authorization";
 import {
   AssociateNotFoundError,
   createAssociateService,
-} from "@/src/features/associates/server/associate.service";
+} from "@/features/associates/server/associate.service";
 
 export const metadata: Metadata = {
   title: "Editar associado",

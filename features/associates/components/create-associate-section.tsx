@@ -1,15 +1,15 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AssociateForm } from "@/src/features/associates/components/associate-form";
-import { AssociatesPageHeader } from "@/src/features/associates/components/associates-page-header";
-import { createAssociateAction } from "@/src/features/associates/actions/create-associate";
+import { AssociateForm } from "@/features/associates/components/associate-form";
+import { AssociatesPageHeader } from "@/features/associates/components/associates-page-header";
+import { createAssociateAction } from "@/features/associates/actions/create-associate";
 import type {
   AssociateFieldErrors,
   AssociateFormValues,
-} from "@/src/features/associates/types";
+} from "@/features/associates/types";
 
 type CreateAssociateSectionProps = {
   userName: string;
@@ -61,7 +61,7 @@ export function CreateAssociateSection({
       <AssociatesPageHeader
         eyebrow="Cadastro de associados"
         title="Novo associado"
-        description="Cadastre um novo associado na base do sistema com dados validados, tipagem forte e integração direta com a camada de serviço."
+        description="Cadastre um novo associado na base do sistema com dados validados, tipagem forte e integraÃ§Ã£o direta com a camada de serviÃ§o."
         userName={userName}
         userEmail={userEmail}
         action={
@@ -86,3 +86,4 @@ export function CreateAssociateSection({
     </div>
   );
 }
+

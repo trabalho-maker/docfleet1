@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+﻿import bcrypt from "bcryptjs";
 import type { Database } from "sql.js";
 import type { FleetDocument, OperationalAlert } from "@/features/data/types";
 import {
@@ -7,7 +7,7 @@ import {
   formatUtcDateOnly,
 } from "@/features/documents/lib/expiration";
 import { logger, maskEmail } from "@/lib/logger";
-import type { Associate } from "@/src/features/associates/types";
+import type { Associate } from "@/features/associates/types";
 
 const defaultSeedRole = "Gestor de frota";
 
@@ -208,3 +208,4 @@ export async function seedSqliteDatabase(db: Database) {
     throw error;
   }
 }
+

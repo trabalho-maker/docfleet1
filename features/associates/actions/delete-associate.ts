@@ -1,14 +1,14 @@
-"use server";
+﻿"use server";
 
 import { logger } from "@/lib/logger";
 import {
   AssociateNotFoundError,
   createAssociateService,
-} from "@/src/features/associates/server/associate.service";
+} from "@/features/associates/server/associate.service";
 import {
   AssociateAccessDeniedError,
   requireAssociateModuleAccess,
-} from "@/src/features/associates/server/access";
+} from "@/features/associates/server/access";
 
 export type DeleteAssociateActionResult =
   | {
@@ -60,7 +60,7 @@ export async function deleteAssociateAction(
       return {
         success: false,
         notFound: true,
-        formError: "O associado informado não foi encontrado.",
+        formError: "O associado informado nÃ£o foi encontrado.",
       };
     }
 
@@ -73,7 +73,8 @@ export async function deleteAssociateAction(
     return {
       success: false,
       formError:
-        "Não foi possível excluir o associado agora. Tente novamente em instantes.",
+        "NÃ£o foi possÃ­vel excluir o associado agora. Tente novamente em instantes.",
     };
   }
 }
+

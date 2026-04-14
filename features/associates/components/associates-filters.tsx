@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { associateCategories, associateStatuses } from "@/src/features/associates/constants";
-import type { AssociateCategory, AssociateStatus } from "@/src/features/associates/types";
+﻿import Link from "next/link";
+import { associateCategories, associateStatuses } from "@/features/associates/constants";
+import type { AssociateCategory, AssociateStatus } from "@/features/associates/types";
 
 export type AssociatesFilterValues = {
   search: string;
@@ -29,8 +29,8 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
             Refine a listagem
           </h2>
           <p className="mt-2 text-sm leading-6 text-[#64748B]">
-            Combine nome, CPF, categoria e situação para localizar associados com
-            rapidez e manter a operação mais previsível.
+            Combine nome, CPF, categoria e situaÃ§Ã£o para localizar associados com
+            rapidez e manter a operaÃ§Ã£o mais previsÃ­vel.
           </p>
         </div>
         {hasActiveFilters ? (
@@ -85,7 +85,7 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
           </select>
         </Field>
 
-        <Field label="Situação" htmlFor="associate-status">
+        <Field label="SituaÃ§Ã£o" htmlFor="associate-status">
           <select
             id="associate-status"
             name="status"
@@ -133,3 +133,4 @@ function Field({
 
 const inputClassName =
   "h-12 rounded-2xl border border-[#E5E7EB] bg-[#FCFDFE] px-4 text-sm text-[#0F172A] outline-none transition-colors placeholder:text-[#94A3B8] focus:border-[#1E3A5F] focus:bg-white";
+

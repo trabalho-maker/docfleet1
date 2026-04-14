@@ -1,8 +1,8 @@
-import {
+﻿import {
   normalizeAssociateCpf,
   validateAssociateCpf,
   validateCreateAssociateInput,
-} from "@/src/features/associates/lib/associate.validators";
+} from "@/features/associates/lib/associate.validators";
 
 describe("associate validators", () => {
   it("normalizes CPF by removing the mask", () => {
@@ -38,3 +38,4 @@ describe("associate validators", () => {
     });
   });
 });
+

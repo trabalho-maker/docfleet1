@@ -1,10 +1,10 @@
-import { randomUUID } from "node:crypto";
+﻿import { randomUUID } from "node:crypto";
 import type { DatabaseAdapter, DatabaseRow } from "@/lib/database/adapter";
 import { getDatabaseAdapter } from "@/lib/database/provider";
 import {
   associateCategories,
   associateStatuses,
-} from "@/src/features/associates/constants";
+} from "@/features/associates/constants";
 import type {
   Associate,
   AssociateCategory,
@@ -14,7 +14,7 @@ import type {
   AssociateStatus,
   CreateAssociateInput,
   UpdateAssociateInput,
-} from "@/src/features/associates/types";
+} from "@/features/associates/types";
 
 type AssociateRecord = {
   id: string;
@@ -385,3 +385,4 @@ export class SqliteAssociateRepository implements AssociateRepository {
     });
   }
 }
+
