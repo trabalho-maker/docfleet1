@@ -12,7 +12,7 @@ export function MetricCard({ metric }: MetricCardProps) {
   const accent = getMetricAccent(metric.label);
 
   return (
-    <article className="relative overflow-hidden rounded-[28px] border border-[#E5E7EB] bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.04)]">
+    <article className="df-metric-card p-6 transition-transform duration-200 hover:-translate-y-0.5">
       <div
         className={`absolute inset-x-0 top-0 h-1.5 ${accent.barClass}`}
         aria-hidden="true"
@@ -22,17 +22,17 @@ export function MetricCard({ metric }: MetricCardProps) {
         aria-hidden="true"
       />
 
-      <p className="relative text-sm font-semibold uppercase tracking-[0.18em] text-[#64748B]">
-        {metric.label}
-      </p>
-      <p className="relative mt-4 text-4xl font-semibold tracking-tight text-[#0F172A]">
-        {metric.value}
-      </p>
-      {metric.helper ? (
-        <p className="relative mt-3 text-sm leading-6 text-[#64748B]">
-          {metric.helper}
+      <div className="relative space-y-3">
+        <p className="df-eyebrow">{metric.label}</p>
+        <p className="text-4xl font-semibold tracking-tight text-[var(--color-foreground)]">
+          {metric.value}
         </p>
-      ) : null}
+        {metric.helper ? (
+          <p className="max-w-xs text-sm leading-6 text-[var(--color-muted)]">
+            {metric.helper}
+          </p>
+        ) : null}
+      </div>
     </article>
   );
 }
@@ -45,7 +45,7 @@ function getMetricAccent(label: string) {
     };
   }
 
-  if (label.includes("Pendencias")) {
+  if (label.includes("Pendencias") || label.includes("Pendências")) {
     return {
       barClass: "bg-[#EF4444]",
       glowClass: "bg-rose-100/80",

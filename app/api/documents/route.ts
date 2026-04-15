@@ -27,7 +27,7 @@ export async function GET(request: Request) {
   const session = await auth();
 
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   if (!canViewOperationalData(session.user)) {
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   const session = await auth();
 
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   if (!canManageOperationalData(session.user)) {
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
 
   if (!bodyResult.success) {
     return NextResponse.json(
-      { error: "Corpo JSON invalido." },
+      { error: "Corpo JSON inválido." },
       { status: 400 },
     );
   }
@@ -100,14 +100,14 @@ export async function POST(request: Request) {
 
   if (!validation.success) {
     return NextResponse.json(
-      { error: "Dados invalidos.", fieldErrors: validation.errors },
+      { error: "Dados inválidos.", fieldErrors: validation.errors },
       { status: 400 },
     );
   }
 
   const document = await createDocumentWithAlerts({
     ...validation.data,
-    owner: session.user.name ?? session.user.email ?? "Usuario DocFleet",
+    owner: session.user.name ?? session.user.email ?? "Usuário DocFleet",
   });
 
   logger.info("api.documents.create.success", {

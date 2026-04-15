@@ -174,9 +174,9 @@ export function validateAssociateFilters(
     const normalizedSearch = normalizePlainTextInput(filters.search);
 
     if (!normalizedSearch) {
-      errors.search = "Informe um termo de busca valido.";
+      errors.search = "Informe um termo de busca válido.";
     } else if (hasExceededMaxLength(normalizedSearch, MAX_FILTER_SEARCH_LENGTH)) {
-      errors.search = `Informe uma busca com no maximo ${MAX_FILTER_SEARCH_LENGTH} caracteres.`;
+      errors.search = `Informe uma busca com no máximo ${MAX_FILTER_SEARCH_LENGTH} caracteres.`;
     } else if (/^[\d.\-\/\s]+$/.test(normalizedSearch)) {
       normalizedFilters.cpf = normalizeAssociateCpf(normalizedSearch);
     } else {
@@ -188,7 +188,7 @@ export function validateAssociateFilters(
     const normalizedCpf = normalizeAssociateCpf(filters.cpf);
 
     if (!normalizedCpf) {
-      errors.cpf = "Informe um CPF valido para filtro.";
+      errors.cpf = "Informe um CPF válido para filtro.";
     } else {
       normalizedFilters.cpf = normalizedCpf;
     }
@@ -196,7 +196,7 @@ export function validateAssociateFilters(
 
   if (filters.category !== undefined) {
     if (!isAssociateCategory(filters.category)) {
-      errors.category = "Informe uma categoria valida.";
+      errors.category = "Informe uma categoria válida.";
     } else {
       normalizedFilters.category = filters.category;
     }
@@ -204,7 +204,7 @@ export function validateAssociateFilters(
 
   if (filters.status !== undefined) {
     if (!isAssociateStatus(filters.status)) {
-      errors.status = "Informe um status valido.";
+      errors.status = "Informe um status válido.";
     } else {
       normalizedFilters.status = filters.status;
     }
@@ -216,14 +216,14 @@ export function validateAssociateFilters(
     );
 
     if (!normalizedRegistrationNumber) {
-      errors.registrationNumber = "Informe uma matricula valida para filtro.";
+      errors.registrationNumber = "Informe uma matrícula válida para filtro.";
     } else if (
       hasExceededMaxLength(
         normalizedRegistrationNumber,
         MAX_ASSOCIATE_REGISTRATION_NUMBER_LENGTH,
       )
     ) {
-      errors.registrationNumber = `Informe uma matricula com no maximo ${MAX_ASSOCIATE_REGISTRATION_NUMBER_LENGTH} caracteres.`;
+      errors.registrationNumber = `Informe uma matrícula com no máximo ${MAX_ASSOCIATE_REGISTRATION_NUMBER_LENGTH} caracteres.`;
     } else {
       normalizedFilters.registrationNumber = normalizedRegistrationNumber;
     }
@@ -231,7 +231,7 @@ export function validateAssociateFilters(
 
   if (filters.admissionDateFrom !== undefined) {
     if (!isValidIsoDate(filters.admissionDateFrom.trim())) {
-      errors.admissionDateFrom = "Informe uma data inicial valida.";
+      errors.admissionDateFrom = "Informe uma data inicial válida.";
     } else {
       normalizedFilters.admissionDateFrom = filters.admissionDateFrom.trim();
     }
@@ -239,7 +239,7 @@ export function validateAssociateFilters(
 
   if (filters.admissionDateTo !== undefined) {
     if (!isValidIsoDate(filters.admissionDateTo.trim())) {
-      errors.admissionDateTo = "Informe uma data final valida.";
+      errors.admissionDateTo = "Informe uma data final válida.";
     } else {
       normalizedFilters.admissionDateTo = filters.admissionDateTo.trim();
     }
@@ -249,13 +249,13 @@ export function validateAssociateFilters(
   const normalizedPageSize = normalizePositiveInteger(filters.pageSize);
 
   if (filters.page !== undefined && normalizedPage === null) {
-    errors.page = "Informe uma pagina valida.";
+    errors.page = "Informe uma página válida.";
   } else {
     normalizedFilters.page = normalizedPage ?? associatesDefaults.page;
   }
 
   if (filters.pageSize !== undefined && normalizedPageSize === null) {
-    errors.pageSize = "Informe um tamanho de pagina valido.";
+    errors.pageSize = "Informe um tamanho de página válido.";
   } else {
     normalizedFilters.pageSize = Math.min(
       normalizedPageSize ?? associatesDefaults.pageSize,
@@ -268,7 +268,7 @@ export function validateAssociateFilters(
     normalizedFilters.admissionDateTo &&
     normalizedFilters.admissionDateFrom > normalizedFilters.admissionDateTo
   ) {
-    errors.admissionDateTo = "A data final nao pode ser anterior a data inicial.";
+    errors.admissionDateTo = "A data final não pode ser anterior à data inicial.";
   }
 
   if (Object.keys(errors).length > 0) {
@@ -290,7 +290,7 @@ function normalizeName(value: string, errors: AssociateFieldErrors) {
   if (normalizedValue.length < 3) {
     errors.name = "Informe um nome com pelo menos 3 caracteres.";
   } else if (hasExceededMaxLength(normalizedValue, MAX_ASSOCIATE_NAME_LENGTH)) {
-    errors.name = `Informe um nome com no maximo ${MAX_ASSOCIATE_NAME_LENGTH} caracteres.`;
+    errors.name = `Informe um nome com no máximo ${MAX_ASSOCIATE_NAME_LENGTH} caracteres.`;
   }
 
   return normalizedValue;
@@ -302,7 +302,7 @@ function normalizeAndValidateCpf(value: string, errors: AssociateFieldErrors) {
   if (!normalizedCpf) {
     errors.cpf = "Informe um CPF.";
   } else if (!validateAssociateCpf(normalizedCpf)) {
-    errors.cpf = "Informe um CPF valido.";
+    errors.cpf = "Informe um CPF válido.";
   }
 
   return normalizedCpf;
@@ -312,11 +312,11 @@ function normalizeRegistrationNumber(value: string, errors: AssociateFieldErrors
   const normalizedValue = normalizePlainTextInput(value);
 
   if (!normalizedValue) {
-    errors.registrationNumber = "Informe uma matricula.";
+    errors.registrationNumber = "Informe uma matrícula.";
   } else if (
     hasExceededMaxLength(normalizedValue, MAX_ASSOCIATE_REGISTRATION_NUMBER_LENGTH)
   ) {
-    errors.registrationNumber = `Informe uma matricula com no maximo ${MAX_ASSOCIATE_REGISTRATION_NUMBER_LENGTH} caracteres.`;
+    errors.registrationNumber = `Informe uma matrícula com no máximo ${MAX_ASSOCIATE_REGISTRATION_NUMBER_LENGTH} caracteres.`;
   }
 
   return normalizedValue;
@@ -327,7 +327,7 @@ function validateCategory(
   errors: AssociateFieldErrors,
 ) {
   if (!value || !isAssociateCategory(value)) {
-    errors.category = "Informe uma categoria valida.";
+    errors.category = "Informe uma categoria válida.";
   }
 
   return value as AssociateCategory;
@@ -338,7 +338,7 @@ function validateStatus(
   errors: AssociateFieldErrors,
 ) {
   if (!value || !isAssociateStatus(value)) {
-    errors.status = "Informe um status valido.";
+    errors.status = "Informe um status válido.";
   }
 
   return value as AssociateStatus;
@@ -348,9 +348,9 @@ function normalizeAndValidateAdmissionDate(value: string, errors: AssociateField
   const normalizedValue = value.trim();
 
   if (!normalizedValue) {
-    errors.admissionDate = "Informe a data de admissao.";
+    errors.admissionDate = "Informe a data de admissão.";
   } else if (!isValidIsoDate(normalizedValue)) {
-    errors.admissionDate = "Informe uma data de admissao valida.";
+    errors.admissionDate = "Informe uma data de admissão válida.";
   }
 
   return normalizedValue;

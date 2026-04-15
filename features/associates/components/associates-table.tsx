@@ -39,9 +39,15 @@ export function AssociatesTable({
           </thead>
           <tbody className="divide-y divide-[#E5E7EB]">
             {associates.map((associate) => (
-              <tr key={associate.id} className="align-top transition-colors hover:bg-[#FCFDFE]">
+              <tr
+                key={associate.id}
+                className="align-top transition-colors hover:bg-[#FCFDFE]"
+              >
                 <td className="px-5 py-4">
                   <p className="font-semibold text-[#0F172A]">{associate.name}</p>
+                  <p className="mt-1 text-sm text-[#64748B]">
+                    Cadastro ativo desde {formatDate(associate.admissionDate)}
+                  </p>
                 </td>
                 <td className="px-5 py-4 text-sm text-[#64748B]">
                   {formatCpf(associate.cpf)}
@@ -103,7 +109,7 @@ function ActionLink({
       <span
         aria-disabled="true"
         title={deniedReason ?? undefined}
-        className="inline-flex h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-slate-100 px-4 text-sm font-semibold text-slate-400"
+        className="df-button-secondary cursor-not-allowed bg-slate-100 text-slate-400 hover:border-[var(--color-border)] hover:bg-slate-100 hover:text-slate-400"
       >
         {children}
       </span>
@@ -111,10 +117,7 @@ function ActionLink({
   }
 
   return (
-    <Link
-      href={href}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#0F172A] transition-colors hover:bg-[#FFF7ED]"
-    >
+    <Link href={href} className="df-button-secondary">
       {children}
     </Link>
   );

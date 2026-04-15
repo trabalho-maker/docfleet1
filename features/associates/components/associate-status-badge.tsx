@@ -14,7 +14,7 @@ export function AssociateStatusBadge({ status }: AssociateStatusBadgeProps) {
 
   return (
     <span
-      className={`inline-flex min-w-[96px] items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${tone}`}
+      className={`df-badge-pill min-w-[96px] ${tone}`}
     >
       {status}
     </span>

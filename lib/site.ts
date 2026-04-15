@@ -1,12 +1,12 @@
 export const siteConfig = {
   name: "DocFleet",
   description:
-    "Base inicial do DocFleet organizada para crescer com clareza, build previsivel e componentes reutilizaveis.",
+    "Plataforma administrativa do DocFleet organizada para crescer com clareza, build previsível e componentes reutilizáveis.",
   url: "https://docfleet.local",
   keywords: [
     "DocFleet",
     "Next.js",
-    "gestao documental",
+    "gestão documental",
     "frota",
     "app router",
   ],
@@ -17,67 +17,67 @@ export const siteConfig = {
   },
   foundationItems: [
     {
-      title: "Layout com metadata real",
+      title: "Identidade institucional aplicada",
       description:
-        "A aplicacao agora usa identidade do produto, idioma correto e configuracao pensada para SEO e compartilhamento.",
+        "A aplicação já usa uma linguagem visual própria, com identidade do produto pensada para navegação pública e área autenticada.",
     },
     {
-      title: "Build sem dependencia de fonte externa",
+      title: "Build previsível em qualquer ambiente",
       description:
-        "A fonte do template foi removida para evitar falhas em CI, ambientes offline ou redes corporativas restritas.",
+        "A base foi preparada para rodar sem dependência de recursos frágeis, reduzindo atrito em CI, ambientes offline e redes corporativas.",
     },
     {
-      title: "Home separada por responsabilidade",
+      title: "Home institucional desacoplada",
       description:
-        "A pagina inicial deixou de concentrar tudo em um unico arquivo e passou a usar componentes pequenos para facilitar manutencao e expansao.",
+        "A página inicial está organizada em componentes menores, facilitando manutenção, refinamento visual e expansão do conteúdo institucional.",
     },
     {
-      title: "Features por dominio",
+      title: "Arquitetura por domínio",
       description:
-        "A base agora separa autenticacao, dashboard e dados em modulos independentes, com contratos e pontos claros de integracao.",
+        "Autenticação, dashboard, documentos e associados já seguem uma separação clara por contexto, com contratos definidos e pontos consistentes de integração.",
     },
     {
-      title: "Persistencia e auth reais",
+      title: "Persistência e acesso reais",
       description:
-        "O projeto agora usa Auth.js com credenciais reais e persistencia local em SQLite, sem precisar desmontar a arquitetura por features.",
+        "O sistema já opera com Auth.js e SQLite reais, sem abandonar a arquitetura por features nem sacrificar previsibilidade de evolução.",
     },
   ],
   reviewActions: [
     {
       label: "Estrutura",
-      title: "Componentes desacoplados",
+      title: "Componentes com responsabilidade clara",
       description:
-        "A pagina inicial deixou de concentrar tudo em um unico arquivo e passou a usar componentes de apresentacao com responsabilidade clara.",
+        "A home deixou de concentrar tudo em um único arquivo e passou a usar blocos de apresentação mais previsíveis e fáceis de manter.",
     },
     {
-      label: "Codigo",
-      title: "Configuracao centralizada",
+      label: "Código",
+      title: "Configuração institucional centralizada",
       description:
-        "Dados institucionais e links recorrentes foram movidos para `lib/site.ts`, reduzindo repeticao e facilitando ajustes globais.",
+        "Informações institucionais e conteúdo recorrente vivem em `lib/site.ts`, o que reduz repetição e facilita ajustes de produto em escala.",
     },
     {
       label: "Qualidade",
-      title: "Scripts de validacao",
+      title: "Validação automatizada",
       description:
-        "Foi preparado um fluxo basico de verificacao com lint, typecheck e build para uso em rotina local ou CI.",
+        "A base já conta com lint, typecheck e build como verificação padrão para dar segurança à evolução local e em CI.",
     },
     {
       label: "Produto",
-      title: "Template removido",
+      title: "Experiência alinhada ao domínio",
       description:
-        "Conteudo padrao do scaffold foi substituido por uma base coerente com o objetivo do projeto e com texto em portugues.",
+        "O conteúdo genérico do scaffold foi substituído por uma narrativa coerente com gestão documental, governança e operação de frota.",
     },
     {
-      label: "Dominio",
-      title: "Esqueleto por features",
+      label: "Domínio",
+      title: "Fluxos reais por módulo",
       description:
-        "Rotas reais em `/login` e `/dashboard` agora consomem servicos das features `auth`, `dashboard` e `data`.",
+        "Rotas como `/login`, `/dashboard`, `/documentos` e `/associados` já consomem serviços reais conectados ao núcleo do sistema.",
     },
     {
       label: "Infra",
-      title: "Banco e sessao reais",
+      title: "Banco e sessão conectados",
       description:
-        "Persistencia local e autenticacao com sessao agora estao conectadas a um banco SQLite real, prontas para evoluir para SQL gerenciado ou API externa.",
+        "Persistência local e autenticação com sessão já funcionam sobre um banco SQLite real, prontas para evoluir para SQL gerenciado ou API externa.",
     },
   ],
 } as const;

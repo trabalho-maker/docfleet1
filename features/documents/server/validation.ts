@@ -45,17 +45,17 @@ export function validateDocumentInput(
   if (name.length < 3) {
     errors.name = "Informe um nome com pelo menos 3 caracteres.";
   } else if (hasExceededMaxLength(name, MAX_DOCUMENT_NAME_LENGTH)) {
-    errors.name = `Informe um nome com no maximo ${MAX_DOCUMENT_NAME_LENGTH} caracteres.`;
+    errors.name = `Informe um nome com no máximo ${MAX_DOCUMENT_NAME_LENGTH} caracteres.`;
   }
 
   if (type.length < 2) {
     errors.type = "Informe um tipo com pelo menos 2 caracteres.";
   } else if (hasExceededMaxLength(type, MAX_DOCUMENT_TYPE_LENGTH)) {
-    errors.type = `Informe um tipo com no maximo ${MAX_DOCUMENT_TYPE_LENGTH} caracteres.`;
+    errors.type = `Informe um tipo com no máximo ${MAX_DOCUMENT_TYPE_LENGTH} caracteres.`;
   }
 
   if (!isValidDueDate(dueDate) || !parseDocumentDueDate(dueDate)) {
-    errors.dueDate = "Informe uma data de vencimento valida.";
+    errors.dueDate = "Informe uma data de vencimento válida.";
   }
 
   if (Object.keys(errors).length > 0) {

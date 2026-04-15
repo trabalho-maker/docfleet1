@@ -43,28 +43,33 @@ export function DocumentFormPanel({
   onSubmit,
 }: DocumentFormPanelProps) {
   return (
-    <article className="rounded-[32px] border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-sm">
+    <article className="df-section-card p-6">
       <div className="space-y-2">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
+        <p className="df-eyebrow">
           {canManageDocuments
             ? editingId
               ? "Editar documento"
               : "Novo documento"
-            : "Permissoes do modulo"}
+            : "Permissões do módulo"}
         </p>
-        <h2 className="text-2xl font-semibold text-[var(--color-foreground)]">
+        <h2 className="text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
           {canManageDocuments
             ? editingId
               ? "Atualize os dados do documento selecionado"
-              : "Cadastre um documento da operacao"
-            : "Visualizacao somente leitura"}
+              : "Cadastre um documento da operação"
+            : "Visualização somente leitura"}
         </h2>
+        <p className="text-sm leading-6 text-[var(--color-muted)]">
+          {canManageDocuments
+            ? "Preencha os campos do documento e acompanhe o status calculado automaticamente a partir do vencimento."
+            : "Seu perfil pode acompanhar os registros existentes, mas não pode alterar a base documental."}
+        </p>
       </div>
 
       {message ? (
         <div
           role="alert"
-          className={`mt-6 rounded-2xl px-4 py-3 text-sm ${
+          className={`mt-6 rounded-[24px] px-4 py-3 text-sm ${
             message.type === "success"
               ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
               : "border border-red-200 bg-red-50 text-red-700"
@@ -75,15 +80,15 @@ export function DocumentFormPanel({
       ) : null}
 
       {!canViewDocuments ? (
-        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
-          {accessMessage ?? "Seu perfil nao pode acessar os documentos."}
+        <div className="mt-6 rounded-[24px] border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
+          {accessMessage ?? "Seu perfil não pode acessar os documentos."}
         </div>
       ) : null}
 
       {canViewDocuments && !canManageDocuments ? (
-        <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+        <div className="mt-6 rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
           {accessMessage ??
-            "Seu perfil pode consultar documentos, mas nao pode criar, editar ou excluir registros."}
+            "Seu perfil pode consultar documentos, mas não pode criar, editar ou excluir registros."}
         </div>
       ) : null}
 
@@ -104,7 +109,7 @@ export function DocumentFormPanel({
           label="Tipo"
           value={formValues.type}
           onChange={(event) => onFieldChange("type", event.target.value)}
-          placeholder="Ex.: Veiculos"
+          placeholder="Ex.: Veículos"
           error={formErrors.type}
           disabled={!canManageDocuments}
           required
@@ -121,21 +126,21 @@ export function DocumentFormPanel({
           required
         />
 
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-          <p className="text-sm font-medium text-slate-700">
+        <div className="df-surface-card px-4 py-4">
+          <p className="text-sm font-semibold text-[var(--color-foreground)]">
             Status calculado automaticamente
           </p>
-          <div className="mt-3 flex items-center gap-3">
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
             {calculatedStatus ? (
               <DocumentStatusBadge status={calculatedStatus} />
             ) : (
-              <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
+              <span className="df-badge-pill bg-slate-200 text-slate-600">
                 Informe a data
               </span>
             )}
-            <p className="text-sm text-slate-500">
-              O backend compara a data atual com o vencimento e define se o
-              documento esta valido, em atencao ou vencido.
+            <p className="text-sm leading-6 text-[var(--color-muted)]">
+              O sistema compara a data atual com o vencimento para classificar o
+              documento como válido, em atenção ou vencido.
             </p>
           </div>
         </div>
@@ -148,7 +153,7 @@ export function DocumentFormPanel({
             disabled={!canManageDocuments}
             className="sm:flex-1"
           >
-            {editingId ? "Salvar alteracoes" : "Criar documento"}
+            {editingId ? "Salvar alterações" : "Criar documento"}
           </Button>
 
           {editingId ? (
@@ -156,7 +161,7 @@ export function DocumentFormPanel({
               type="button"
               onClick={onCancelEdit}
               disabled={!canManageDocuments}
-              className="inline-flex h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+              className="df-button-secondary min-h-12 justify-center rounded-[14px] disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancelar
             </button>

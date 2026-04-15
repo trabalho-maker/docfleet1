@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { logger } from "@/lib/logger";
 import { getCurrentUser } from "@/features/auth/server/session";
-import { AssociatesFilters, type AssociatesFilterValues } from "@/features/associates/components/associates-filters";
+import {
+  AssociatesFilters,
+  type AssociatesFilterValues,
+} from "@/features/associates/components/associates-filters";
 import { AssociatesListSection } from "@/features/associates/components/associates-list-section";
 import { AssociatesPageHeader } from "@/features/associates/components/associates-page-header";
 import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
@@ -92,24 +95,17 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
 
   return (
     <AppShell user={user}>
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 py-2 sm:py-4">
+      <div className="flex w-full flex-1 flex-col gap-6 py-2 sm:py-4">
         <AssociatesPageHeader
           eyebrow="Gestão de associados"
           title="Base de associados"
           description="Visualize a relação de associados, acompanhe categoria, situação e data de entrada em uma interface alinhada ao centro operacional do DocFleet."
           userName={user.name}
           userEmail={user.email}
-          supportingBadge={
-            <span className="inline-flex h-10 w-fit items-center rounded-full bg-[#FFF7ED] px-4 text-sm font-semibold text-[#C2410C]">
-              {user.role}
-            </span>
-          }
+          userRole={user.role}
           action={
             canCreate ? (
-              <Link
-                href="/associados/novo"
-                className="inline-flex h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#0F172A] transition-colors hover:bg-[#FFF7ED]"
-              >
+              <Link href="/associados/novo" className="df-button-secondary">
                 Novo associado
               </Link>
             ) : (
@@ -117,7 +113,7 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
                 type="button"
                 disabled
                 title={accessMessage ?? undefined}
-                className="inline-flex h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-slate-100 px-4 text-sm font-semibold text-slate-400"
+                className="df-button-secondary cursor-not-allowed bg-slate-100 text-slate-400 hover:border-[var(--color-border)] hover:bg-slate-100 hover:text-slate-400"
               >
                 Novo associado
               </button>

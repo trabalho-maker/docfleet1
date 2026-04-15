@@ -1,4 +1,4 @@
-﻿import {
+import {
   SqliteAssociateRepository,
   type AssociateRepository,
 } from "@/features/associates/server/associate.repository";
@@ -185,7 +185,7 @@ function getFirstErrorMessage(errors: Record<string, string | undefined>) {
     }
   }
 
-  return "Dados invalidos para o associado.";
+  return "Dados inválidos para o associado.";
 }
 
 export type AssociateService = ReturnType<typeof createAssociateService>;
@@ -197,4 +197,3 @@ export type {
   CreateAssociateInput,
   UpdateAssociateInput,
 };
-

@@ -23,7 +23,7 @@ export async function GET(_request: Request, context: RouteContext) {
   const session = await auth();
 
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   if (!canViewOperationalData(session.user)) {
@@ -35,7 +35,7 @@ export async function GET(_request: Request, context: RouteContext) {
   const document = await dataLayer.documents.findById(documentId);
 
   if (!document) {
-    return NextResponse.json({ error: "Documento nao encontrado." }, { status: 404 });
+    return NextResponse.json({ error: "Documento não encontrado." }, { status: 404 });
   }
 
   return NextResponse.json({ document });
@@ -45,7 +45,7 @@ export async function PUT(request: Request, context: RouteContext) {
   const session = await auth();
 
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   if (!canManageOperationalData(session.user)) {
@@ -61,7 +61,7 @@ export async function PUT(request: Request, context: RouteContext) {
 
   if (!bodyResult.success) {
     return NextResponse.json(
-      { error: "Corpo JSON invalido." },
+      { error: "Corpo JSON inválido." },
       { status: 400 },
     );
   }
@@ -76,7 +76,7 @@ export async function PUT(request: Request, context: RouteContext) {
 
   if (!validation.success) {
     return NextResponse.json(
-      { error: "Dados invalidos.", fieldErrors: validation.errors },
+      { error: "Dados inválidos.", fieldErrors: validation.errors },
       { status: 400 },
     );
   }
@@ -93,7 +93,7 @@ export async function PUT(request: Request, context: RouteContext) {
   } catch (error) {
     if (error instanceof Error && error.message === "DOCUMENT_NOT_FOUND") {
       return NextResponse.json(
-        { error: "Documento nao encontrado." },
+        { error: "Documento não encontrado." },
         { status: 404 },
       );
     }
@@ -106,7 +106,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const session = await auth();
 
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   if (!canManageOperationalData(session.user)) {
@@ -127,7 +127,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
   } catch (error) {
     if (error instanceof Error && error.message === "DOCUMENT_NOT_FOUND") {
       return NextResponse.json(
-        { error: "Documento nao encontrado." },
+        { error: "Documento não encontrado." },
         { status: 404 },
       );
     }

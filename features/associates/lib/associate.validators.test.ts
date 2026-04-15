@@ -31,9 +31,9 @@ describe("associate validators", () => {
     expect(result).toMatchObject({
       errors: {
         name: "Informe um nome com pelo menos 3 caracteres.",
-        cpf: "Informe um CPF valido.",
-        registrationNumber: "Informe uma matricula.",
-        admissionDate: "Informe uma data de admissao valida.",
+        cpf: "Informe um CPF válido.",
+        registrationNumber: "Informe uma matrícula.",
+        admissionDate: "Informe uma data de admissão válida.",
       },
     });
   });

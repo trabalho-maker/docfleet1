@@ -22,10 +22,10 @@ export function Input({
     <label htmlFor={id} className="grid gap-2 text-sm font-medium text-slate-700">
       <span>{label}</span>
       <span
-        className={`flex h-12 items-center gap-3 rounded-2xl border bg-white px-4 transition-colors duration-200 ${
+        className={`df-input-shell ${
           error
-            ? "border-red-300 focus-within:border-red-400"
-            : "border-slate-200 focus-within:border-slate-900"
+            ? "border-red-300 focus-within:border-red-400 focus-within:shadow-[0_0_0_3px_rgba(248,113,113,0.14)]"
+            : ""
         }`}
       >
         {icon ? <span className="text-slate-400">{icon}</span> : null}

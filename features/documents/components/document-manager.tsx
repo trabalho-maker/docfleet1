@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { type FleetDocument } from "@/features/data/types";
+import { MetricCard } from "@/features/dashboard/components/metric-card";
 import { DocumentFormPanel } from "@/features/documents/components/document-form-panel";
 import { DocumentManagerHeader } from "@/features/documents/components/document-manager-header";
 import { DocumentsListPanel } from "@/features/documents/components/documents-list-panel";
@@ -16,6 +17,8 @@ import type {
 
 type DocumentManagerProps = {
   userName: string;
+  userEmail: string;
+  userRole: string;
   canViewDocuments: boolean;
   canManageDocuments: boolean;
   accessMessage?: string | null;
@@ -29,6 +32,8 @@ const initialValues: DocumentFormValues = {
 
 export function DocumentManager({
   userName,
+  userEmail,
+  userRole,
   canViewDocuments,
   canManageDocuments,
   accessMessage = null,
@@ -74,7 +79,7 @@ export function DocumentManager({
           throw new Error(
             "error" in payload && payload.error
               ? payload.error
-              : "Nao foi possivel carregar os documentos.",
+              : "Não foi possível carregar os documentos.",
           );
         }
 
@@ -93,7 +98,7 @@ export function DocumentManager({
             text:
               error instanceof Error
                 ? error.message
-                : "Nao foi possivel carregar os documentos.",
+                : "Não foi possível carregar os documentos.",
           });
         }
       } finally {
@@ -113,8 +118,8 @@ export function DocumentManager({
   const metrics = useMemo(() => {
     return [
       { label: "Documentos", value: String(totalDocuments) },
-      { label: "Requer atencao", value: String(documentsRequiringAttention) },
-      { label: "Em atencao", value: String(documentsInAttention) },
+      { label: "Requer atenção", value: String(documentsRequiringAttention) },
+      { label: "Em atenção", value: String(documentsInAttention) },
     ];
   }, [documentsInAttention, documentsRequiringAttention, totalDocuments]);
 
@@ -163,9 +168,7 @@ export function DocumentManager({
     if (!canManageDocuments) {
       setMessage({
         type: "error",
-        text:
-          accessMessage ??
-          "Seu perfil nao pode criar ou editar documentos.",
+        text: accessMessage ?? "Seu perfil não pode criar ou editar documentos.",
       });
       return;
     }
@@ -195,12 +198,12 @@ export function DocumentManager({
         throw new Error(
           "error" in payload && payload.error
             ? payload.error
-            : "Nao foi possivel salvar o documento.",
+            : "Não foi possível salvar o documento.",
         );
       }
 
       if (!("document" in payload)) {
-        throw new Error("Resposta invalida ao salvar o documento.");
+        throw new Error("Resposta inválida ao salvar o documento.");
       }
 
       setPage(1);
@@ -218,7 +221,7 @@ export function DocumentManager({
         text:
           error instanceof Error
             ? error.message
-            : "Nao foi possivel salvar o documento.",
+            : "Não foi possível salvar o documento.",
       });
     } finally {
       setIsSubmitting(false);
@@ -229,16 +232,12 @@ export function DocumentManager({
     if (!canManageDocuments) {
       setMessage({
         type: "error",
-        text:
-          accessMessage ??
-          "Seu perfil nao pode excluir documentos.",
+        text: accessMessage ?? "Seu perfil não pode excluir documentos.",
       });
       return;
     }
 
-    const confirmed = window.confirm(
-      "Deseja realmente excluir este documento?",
-    );
+    const confirmed = window.confirm("Deseja realmente excluir este documento?");
 
     if (!confirmed) {
       return;
@@ -254,7 +253,7 @@ export function DocumentManager({
       const payload = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        throw new Error(payload.error || "Nao foi possivel excluir o documento.");
+        throw new Error(payload.error || "Não foi possível excluir o documento.");
       }
 
       if (editingId === documentId) {
@@ -277,28 +276,28 @@ export function DocumentManager({
         text:
           error instanceof Error
             ? error.message
-            : "Nao foi possivel excluir o documento.",
+            : "Não foi possível excluir o documento.",
       });
     }
   }
 
   return (
-    <div className="flex w-full flex-col gap-8">
-      <DocumentManagerHeader userName={userName} />
+    <div className="flex w-full flex-col gap-6">
+      <DocumentManagerHeader
+        userName={userName}
+        userEmail={userEmail}
+        userRole={userRole}
+      />
 
       <section className="grid gap-5 md:grid-cols-3">
         {metrics.map((metric) => (
-          <article
+          <MetricCard
             key={metric.label}
-            className="rounded-[28px] border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-sm"
-          >
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
-              {metric.label}
-            </p>
-            <p className="mt-4 text-4xl font-semibold tracking-tight text-[var(--color-foreground)]">
-              {metric.value}
-            </p>
-          </article>
+            metric={{
+              label: metric.label,
+              value: metric.value,
+            }}
+          />
         ))}
       </section>
 

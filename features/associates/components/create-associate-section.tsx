@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { createAssociateAction } from "@/features/associates/actions/create-associate";
 import { AssociateForm } from "@/features/associates/components/associate-form";
 import { AssociatesPageHeader } from "@/features/associates/components/associates-page-header";
-import { createAssociateAction } from "@/features/associates/actions/create-associate";
 import type {
   AssociateFieldErrors,
   AssociateFormValues,
@@ -14,11 +14,13 @@ import type {
 type CreateAssociateSectionProps = {
   userName: string;
   userEmail: string;
+  userRole: string;
 };
 
 export function CreateAssociateSection({
   userName,
   userEmail,
+  userRole,
 }: CreateAssociateSectionProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,11 +66,9 @@ export function CreateAssociateSection({
         description="Cadastre um novo associado na base do sistema com dados validados, tipagem forte e integração direta com a camada de serviço."
         userName={userName}
         userEmail={userEmail}
+        userRole={userRole}
         action={
-          <Link
-            href="/associados"
-            className="inline-flex h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#0F172A] transition-colors hover:bg-[#FFF7ED]"
-          >
+          <Link href="/associados" className="df-button-secondary">
             Voltar para associados
           </Link>
         }

@@ -1,41 +1,33 @@
 "use client";
 
 import Link from "next/link";
+import { AuthenticatedPageHeader } from "@/features/dashboard/components/authenticated-page-header";
 
 type DocumentManagerHeaderProps = {
   userName: string;
+  userEmail: string;
+  userRole: string;
 };
 
 export function DocumentManagerHeader({
   userName,
+  userEmail,
+  userRole,
 }: DocumentManagerHeaderProps) {
   return (
-    <section className="rounded-[32px] border border-[var(--color-border)] bg-[var(--color-card)] p-8 shadow-[0_30px_80px_rgba(15,23,42,0.08)]">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-3">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">
-            CRUD de documentos
-          </p>
-          <div>
-            <h1 className="text-4xl font-semibold tracking-tight text-[var(--color-foreground)]">
-              Gestão documental
-            </h1>
-            <p className="mt-2 max-w-3xl text-base leading-7 text-[var(--color-muted)]">
-              Crie, edite e exclua documentos com persistência em SQLite e rotas
-              API protegidas. Tudo conectado ao core atual do DocFleet.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-white/80 px-5 py-4 text-sm text-[var(--color-muted)]">
-          <p className="font-semibold text-[var(--color-foreground)]">{userName}</p>
-          <Link
-            href="/dashboard"
-            className="inline-flex h-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-white px-4 text-sm font-semibold text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-surface-strong)]"
-          >
-            Voltar ao dashboard
-          </Link>
-        </div>
-      </div>
-    </section>
+    <AuthenticatedPageHeader
+      eyebrow="Gestão documental"
+      title="Documentos operacionais"
+      description="Crie, edite e acompanhe documentos com persistência em SQLite, rotas protegidas e uma visão clara do que exige ação imediata."
+      userName={userName}
+      userEmail={userEmail}
+      userRole={userRole}
+      supportingText="Área conectada ao core documental, às permissões do usuário e às rotas protegidas do DocFleet."
+      actions={
+        <Link href="/dashboard" className="df-button-secondary">
+          Voltar ao dashboard
+        </Link>
+      }
+    />
   );
 }

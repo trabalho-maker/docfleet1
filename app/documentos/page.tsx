@@ -24,9 +24,11 @@ export default async function DocumentsPage() {
 
   return (
     <AppShell user={user}>
-      <div className="mx-auto flex w-full max-w-7xl flex-1 py-2 sm:py-4">
+      <div className="flex w-full flex-1 py-2 sm:py-4">
         <DocumentManager
           userName={user.name}
+          userEmail={user.email}
+          userRole={user.role}
           canViewDocuments={canViewDocuments}
           canManageDocuments={canManageDocuments}
           accessMessage={accessMessage}

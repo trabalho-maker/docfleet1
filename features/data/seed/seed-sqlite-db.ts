@@ -23,13 +23,13 @@ function buildSeedDocuments(now = new Date()): FleetDocument[] {
       id: "doc_01",
       name: "Licenciamento da frota leve",
       owner: "Equipe Operacional",
-      type: "Veiculos",
+      type: "Veículos",
       status: calculateDocumentStatus(dueDates.doc01, { now }),
       dueDate: dueDates.doc01,
     },
     {
       id: "doc_02",
-      name: "Contratos de manutencao",
+      name: "Contratos de manutenção",
       owner: "Suprimentos",
       type: "Contratos",
       status: calculateDocumentStatus(dueDates.doc02, { now }),
@@ -51,7 +51,7 @@ const seedAlerts: OperationalAlert[] = [
     id: "alt_01",
     title: "3 documentos vencem esta semana",
     severity: "Alta",
-    team: "Operacoes",
+    team: "Operações",
     createdAt: "2026-04-06 08:30",
   },
   {
@@ -63,7 +63,7 @@ const seedAlerts: OperationalAlert[] = [
   },
   {
     id: "alt_03",
-    title: "Fila de aprovacao abaixo do SLA",
+    title: "Fila de aprovação abaixo do SLA",
     severity: "Baixa",
     team: "Backoffice",
     createdAt: "2026-04-06 10:00",
@@ -84,7 +84,7 @@ const seedAssociates: Associate[] = [
   },
   {
     id: "asc_02",
-    name: "Joao Pereira",
+    name: "João Pereira",
     cpf: "16899535009",
     category: "Contribuinte",
     registrationNumber: "MAT-2026-0002",

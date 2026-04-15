@@ -22,8 +22,8 @@ export default async function LoginPage({
   }
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(135deg,#0f172a_0%,#14213d_45%,#1d4ed8_100%)]">
-      <div className="grid min-h-screen lg:grid-cols-[1.08fr_0.92fr]">
+    <main className="min-h-screen bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_45%,#1e3a8a_100%)]">
+      <div className="grid min-h-screen lg:grid-cols-[1.16fr_0.84fr]">
         <AuthShowcasePanel
           badge="Monitoramento de vencimentos, alertas e conformidade em tempo real"
           title="Bem-vindo de volta ao centro de controle da sua frota."
@@ -57,8 +57,11 @@ export default async function LoginPage({
           ]}
         />
 
-        <section className="flex items-center justify-center bg-[#f8fafc] px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
-          <SignInCard resetSuccess={params.reset === "success"} />
+        <section className="relative flex items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)] px-6 py-10 sm:px-10 lg:px-16 lg:py-16">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.08),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.08),transparent_26%)]" />
+          <div className="relative w-full max-w-[540px]">
+            <SignInCard resetSuccess={params.reset === "success"} />
+          </div>
         </section>
       </div>
     </main>

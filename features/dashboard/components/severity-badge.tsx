@@ -10,10 +10,15 @@ export function SeverityBadge({ severity }: SeverityBadgeProps) {
     Media: "bg-[#FEF3C7] text-[#92400E]",
     Baixa: "bg-[#DCFCE7] text-[#166534]",
   }[severity];
+  const label = {
+    Alta: "Alta",
+    Media: "Média",
+    Baixa: "Baixa",
+  }[severity];
 
   return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${tone}`}>
-      {severity}
+    <span className={`df-badge-pill ${tone}`}>
+      {label}
     </span>
   );
 }

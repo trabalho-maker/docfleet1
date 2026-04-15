@@ -81,17 +81,17 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
   }
 
   return (
-    <section className="w-full max-w-[480px] rounded-[32px] border border-slate-200/80 bg-white p-8 shadow-[0_32px_80px_rgba(15,23,42,0.14)] sm:p-10">
-      <div className="space-y-8">
-        <header className="space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+    <section className="w-full rounded-[32px] border border-slate-200/85 bg-white/96 p-8 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur sm:rounded-[36px] sm:p-10">
+      <div className="space-y-9">
+        <header className="space-y-5">
+          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
             Área segura
           </div>
-          <div className="space-y-2">
-            <h2 className="text-3xl font-semibold tracking-tight text-slate-950">
+          <div className="space-y-3">
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2.1rem]">
               Entrar no DocFleet
             </h2>
-            <p className="text-sm leading-6 text-slate-500">
+            <p className="max-w-md text-sm leading-7 text-slate-500">
               Acesse seu painel para acompanhar vencimentos, alertas operacionais e
               documentos da frota em um único lugar.
             </p>
@@ -171,12 +171,17 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
             </Link>
           </div>
 
-          <Button type="submit" isLoading={isLoading} loadingLabel="Entrando...">
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            loadingLabel="Entrando..."
+            className="mt-1 rounded-[14px] shadow-[0_18px_40px_rgba(249,115,22,0.24)]"
+          >
             Entrar
           </Button>
         </form>
 
-        <div className="space-y-4">
+        <div className="space-y-4 border-t border-slate-100 pt-5">
           {isDevelopment && devSeedEmail && devSeedPassword ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
               Ambiente de desenvolvimento:

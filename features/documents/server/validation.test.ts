@@ -28,7 +28,7 @@ describe("document validation", () => {
     expect(result.success).toBe(false);
     expect(result).toMatchObject({
       errors: {
-        dueDate: "Informe uma data de vencimento valida.",
+        dueDate: "Informe uma data de vencimento válida.",
       },
     });
   });
@@ -69,8 +69,8 @@ describe("document validation", () => {
     expect(result.success).toBe(false);
     expect(result).toMatchObject({
       errors: {
-        name: "Informe um nome com no maximo 160 caracteres.",
-        type: "Informe um tipo com no maximo 80 caracteres.",
+        name: "Informe um nome com no máximo 160 caracteres.",
+        type: "Informe um tipo com no máximo 80 caracteres.",
       },
     });
   });

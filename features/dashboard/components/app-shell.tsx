@@ -14,7 +14,7 @@ export function AppShell({ user, children }: AppShellProps) {
         <DashboardSidebar user={user} />
 
         <main className="min-w-0 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
-          {children}
+          <div className="df-page-container min-w-0">{children}</div>
         </main>
       </div>
     </div>

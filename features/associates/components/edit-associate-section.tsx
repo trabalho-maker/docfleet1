@@ -16,6 +16,7 @@ type EditAssociateSectionProps = {
   initialValues: AssociateFormValues;
   userName: string;
   userEmail: string;
+  userRole: string;
 };
 
 export function EditAssociateSection({
@@ -23,6 +24,7 @@ export function EditAssociateSection({
   initialValues,
   userName,
   userEmail,
+  userRole,
 }: EditAssociateSectionProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,11 +77,9 @@ export function EditAssociateSection({
         description="Atualize os dados cadastrais do associado mantendo a consistência da base e as validações do domínio."
         userName={userName}
         userEmail={userEmail}
+        userRole={userRole}
         action={
-          <Link
-            href="/associados"
-            className="inline-flex h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#0F172A] transition-colors hover:bg-[#FFF7ED]"
-          >
+          <Link href="/associados" className="df-button-secondary">
             Voltar para associados
           </Link>
         }

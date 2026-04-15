@@ -1,10 +1,10 @@
 import type { DashboardOverview } from "@/features/dashboard/types";
 import { AppShell } from "@/features/dashboard/components/app-shell";
 import { DashboardHeader } from "@/features/dashboard/components/dashboard-header";
-import { MetricCard } from "@/features/dashboard/components/metric-card";
-import { StatusBadge } from "@/features/dashboard/components/status-badge";
-import { SeverityBadge } from "@/features/dashboard/components/severity-badge";
 import { EmptyState } from "@/features/dashboard/components/empty-state";
+import { MetricCard } from "@/features/dashboard/components/metric-card";
+import { SeverityBadge } from "@/features/dashboard/components/severity-badge";
+import { StatusBadge } from "@/features/dashboard/components/status-badge";
 
 type DashboardShellProps = {
   overview: DashboardOverview;
@@ -22,21 +22,20 @@ export function DashboardShell({ overview }: DashboardShellProps) {
           ))}
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-          <article className="rounded-[32px] border border-[#E5E7EB] bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.04)] lg:p-7">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <section className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+          <article className="df-section-card overflow-hidden p-6 lg:p-7">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#64748B]">
-                  Documentos recentes
-                </p>
-                <h3 className="mt-2 text-2xl font-semibold tracking-tight text-[#0F172A]">
+                <p className="df-eyebrow">Documentos recentes</p>
+                <h3 className="mt-2 text-[2rem] font-semibold tracking-tight text-[#0F172A]">
                   Operação documental
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-[#64748B]">
-                  Itens mais relevantes carregados da camada atual do dashboard.
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-[#64748B]">
+                  Itens mais relevantes da camada operacional atual, com status,
+                  proprietário e vencimento prontos para acompanhamento.
                 </p>
               </div>
-              <div className="rounded-2xl bg-[#FFF7ED] px-4 py-3 text-sm text-[#9A3412]">
+              <div className="rounded-[24px] border border-[#FED7AA] bg-[#FFF7ED] px-4 py-3 text-sm text-[#9A3412] shadow-[0_12px_28px_rgba(249,115,22,0.08)]">
                 <p className="font-semibold">Atualização em tempo real</p>
                 <p className="mt-1 text-[#C2410C]">
                   Dados vindos diretamente do overview.
@@ -44,17 +43,17 @@ export function DashboardShell({ overview }: DashboardShellProps) {
               </div>
             </div>
 
-            <div className="mt-6 grid gap-4">
+            <div className="mt-7 grid gap-4">
               {overview.recentDocuments.length === 0 ? (
                 <EmptyState
                   title="Nenhum documento recente"
-                  description="Assim que houver documentos cadastrados, eles aparecem aqui com status e vencimento."
+                  description="Assim que houver documentos cadastrados, eles aparecem aqui com status, responsável e vencimento."
                 />
               ) : (
                 overview.recentDocuments.map((document) => (
                   <article
                     key={document.id}
-                    className="rounded-[26px] border border-[#E5E7EB] bg-[#FCFDFE] p-5 transition-colors hover:bg-white"
+                    className="rounded-[28px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FCFDFE_0%,#FFFFFF_100%)] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-0.5"
                   >
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div className="space-y-2">
@@ -69,7 +68,7 @@ export function DashboardShell({ overview }: DashboardShellProps) {
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm text-[#64748B]">
+                      <div className="rounded-[22px] border border-[#E5E7EB] bg-white px-4 py-3 text-sm text-[#64748B] shadow-[0_8px_24px_rgba(15,23,42,0.03)]">
                         <p className="font-semibold text-[#0F172A]">Vencimento</p>
                         <p className="mt-1">{formatDate(document.dueDate)}</p>
                       </div>
@@ -81,25 +80,27 @@ export function DashboardShell({ overview }: DashboardShellProps) {
           </article>
 
           <div className="grid gap-6">
-            <article className="rounded-[32px] border border-[#E5E7EB] bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.04)] lg:p-7">
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#64748B]">
-                Alertas operacionais
-              </p>
-              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-[#0F172A]">
+            <article className="df-section-card p-6 lg:p-7">
+              <p className="df-eyebrow">Alertas operacionais</p>
+              <h3 className="mt-2 text-[2rem] font-semibold tracking-tight text-[#0F172A]">
                 Painel de atenção
               </h3>
+              <p className="mt-3 text-sm leading-6 text-[#64748B]">
+                Prioridades abertas para times e responsáveis que exigem visibilidade
+                imediata.
+              </p>
 
               <div className="mt-6 grid gap-4">
                 {overview.alerts.length === 0 ? (
                   <EmptyState
                     title="Sem alertas ativos"
-                    description="Quando surgirem vencimentos ou pendências, o painel passa a destacar aqui."
+                    description="Quando surgirem vencimentos ou pendências, o painel passa a destacar aqui o que precisa de atenção."
                   />
                 ) : (
                   overview.alerts.map((alert) => (
                     <article
                       key={alert.id}
-                      className="rounded-[24px] border border-[#E5E7EB] bg-[#FCFDFE] p-4"
+                      className="rounded-[24px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FCFDFE_0%,#FFFFFF_100%)] p-4 shadow-[0_12px_28px_rgba(15,23,42,0.03)]"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -121,18 +122,19 @@ export function DashboardShell({ overview }: DashboardShellProps) {
               </div>
             </article>
 
-            <article className="overflow-hidden rounded-[32px] border border-[#E5E7EB] bg-[linear-gradient(135deg,#FFF7ED_0%,#FFFFFF_55%,#F8FAFC_100%)] p-6 shadow-[0_18px_40px_rgba(15,23,42,0.04)] lg:p-7">
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#64748B]">
-                Resumo executivo
-              </p>
-              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-[#0F172A]">
+            <article className="overflow-hidden rounded-[32px] border border-[#E5E7EB] bg-[linear-gradient(135deg,#FFF7ED_0%,#FFFFFF_52%,#F8FAFC_100%)] p-6 shadow-[0_18px_40px_rgba(15,23,42,0.04)] lg:p-7">
+              <p className="df-eyebrow">Resumo executivo</p>
+              <h3 className="mt-2 text-[2rem] font-semibold tracking-tight text-[#0F172A]">
                 Visão do ambiente
               </h3>
+              <p className="mt-3 text-sm leading-6 text-[#64748B]">
+                Leitura rápida dos indicadores mais importantes para a operação atual.
+              </p>
               <div className="mt-6 grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
                 {overview.metrics.map((metric) => (
                   <div
                     key={metric.label}
-                    className="rounded-[24px] border border-white/70 bg-white/80 px-4 py-4"
+                    className="rounded-[24px] border border-white/70 bg-white/85 px-4 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.03)]"
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#64748B]">
                       {metric.label}

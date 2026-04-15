@@ -113,7 +113,9 @@ export function SignUpCard() {
                 onClick={() => setShowConfirmPassword((current) => !current)}
                 className="text-xs font-semibold text-slate-500 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                 aria-label={
-                  showConfirmPassword ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"
+                  showConfirmPassword
+                    ? "Ocultar confirmação de senha"
+                    : "Mostrar confirmação de senha"
                 }
               >
                 {showConfirmPassword ? "Ocultar" : "Mostrar"}

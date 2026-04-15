@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import {
   associateCategories,
   associateStatuses,
@@ -96,17 +97,17 @@ export function AssociateForm({
     submitLabel ?? (mode === "edit" ? "Salvar alterações" : "Criar associado");
 
   return (
-    <article className="rounded-[32px] border border-[#E5E7EB] bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.04)] lg:p-7">
+    <article className="df-section-card p-6 lg:p-7">
       <div className="space-y-2">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#64748B]">
+        <p className="df-eyebrow">
           {mode === "edit" ? "Editar associado" : "Novo associado"}
         </p>
-        <h2 className="text-2xl font-semibold tracking-tight text-[#0F172A]">
+        <h2 className="text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
           {mode === "edit"
             ? "Atualize os dados do associado selecionado"
             : "Cadastre um novo associado"}
         </h2>
-        <p className="text-sm leading-6 text-[#64748B]">
+        <p className="text-sm leading-6 text-[var(--color-muted)]">
           Preencha os dados principais para manter a base de associados organizada e
           pronta para operação.
         </p>
@@ -125,7 +126,11 @@ export function AssociateForm({
         </div>
       ) : null}
 
-      <form className="mt-6 grid gap-5" onSubmit={(event) => void handleSubmit(event)} noValidate>
+      <form
+        className="mt-6 grid gap-5"
+        onSubmit={(event) => void handleSubmit(event)}
+        noValidate
+      >
         <Input
           id="associate-name"
           label="Nome"
@@ -150,23 +155,29 @@ export function AssociateForm({
         />
 
         <div className="grid gap-5 md:grid-cols-2">
-          <SelectField
+          <Select
             id="associate-category"
             label="Categoria"
             value={values.category}
             error={errors.category}
-            options={associateCategories}
+            options={associateCategories.map((category) => ({
+              value: category,
+              label: category,
+            }))}
             onChange={(event) =>
               updateField("category", event.target.value as AssociateCategory)
             }
           />
 
-          <SelectField
+          <Select
             id="associate-status"
             label="Situação"
             value={values.status}
             error={errors.status}
-            options={associateStatuses}
+            options={associateStatuses.map((status) => ({
+              value: status,
+              label: status,
+            }))}
             onChange={(event) =>
               updateField("status", event.target.value as AssociateStatus)
             }
@@ -207,11 +218,7 @@ export function AssociateForm({
           </Button>
 
           {onCancel ? (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="inline-flex h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-            >
+            <button type="button" onClick={onCancel} className="df-button-secondary">
               Cancelar
             </button>
           ) : null}
@@ -221,50 +228,9 @@ export function AssociateForm({
   );
 }
 
-function SelectField({
-  id,
-  label,
-  value,
-  error,
-  options,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  error?: string;
-  options: readonly string[];
-  onChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
-}) {
-  return (
-    <label htmlFor={id} className="grid gap-2 text-sm font-medium text-slate-700">
-      <span>{label}</span>
-      <select
-        id={id}
-        value={value}
-        onChange={onChange}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? `${id}-error` : undefined}
-        className={`h-12 rounded-2xl border bg-white px-4 text-sm text-slate-900 outline-none transition-colors ${
-          error ? "border-red-300 focus:border-red-400" : "border-slate-200 focus:border-slate-900"
-        }`}
-      >
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-      {error ? (
-        <span id={`${id}-error`} className="text-sm text-red-600">
-          {error}
-        </span>
-      ) : null}
-    </label>
-  );
-}
-
-function mergeInitialValues(initialValues?: Partial<AssociateFormValues>): AssociateFormValues {
+function mergeInitialValues(
+  initialValues?: Partial<AssociateFormValues>,
+): AssociateFormValues {
   return {
     ...defaultValues,
     ...initialValues,

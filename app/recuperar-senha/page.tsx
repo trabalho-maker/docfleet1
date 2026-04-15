@@ -47,7 +47,7 @@ export default async function RequestPasswordResetPage() {
           ]}
           stats={[
             { value: "1", label: "token por solicitação" },
-            { value: "100%", label: "validação server-side" },
+            { value: "100%", label: "validação no servidor" },
             { value: "24/7", label: "recuperação de acesso" },
           ]}
         />

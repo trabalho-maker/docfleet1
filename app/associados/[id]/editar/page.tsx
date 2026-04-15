@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/features/auth/server/session";
-import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
 import { EditAssociateSection } from "@/features/associates/components/edit-associate-section";
+import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
 import {
   canEditAssociate,
   getAssociateAccessMessage,
@@ -14,7 +14,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Editar associado",
-  description: "Edicao de associados cadastrados no DocFleet.",
+  description: "Edição de associados cadastrados no DocFleet.",
 };
 
 type EditAssociatePageProps = {
@@ -71,6 +71,7 @@ export default async function EditAssociatePage({
         }}
         userName={user.name}
         userEmail={user.email}
+        userRole={user.role}
       />
     </main>
   );

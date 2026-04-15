@@ -4,7 +4,7 @@ import { ResetPasswordCard } from "@/features/auth/components/reset-password-car
 
 export const metadata: Metadata = {
   title: "Redefinir senha",
-  description: "Defina uma nova senha usando um token seguro de recuperacao.",
+  description: "Defina uma nova senha usando um token seguro de recuperação.",
 };
 
 export default async function ResetPasswordPage({
@@ -20,17 +20,18 @@ export default async function ResetPasswordPage({
       <div className="grid w-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <section className="space-y-5">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">
-            Redefinicao
+            Redefinição
           </p>
           <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-[var(--color-foreground)] sm:text-5xl">
-            Finalize a recuperacao com uma nova senha forte.
+            Finalize a recuperação com uma nova senha forte.
           </h1>
           <p className="max-w-2xl text-lg leading-8 text-[var(--color-muted)]">
-            O token e validado no servidor, tem expiracao curta e fica inutilizado apos o uso.
+            O token é validado no servidor, tem expiração curta e fica inutilizado
+            após o uso.
           </p>
           {!token ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              Token ausente ou invalido. Solicite um novo link de recuperacao em{" "}
+              Token ausente ou inválido. Solicite um novo link de recuperação em{" "}
               <Link
                 href="/recuperar-senha"
                 className="font-semibold text-[var(--color-accent)]"

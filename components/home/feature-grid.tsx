@@ -4,20 +4,21 @@ export function FeatureGrid() {
   return (
     <section className="space-y-6">
       <div className="space-y-2">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
-          Diretrizes aplicadas
+        <p className="df-eyebrow">
+          Base consolidada
         </p>
-        <h2 className="text-3xl font-semibold tracking-tight text-[var(--color-foreground)]">
-          O que mudou na reorganizacao da base
+        <h2 className="df-page-title max-w-3xl text-[2.4rem]">
+          O que sustenta a evolução do DocFleet a partir desta base.
         </h2>
+        <p className="df-page-description max-w-3xl">
+          A estrutura já organiza autenticação, operações e persistência com clareza,
+          criando uma plataforma pronta para crescer por módulos sem perder consistência.
+        </p>
       </div>
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         {siteConfig.reviewActions.map((item) => (
-          <article
-            key={item.title}
-            className="rounded-[28px] border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-sm"
-          >
+          <article key={item.title} className="df-section-card p-6">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
               {item.label}
             </p>

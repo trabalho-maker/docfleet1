@@ -10,10 +10,15 @@ export function StatusBadge({ status }: StatusBadgeProps) {
     Atencao: "bg-[#FEF3C7] text-[#92400E]",
     Vencido: "bg-[#FEE2E2] text-[#991B1B]",
   }[status];
+  const label = {
+    Valido: "Válido",
+    Atencao: "Atenção",
+    Vencido: "Vencido",
+  }[status];
 
   return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${tone}`}>
-      {status}
+    <span className={`df-badge-pill ${tone}`}>
+      {label}
     </span>
   );
 }

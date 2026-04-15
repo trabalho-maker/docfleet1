@@ -1,7 +1,7 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/features/auth/server/session";
-import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
 import { CreateAssociateSection } from "@/features/associates/components/create-associate-section";
+import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
 import {
   canCreateAssociate,
   getAssociateAccessMessage,
@@ -20,7 +20,11 @@ export default async function NewAssociatePage() {
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 px-6 py-10 sm:px-10 lg:px-12 lg:py-16">
       {canCreate ? (
-        <CreateAssociateSection userName={user.name} userEmail={user.email} />
+        <CreateAssociateSection
+          userName={user.name}
+          userEmail={user.email}
+          userRole={user.role}
+        />
       ) : (
         <div className="w-full">
           <FeedbackAlert
@@ -32,4 +36,3 @@ export default async function NewAssociatePage() {
     </main>
   );
 }
-

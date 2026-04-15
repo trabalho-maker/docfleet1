@@ -32,9 +32,9 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
         helper: "Consulta real em SQLite",
       },
       {
-        label: "Pendencias criticas",
+        label: "Pendências críticas",
         value: String(pendingDocuments),
-        helper: "Documentos em atencao ou vencidos",
+        helper: "Documentos em atenção ou vencidos",
       },
     ],
   };
