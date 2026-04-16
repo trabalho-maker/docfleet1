@@ -30,7 +30,10 @@ export function CreateAssociateSection({
     text: string;
   } | null>(null);
 
-  async function handleSubmit(values: AssociateFormValues) {
+  async function handleSubmit(
+    values: AssociateFormValues,
+    intent: "save" | "saveAndPrint",
+  ) {
     setIsSubmitting(true);
     setServerErrors({});
     setMessage(null);
@@ -51,8 +54,12 @@ export function CreateAssociateSection({
         return;
       }
 
-      router.push("/associados?success=created");
-      router.refresh();
+      const targetUrl =
+        intent === "saveAndPrint"
+          ? `/associados/${result.associateId}/impressao?autoPrint=1`
+          : "/associados?success=created";
+
+      router.push(targetUrl);
     } finally {
       setIsSubmitting(false);
     }
@@ -76,7 +83,8 @@ export function CreateAssociateSection({
 
       <AssociateForm
         mode="create"
-        submitLabel="Criar associado"
+        submitLabel="Salvar cadastro"
+        saveAndPrintLabel="Salvar e imprimir"
         isSubmitting={isSubmitting}
         serverErrors={serverErrors}
         message={message}

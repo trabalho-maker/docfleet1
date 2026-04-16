@@ -7,6 +7,7 @@ import {
   formatUtcDateOnly,
 } from "@/features/documents/lib/expiration";
 import { logger, maskEmail } from "@/lib/logger";
+import { createEmptyAssociateProfile } from "@/features/associates/server/associate-profile.repository";
 import type { Associate } from "@/features/associates/types";
 import type { AssociateOperationProfile } from "@/features/associates/operations/types";
 
@@ -82,6 +83,7 @@ const seedAssociates: Associate[] = [
     admissionDate: "2023-02-15",
     createdAt: "2026-04-06T08:15:00.000Z",
     updatedAt: "2026-04-06T08:15:00.000Z",
+    ...createEmptyAssociateProfile(),
   },
   {
     id: "asc_02",
@@ -93,6 +95,7 @@ const seedAssociates: Associate[] = [
     admissionDate: "2022-09-01",
     createdAt: "2026-04-06T08:20:00.000Z",
     updatedAt: "2026-04-06T08:20:00.000Z",
+    ...createEmptyAssociateProfile(),
   },
   {
     id: "asc_03",
@@ -104,6 +107,7 @@ const seedAssociates: Associate[] = [
     admissionDate: "2024-01-10",
     createdAt: "2026-04-06T08:25:00.000Z",
     updatedAt: "2026-04-06T08:25:00.000Z",
+    ...createEmptyAssociateProfile(),
   },
 ];
 
@@ -140,6 +144,69 @@ const seedAssociateOperationProfiles: AssociateOperationProfile[] = [
   },
 ];
 
+const seedAssociateProfiles = [
+  {
+    associateId: "asc_01",
+    enderecoCompleto: "Rua 1, 200 - Centro",
+    bairro: "Centro",
+    cidade: "Rio Claro",
+    estado: "SP",
+    cep: "13500000",
+    profissao: "Taxista",
+    sexo: "F",
+    dataNascimento: "1989-06-20",
+    nacionalidade: "Brasileira",
+    naturalidade: "Rio Claro",
+    rg: "28.456.789-0",
+    cnh: "01234567890",
+    estadoCivil: "Casado(a)",
+    nomePai: "Carlos de Souza",
+    nomeMae: "Helena de Souza",
+    dependentes: "2",
+    grauParentesco: "Filhos",
+    telefone: "(19) 3522-0001",
+    celular: "(19) 99888-0001",
+    email: "maria.souza@exemplo.com",
+    observacoes: "Associada com ficha regularizada para atendimento.",
+    situacaoFinanceira: "Mensalidade em dia.",
+    situacaoDocumental: "Documentação principal atualizada.",
+    historicoResumo: "Cadastro revisado na última campanha sindical.",
+    fotoUrl: null,
+    createdAt: "2026-04-06T08:45:00.000Z",
+    updatedAt: "2026-04-06T08:45:00.000Z",
+  },
+  {
+    associateId: "asc_02",
+    enderecoCompleto: "Avenida 12, 900",
+    bairro: "Jardim América",
+    cidade: "Rio Claro",
+    estado: "SP",
+    cep: "13506120",
+    profissao: "Condutor escolar",
+    sexo: "M",
+    dataNascimento: "1978-03-11",
+    nacionalidade: "Brasileira",
+    naturalidade: "Araras",
+    rg: "19.223.456-1",
+    cnh: "00998877665",
+    estadoCivil: "Solteiro(a)",
+    nomePai: "Antonio Pereira",
+    nomeMae: "Lucia Pereira",
+    dependentes: "1",
+    grauParentesco: "Filho",
+    telefone: "(19) 3522-0002",
+    celular: "(19) 99888-0002",
+    email: "joao.pereira@exemplo.com",
+    observacoes: "Necessita acompanhamento documental periódico.",
+    situacaoFinanceira: "Pendência de uma mensalidade.",
+    situacaoDocumental: "Autorização do condutor vencida.",
+    historicoResumo: "Associado retornou ao quadro em 2024.",
+    fotoUrl: null,
+    createdAt: "2026-04-06T08:50:00.000Z",
+    updatedAt: "2026-04-06T08:50:00.000Z",
+  },
+];
+
 export async function seedSqliteDatabase(db: Database) {
   const seedDocuments = buildSeedDocuments();
   const seedUserName = process.env.SEED_USER_NAME?.trim();
@@ -167,6 +234,7 @@ export async function seedSqliteDatabase(db: Database) {
     db.run("DELETE FROM password_reset_tokens");
     db.run("DELETE FROM auth_rate_limits");
     db.run("DELETE FROM associate_operation_profiles");
+    db.run("DELETE FROM associate_profiles");
     db.run("DELETE FROM associates");
 
     db.run(
@@ -253,6 +321,71 @@ export async function seedSqliteDatabase(db: Database) {
       );
     }
 
+    for (const profile of seedAssociateProfiles) {
+      db.run(
+        `INSERT INTO associate_profiles (
+          associate_id,
+          endereco_completo,
+          bairro,
+          cidade,
+          estado,
+          cep,
+          profissao,
+          sexo,
+          data_nascimento,
+          nacionalidade,
+          naturalidade,
+          rg,
+          cnh,
+          estado_civil,
+          nome_pai,
+          nome_mae,
+          dependentes,
+          grau_parentesco,
+          telefone,
+          celular,
+          email,
+          observacoes,
+          situacao_financeira,
+          situacao_documental,
+          historico_resumo,
+          foto_url,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          profile.associateId,
+          profile.enderecoCompleto,
+          profile.bairro,
+          profile.cidade,
+          profile.estado,
+          profile.cep,
+          profile.profissao,
+          profile.sexo,
+          profile.dataNascimento,
+          profile.nacionalidade,
+          profile.naturalidade,
+          profile.rg,
+          profile.cnh,
+          profile.estadoCivil,
+          profile.nomePai,
+          profile.nomeMae,
+          profile.dependentes,
+          profile.grauParentesco,
+          profile.telefone,
+          profile.celular,
+          profile.email,
+          profile.observacoes,
+          profile.situacaoFinanceira,
+          profile.situacaoDocumental,
+          profile.historicoResumo,
+          profile.fotoUrl,
+          profile.createdAt,
+          profile.updatedAt,
+        ],
+      );
+    }
+
     db.run("COMMIT");
     logger.info("data.seed.completed", {
       userEmail: maskEmail(seedUserEmail),
@@ -260,6 +393,7 @@ export async function seedSqliteDatabase(db: Database) {
       alerts: seedAlerts.length,
       associates: seedAssociates.length,
       operationProfiles: seedAssociateOperationProfiles.length,
+      associateProfiles: seedAssociateProfiles.length,
     });
   } catch (error) {
     db.run("ROLLBACK");

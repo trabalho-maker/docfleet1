@@ -37,5 +37,29 @@ describe("associate validators", () => {
       },
     });
   });
+
+  it("normalizes optional profile fields when provided", () => {
+    const result = validateCreateAssociateInput({
+      name: "Maria de Souza",
+      cpf: "390.533.447-05",
+      category: "Titular",
+      registrationNumber: "MAT-2026-3000",
+      status: "Ativo",
+      admissionDate: "2025-01-10",
+      cidade: " Rio Claro ",
+      estado: "sp",
+      cep: "13500-000",
+      email: "CONTATO@EXEMPLO.COM",
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.cidade).toBe("Rio Claro");
+      expect(result.data.estado).toBe("SP");
+      expect(result.data.cep).toBe("13500000");
+      expect(result.data.email).toBe("contato@exemplo.com");
+    }
+  });
 });
 

@@ -3,6 +3,11 @@ import {
   type AssociateRepository,
 } from "@/features/associates/server/associate.repository";
 import {
+  SqliteAssociateProfileRepository,
+  createEmptyAssociateProfile,
+  type AssociateProfileRepository,
+} from "@/features/associates/server/associate-profile.repository";
+import {
   validateAssociateFilters,
   validateCreateAssociateInput,
   validateUpdateAssociateInput,
@@ -11,6 +16,7 @@ import type {
   Associate,
   AssociateCategoryCounts,
   AssociateFilters,
+  AssociateProfileData,
   AssociateStatusCounts,
   CreateAssociateInput,
   UpdateAssociateInput,
@@ -39,10 +45,13 @@ export class AssociateNotFoundError extends Error {
 
 type AssociateServiceOptions = {
   repository?: AssociateRepository;
+  profileRepository?: AssociateProfileRepository;
 };
 
 export function createAssociateService(options: AssociateServiceOptions = {}) {
   const repository = options.repository ?? new SqliteAssociateRepository();
+  const profileRepository =
+    options.profileRepository ?? new SqliteAssociateProfileRepository();
 
   return {
     listAssociates(filters?: AssociateFilters) {
@@ -71,8 +80,9 @@ export function createAssociateService(options: AssociateServiceOptions = {}) {
       return repository.countByCategory();
     },
 
-    getAssociateById(id: string) {
-      return getAssociateById(repository, id);
+    async getAssociateById(id: string) {
+      const associate = await getAssociateById(repository, id);
+      return hydrateAssociateProfile(profileRepository, associate);
     },
 
     async createAssociate(input: CreateAssociateInput) {
@@ -88,7 +98,13 @@ export function createAssociateService(options: AssociateServiceOptions = {}) {
         validation.data.registrationNumber,
       );
 
-      return repository.create(validation.data);
+      const createdAssociate = await repository.create(validation.data);
+      const savedProfile = await profileRepository.upsertByAssociateId(
+        createdAssociate.id,
+        extractAssociateProfileData(validation.data),
+      );
+
+      return mergeAssociateWithProfile(createdAssociate, savedProfile);
     },
 
     async updateAssociate(id: string, input: UpdateAssociateInput) {
@@ -118,12 +134,25 @@ export function createAssociateService(options: AssociateServiceOptions = {}) {
         );
       }
 
-      return repository.update(associateId, validation.data);
+      const updatedAssociate = await repository.update(associateId, validation.data);
+      const existingProfile =
+        (await profileRepository.findByAssociateId(associateId)) ??
+        createEmptyAssociateProfile();
+      const savedProfile = await profileRepository.upsertByAssociateId(
+        associateId,
+        {
+          ...existingProfile,
+          ...extractAssociateProfileData(validation.data),
+        },
+      );
+
+      return mergeAssociateWithProfile(updatedAssociate, savedProfile);
     },
 
     async deleteAssociate(id: string) {
       const associateId = normalizeRequiredId(id);
       await getAssociateById(repository, associateId);
+      await profileRepository.removeByAssociateId(associateId);
       await repository.remove(associateId);
     },
   };
@@ -138,6 +167,17 @@ async function getAssociateById(repository: AssociateRepository, id: string) {
   }
 
   return associate;
+}
+
+async function hydrateAssociateProfile(
+  profileRepository: AssociateProfileRepository,
+  associate: Associate,
+) {
+  const profile =
+    (await profileRepository.findByAssociateId(associate.id)) ??
+    createEmptyAssociateProfile();
+
+  return mergeAssociateWithProfile(associate, profile);
 }
 
 async function assertCpfAvailable(
@@ -186,6 +226,51 @@ function getFirstErrorMessage(errors: Record<string, string | undefined>) {
   }
 
   return "Dados inválidos para o associado.";
+}
+
+function mergeAssociateWithProfile(
+  associate: Associate,
+  profile: AssociateProfileData,
+): Associate {
+  return {
+    ...associate,
+    ...profile,
+  };
+}
+
+function extractAssociateProfileData(
+  input: Partial<CreateAssociateInput> | Partial<UpdateAssociateInput>,
+): AssociateProfileData {
+  return {
+    modalidadeAssociado: input.modalidadeAssociado ?? null,
+    cnpjEmpresa: input.cnpjEmpresa ?? null,
+    nomeEmpresa: input.nomeEmpresa ?? null,
+    enderecoCompleto: input.enderecoCompleto ?? null,
+    bairro: input.bairro ?? null,
+    cidade: input.cidade ?? null,
+    estado: input.estado ?? null,
+    cep: input.cep ?? null,
+    profissao: input.profissao ?? null,
+    sexo: input.sexo ?? null,
+    dataNascimento: input.dataNascimento ?? null,
+    nacionalidade: input.nacionalidade ?? null,
+    naturalidade: input.naturalidade ?? null,
+    rg: input.rg ?? null,
+    cnh: input.cnh ?? null,
+    estadoCivil: input.estadoCivil ?? null,
+    nomePai: input.nomePai ?? null,
+    nomeMae: input.nomeMae ?? null,
+    dependentes: input.dependentes ?? null,
+    grauParentesco: input.grauParentesco ?? null,
+    telefone: input.telefone ?? null,
+    celular: input.celular ?? null,
+    email: input.email ?? null,
+    observacoes: input.observacoes ?? null,
+    situacaoFinanceira: input.situacaoFinanceira ?? null,
+    situacaoDocumental: input.situacaoDocumental ?? null,
+    historicoResumo: input.historicoResumo ?? null,
+    fotoUrl: input.fotoUrl ?? null,
+  };
 }
 
 export type AssociateService = ReturnType<typeof createAssociateService>;

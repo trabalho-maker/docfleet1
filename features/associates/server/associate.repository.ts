@@ -5,6 +5,7 @@ import {
   associateCategories,
   associateStatuses,
 } from "@/features/associates/constants";
+import { createEmptyAssociateProfile } from "@/features/associates/server/associate-profile.repository";
 import type {
   Associate,
   AssociateCategory,
@@ -72,6 +73,7 @@ function mapAssociate(row: DatabaseRow): Associate {
     admissionDate: record.admission_date,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
+    ...createEmptyAssociateProfile(),
   };
 }
 
@@ -276,6 +278,7 @@ export class SqliteAssociateRepository implements AssociateRepository {
         admissionDate: data.admissionDate.trim(),
         createdAt: now,
         updatedAt: now,
+        ...createEmptyAssociateProfile(),
       };
 
       await session.execute(
@@ -340,6 +343,7 @@ export class SqliteAssociateRepository implements AssociateRepository {
             ? data.admissionDate.trim()
             : current.admissionDate,
         updatedAt: new Date().toISOString(),
+        ...createEmptyAssociateProfile(),
       };
 
       await session.execute(

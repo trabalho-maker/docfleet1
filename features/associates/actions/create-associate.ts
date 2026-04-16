@@ -19,6 +19,7 @@ import type {
 export type CreateAssociateActionResult =
   | {
       success: true;
+      associateId: string;
     }
   | {
       success: false;
@@ -55,10 +56,11 @@ export async function createAssociateAction(
 
   try {
     const associateService = createAssociateService();
-    await associateService.createAssociate(validation.data);
+    const createdAssociate = await associateService.createAssociate(validation.data);
 
     logger.info("associates.create.success", {
       userId: user.id,
+      associateId: createdAssociate.id,
       cpf: maskCpf(validation.data.cpf),
       registrationNumber: validation.data.registrationNumber,
       category: validation.data.category,
@@ -67,6 +69,7 @@ export async function createAssociateAction(
 
     return {
       success: true,
+      associateId: createdAssociate.id,
     };
   } catch (error) {
     if (

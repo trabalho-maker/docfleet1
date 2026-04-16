@@ -1,16 +1,25 @@
-﻿import {
+import {
   hasExceededMaxLength,
+  normalizeEmailInput,
   normalizePlainTextInput,
 } from "@/lib/security/input";
 import {
   associateCategories,
   associatesDefaults,
+  associateCivilStates,
+  associateProfileCategories,
+  associateSexOptions,
   associateStatuses,
+  brazilianStates,
 } from "@/features/associates/constants";
 import type {
   AssociateCategory,
   AssociateFieldErrors,
   AssociateFilters,
+  AssociateFormValues,
+  AssociateProfileCategory,
+  AssociateProfileData,
+  AssociateSex,
   AssociateStatus,
   CreateAssociateInput,
   UpdateAssociateInput,
@@ -21,8 +30,14 @@ const MAX_ASSOCIATE_CPF_LENGTH = 11;
 const MAX_ASSOCIATE_REGISTRATION_NUMBER_LENGTH = 40;
 const MAX_FILTER_SEARCH_LENGTH = 160;
 const MAX_PAGE_SIZE = 100;
+const MAX_SHORT_TEXT_LENGTH = 120;
+const MAX_MEDIUM_TEXT_LENGTH = 180;
+const MAX_LONG_TEXT_LENGTH = 255;
+const MAX_NOTES_LENGTH = 2000;
 
 type AssociateFiltersErrors = Partial<Record<keyof AssociateFilters, string>>;
+
+type AssociateInputLike = Partial<AssociateFormValues> | Partial<CreateAssociateInput>;
 
 export type CreateAssociateValidationResult =
   | {
@@ -85,18 +100,28 @@ export function validateAssociateCpf(value: string) {
 }
 
 export function validateCreateAssociateInput(
-  input: CreateAssociateInput,
+  input: AssociateInputLike,
 ): CreateAssociateValidationResult {
   const errors: AssociateFieldErrors = {};
-  const name = normalizeName(input.name, errors);
-  const cpf = normalizeAndValidateCpf(input.cpf, errors);
-  const category = validateCategory(input.category, errors);
-  const registrationNumber = normalizeRegistrationNumber(
-    input.registrationNumber,
+  const name = normalizeName(String(input.name ?? ""), errors);
+  const cpf = normalizeAndValidateCpf(String(input.cpf ?? ""), errors);
+  const category = validateCategory(
+    typeof input.category === "string" ? input.category : "",
     errors,
   );
-  const status = validateStatus(input.status, errors);
-  const admissionDate = normalizeAndValidateAdmissionDate(input.admissionDate, errors);
+  const registrationNumber = normalizeRegistrationNumber(
+    String(input.registrationNumber ?? ""),
+    errors,
+  );
+  const status = validateStatus(
+    typeof input.status === "string" ? input.status : "",
+    errors,
+  );
+  const admissionDate = normalizeAndValidateAdmissionDate(
+    String(input.admissionDate ?? ""),
+    errors,
+  );
+  const profile = normalizeAssociateProfile(input, errors);
 
   if (Object.keys(errors).length > 0) {
     return {
@@ -114,42 +139,48 @@ export function validateCreateAssociateInput(
       registrationNumber,
       status,
       admissionDate,
+      ...profile,
     },
   };
 }
 
 export function validateUpdateAssociateInput(
-  input: UpdateAssociateInput,
+  input: AssociateInputLike,
 ): UpdateAssociateValidationResult {
   const errors: AssociateFieldErrors = {};
   const data: UpdateAssociateInput = {};
 
   if (input.name !== undefined) {
-    data.name = normalizeName(input.name, errors);
+    data.name = normalizeName(String(input.name), errors);
   }
 
   if (input.cpf !== undefined) {
-    data.cpf = normalizeAndValidateCpf(input.cpf, errors);
+    data.cpf = normalizeAndValidateCpf(String(input.cpf), errors);
   }
 
   if (input.category !== undefined) {
-    data.category = validateCategory(input.category, errors);
+    data.category = validateCategory(String(input.category), errors);
   }
 
   if (input.registrationNumber !== undefined) {
     data.registrationNumber = normalizeRegistrationNumber(
-      input.registrationNumber,
+      String(input.registrationNumber),
       errors,
     );
   }
 
   if (input.status !== undefined) {
-    data.status = validateStatus(input.status, errors);
+    data.status = validateStatus(String(input.status), errors);
   }
 
   if (input.admissionDate !== undefined) {
-    data.admissionDate = normalizeAndValidateAdmissionDate(input.admissionDate, errors);
+    data.admissionDate = normalizeAndValidateAdmissionDate(
+      String(input.admissionDate),
+      errors,
+    );
   }
+
+  Object.assign(data, normalizeAssociateProfile(input, errors));
 
   if (Object.keys(errors).length > 0) {
     return {
@@ -284,6 +315,124 @@ export function validateAssociateFilters(
   };
 }
 
+function normalizeAssociateProfile(
+  input: AssociateInputLike,
+  errors: AssociateFieldErrors,
+): AssociateProfileData {
+  const modalidadeAssociado = normalizeOptionalProfileCategory(
+    input.modalidadeAssociado,
+    errors,
+  );
+  const cnpjEmpresa = normalizeOptionalCompanyDocument(input.cnpjEmpresa, errors);
+  const nomeEmpresa = normalizeOptionalText(
+    input.nomeEmpresa,
+    "nomeEmpresa",
+    errors,
+    MAX_ASSOCIATE_NAME_LENGTH,
+  );
+
+  if (modalidadeAssociado === "CNPJ") {
+    if (!cnpjEmpresa) {
+      errors.cnpjEmpresa = "Informe o CNPJ da empresa.";
+    }
+
+    if (!nomeEmpresa) {
+      errors.nomeEmpresa = "Informe o nome da empresa.";
+    }
+  }
+
+  return {
+    modalidadeAssociado,
+    cnpjEmpresa,
+    nomeEmpresa,
+    enderecoCompleto: normalizeOptionalText(
+      input.enderecoCompleto,
+      "enderecoCompleto",
+      errors,
+      MAX_LONG_TEXT_LENGTH,
+    ),
+    bairro: normalizeOptionalText(input.bairro, "bairro", errors, MAX_SHORT_TEXT_LENGTH),
+    cidade: normalizeOptionalText(input.cidade, "cidade", errors, MAX_SHORT_TEXT_LENGTH),
+    estado: normalizeOptionalState(input.estado, errors),
+    cep: normalizeOptionalCep(input.cep, errors),
+    profissao: normalizeOptionalText(
+      input.profissao,
+      "profissao",
+      errors,
+      MAX_SHORT_TEXT_LENGTH,
+    ),
+    sexo: normalizeOptionalSex(input.sexo, errors),
+    dataNascimento: normalizeOptionalDate(
+      input.dataNascimento,
+      "dataNascimento",
+      "Informe uma data de nascimento válida.",
+      errors,
+    ),
+    nacionalidade: normalizeOptionalText(
+      input.nacionalidade,
+      "nacionalidade",
+      errors,
+      MAX_SHORT_TEXT_LENGTH,
+    ),
+    naturalidade: normalizeOptionalText(
+      input.naturalidade,
+      "naturalidade",
+      errors,
+      MAX_SHORT_TEXT_LENGTH,
+    ),
+    rg: normalizeOptionalText(input.rg, "rg", errors, MAX_SHORT_TEXT_LENGTH),
+    cnh: normalizeOptionalText(input.cnh, "cnh", errors, MAX_SHORT_TEXT_LENGTH),
+    estadoCivil: normalizeOptionalCivilState(input.estadoCivil, errors),
+    nomePai: normalizeOptionalText(input.nomePai, "nomePai", errors, MAX_ASSOCIATE_NAME_LENGTH),
+    nomeMae: normalizeOptionalText(input.nomeMae, "nomeMae", errors, MAX_ASSOCIATE_NAME_LENGTH),
+    dependentes: normalizeOptionalText(
+      input.dependentes,
+      "dependentes",
+      errors,
+      MAX_SHORT_TEXT_LENGTH,
+    ),
+    grauParentesco: normalizeOptionalText(
+      input.grauParentesco,
+      "grauParentesco",
+      errors,
+      MAX_SHORT_TEXT_LENGTH,
+    ),
+    telefone: normalizeOptionalText(
+      input.telefone,
+      "telefone",
+      errors,
+      MAX_SHORT_TEXT_LENGTH,
+    ),
+    celular: normalizeOptionalText(input.celular, "celular", errors, MAX_SHORT_TEXT_LENGTH),
+    email: normalizeOptionalEmail(input.email, errors),
+    observacoes: normalizeOptionalLongText(
+      input.observacoes,
+      "observacoes",
+      errors,
+      MAX_NOTES_LENGTH,
+    ),
+    situacaoFinanceira: normalizeOptionalLongText(
+      input.situacaoFinanceira,
+      "situacaoFinanceira",
+      errors,
+      MAX_MEDIUM_TEXT_LENGTH,
+    ),
+    situacaoDocumental: normalizeOptionalLongText(
+      input.situacaoDocumental,
+      "situacaoDocumental",
+      errors,
+      MAX_MEDIUM_TEXT_LENGTH,
+    ),
+    historicoResumo: normalizeOptionalLongText(
+      input.historicoResumo,
+      "historicoResumo",
+      errors,
+      MAX_NOTES_LENGTH,
+    ),
+    fotoUrl: normalizeOptionalText(input.fotoUrl, "fotoUrl", errors, MAX_LONG_TEXT_LENGTH),
+  };
+}
+
 function normalizeName(value: string, errors: AssociateFieldErrors) {
   const normalizedValue = normalizePlainTextInput(value);
 
@@ -322,10 +471,7 @@ function normalizeRegistrationNumber(value: string, errors: AssociateFieldErrors
   return normalizedValue;
 }
 
-function validateCategory(
-  value: CreateAssociateInput["category"] | UpdateAssociateInput["category"],
-  errors: AssociateFieldErrors,
-) {
+function validateCategory(value: string, errors: AssociateFieldErrors) {
   if (!value || !isAssociateCategory(value)) {
     errors.category = "Informe uma categoria válida.";
   }
@@ -333,10 +479,7 @@ function validateCategory(
   return value as AssociateCategory;
 }
 
-function validateStatus(
-  value: CreateAssociateInput["status"] | UpdateAssociateInput["status"],
-  errors: AssociateFieldErrors,
-) {
+function validateStatus(value: string, errors: AssociateFieldErrors) {
   if (!value || !isAssociateStatus(value)) {
     errors.status = "Informe um status válido.";
   }
@@ -351,6 +494,169 @@ function normalizeAndValidateAdmissionDate(value: string, errors: AssociateField
     errors.admissionDate = "Informe a data de admissão.";
   } else if (!isValidIsoDate(normalizedValue)) {
     errors.admissionDate = "Informe uma data de admissão válida.";
+  }
+
+  return normalizedValue;
+}
+
+function normalizeOptionalText(
+  value: unknown,
+  field: keyof AssociateFieldErrors,
+  errors: AssociateFieldErrors,
+  maxLength: number,
+) {
+  const normalizedValue = normalizePlainTextInput(String(value ?? ""));
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (hasExceededMaxLength(normalizedValue, maxLength)) {
+    errors[field] = `Informe um valor com no máximo ${maxLength} caracteres.`;
+  }
+
+  return normalizedValue;
+}
+
+function normalizeOptionalProfileCategory(value: unknown, errors: AssociateFieldErrors) {
+  const normalizedValue = normalizePlainTextInput(String(value ?? ""));
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (!associateProfileCategories.includes(normalizedValue as AssociateProfileCategory)) {
+    errors.modalidadeAssociado = "Informe uma categoria da ficha valida.";
+  }
+
+  return normalizedValue as AssociateProfileCategory;
+}
+
+function normalizeOptionalCompanyDocument(value: unknown, errors: AssociateFieldErrors) {
+  const digits = String(value ?? "").replace(/\D/g, "");
+
+  if (!digits) {
+    return null;
+  }
+
+  if (digits.length !== 14) {
+    errors.cnpjEmpresa = "Informe um CNPJ valido.";
+  }
+
+  return digits;
+}
+
+function normalizeOptionalLongText(
+  value: unknown,
+  field: keyof AssociateFieldErrors,
+  errors: AssociateFieldErrors,
+  maxLength: number,
+) {
+  const normalizedValue = normalizeMultilineInput(String(value ?? ""));
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (hasExceededMaxLength(normalizedValue, maxLength)) {
+    errors[field] = `Informe um texto com no máximo ${maxLength} caracteres.`;
+  }
+
+  return normalizedValue;
+}
+
+function normalizeOptionalEmail(value: unknown, errors: AssociateFieldErrors) {
+  const rawValue = String(value ?? "").trim();
+
+  if (!rawValue) {
+    return null;
+  }
+
+  const normalizedValue = normalizeEmailInput(rawValue);
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedValue)) {
+    errors.email = "Informe um e-mail válido.";
+  } else if (hasExceededMaxLength(normalizedValue, MAX_LONG_TEXT_LENGTH)) {
+    errors.email = `Informe um e-mail com no máximo ${MAX_LONG_TEXT_LENGTH} caracteres.`;
+  }
+
+  return normalizedValue;
+}
+
+function normalizeOptionalDate(
+  value: unknown,
+  field: keyof AssociateFieldErrors,
+  errorMessage: string,
+  errors: AssociateFieldErrors,
+) {
+  const normalizedValue = String(value ?? "").trim();
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (!isValidIsoDate(normalizedValue)) {
+    errors[field] = errorMessage;
+  }
+
+  return normalizedValue;
+}
+
+function normalizeOptionalCep(value: unknown, errors: AssociateFieldErrors) {
+  const digits = String(value ?? "").replace(/\D/g, "");
+
+  if (!digits) {
+    return null;
+  }
+
+  if (digits.length !== 8) {
+    errors.cep = "Informe um CEP válido.";
+  }
+
+  return digits;
+}
+
+function normalizeOptionalState(value: unknown, errors: AssociateFieldErrors) {
+  const normalizedValue = normalizePlainTextInput(String(value ?? "")).toUpperCase();
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (!brazilianStates.includes(normalizedValue as (typeof brazilianStates)[number])) {
+    errors.estado = "Informe uma UF válida.";
+  }
+
+  return normalizedValue;
+}
+
+function normalizeOptionalSex(value: unknown, errors: AssociateFieldErrors) {
+  const normalizedValue = normalizePlainTextInput(String(value ?? "")).toUpperCase();
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (!associateSexOptions.includes(normalizedValue as AssociateSex)) {
+    errors.sexo = "Informe um sexo válido.";
+  }
+
+  return normalizedValue as AssociateSex;
+}
+
+function normalizeOptionalCivilState(value: unknown, errors: AssociateFieldErrors) {
+  const normalizedValue = normalizePlainTextInput(String(value ?? ""));
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (
+    !associateCivilStates.includes(
+      normalizedValue as (typeof associateCivilStates)[number],
+    )
+  ) {
+    errors.estadoCivil = "Informe um estado civil válido.";
   }
 
   return normalizedValue;
@@ -394,3 +700,10 @@ function calculateCpfCheckDigit(baseDigits: number[], factor: number) {
   return remainder === 10 ? 0 : remainder;
 }
 
+function normalizeMultilineInput(value: string) {
+  return value
+    .replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, " ")
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}

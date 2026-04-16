@@ -1,4 +1,9 @@
-﻿import type { AssociateCategory, AssociateStatus } from "@/features/associates/types";
+import type {
+  AssociateCategory,
+  AssociateProfileCategory,
+  AssociateSex,
+  AssociateStatus,
+} from "@/features/associates/types";
 
 export const associateCategories: AssociateCategory[] = [
   "Titular",
@@ -14,8 +19,54 @@ export const associateStatuses: AssociateStatus[] = [
   "Bloqueado",
 ];
 
+export const associateSexOptions: AssociateSex[] = ["M", "F"];
+
+export const associateProfileCategories: AssociateProfileCategory[] = [
+  "Taxi",
+  "Caminhao",
+  "Escolar",
+  "CNPJ",
+];
+
+export const associateCivilStates = [
+  "Solteiro(a)",
+  "Casado(a)",
+  "União estável",
+  "Divorciado(a)",
+  "Viúvo(a)",
+] as const;
+
+export const brazilianStates = [
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
+  "TO",
+] as const;
+
 export const associatesDefaults = {
   page: 1,
   pageSize: 20,
 } as const;
-

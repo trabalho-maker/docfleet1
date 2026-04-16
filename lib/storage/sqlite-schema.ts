@@ -113,6 +113,41 @@ export function createSqliteSchema(db: Database) {
       FOREIGN KEY (associate_id) REFERENCES associates(id)
     );
 
+    CREATE TABLE IF NOT EXISTS associate_profiles (
+      associate_id TEXT PRIMARY KEY,
+      modalidade_associado TEXT,
+      cnpj_empresa TEXT,
+      nome_empresa TEXT,
+      endereco_completo TEXT,
+      bairro TEXT,
+      cidade TEXT,
+      estado TEXT,
+      cep TEXT,
+      profissao TEXT,
+      sexo TEXT,
+      data_nascimento TEXT,
+      nacionalidade TEXT,
+      naturalidade TEXT,
+      rg TEXT,
+      cnh TEXT,
+      estado_civil TEXT,
+      nome_pai TEXT,
+      nome_mae TEXT,
+      dependentes TEXT,
+      grau_parentesco TEXT,
+      telefone TEXT,
+      celular TEXT,
+      email TEXT,
+      observacoes TEXT,
+      situacao_financeira TEXT,
+      situacao_documental TEXT,
+      historico_resumo TEXT,
+      foto_url TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (associate_id) REFERENCES associates(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_documents_due_date
     ON documents(due_date);
 
@@ -145,11 +180,17 @@ export function createSqliteSchema(db: Database) {
 
     CREATE INDEX IF NOT EXISTS idx_associate_operation_profiles_type
     ON associate_operation_profiles(operation_type);
+
+    CREATE INDEX IF NOT EXISTS idx_associate_profiles_email
+    ON associate_profiles(email);
   `);
 
   migrateLegacyDocumentColumns(db);
   ensureColumnExists(db, "alerts", "kind", "TEXT");
   ensureColumnExists(db, "alerts", "source_document_id", "TEXT");
+  ensureColumnExists(db, "associate_profiles", "modalidade_associado", "TEXT");
+  ensureColumnExists(db, "associate_profiles", "cnpj_empresa", "TEXT");
+  ensureColumnExists(db, "associate_profiles", "nome_empresa", "TEXT");
   ensureColumnExists(
     db,
     "auth_rate_limits",

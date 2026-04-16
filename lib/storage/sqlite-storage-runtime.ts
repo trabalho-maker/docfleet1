@@ -178,6 +178,8 @@ export async function resetSqliteDatabase() {
       db.run("DROP TABLE IF EXISTS alerts");
       db.run("DROP TABLE IF EXISTS password_reset_tokens");
       db.run("DROP TABLE IF EXISTS auth_rate_limits");
+      db.run("DROP TABLE IF EXISTS associate_profiles");
+      db.run("DROP TABLE IF EXISTS associate_operation_profiles");
       db.run("DROP TABLE IF EXISTS associates");
       createSqliteSchema(db);
       await seedSqliteDatabase(db);

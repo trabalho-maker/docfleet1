@@ -66,6 +66,13 @@ export function AssociatesTable({
                 </td>
                 <td className="px-5 py-4">
                   <div className="flex justify-end gap-3">
+                    <Link
+                      href={`/associados/${associate.id}/impressao`}
+                      className="df-button-secondary"
+                    >
+                      Ver ficha
+                    </Link>
+
                     <ActionLink
                       href={`/associados/${associate.id}/editar`}
                       disabled={!canEdit}

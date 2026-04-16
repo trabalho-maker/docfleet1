@@ -34,6 +34,7 @@ describe("associate service", () => {
 
     expect(created.cpf).toBe("52998224725");
     expect(created.registrationNumber).toBe("MAT-2026-0100");
+    expect(created.enderecoCompleto).toBeNull();
   });
 
   it("rejects duplicate CPF on create", async () => {
@@ -53,10 +54,17 @@ describe("associate service", () => {
     const updated = await service.updateAssociate("asc_01", {
       name: "Maria de Souza Lima",
       status: "Inativo",
+      enderecoCompleto: "Rua 1, 200",
+      cidade: "Rio Claro",
+      estado: "SP",
+      observacoes: "Associada com ficha completa.",
     });
 
     expect(updated.name).toBe("Maria de Souza Lima");
     expect(updated.status).toBe("Inativo");
+    expect(updated.enderecoCompleto).toBe("Rua 1, 200");
+    expect(updated.cidade).toBe("Rio Claro");
+    expect(updated.estado).toBe("SP");
   });
 
   it("deletes an existing associate", async () => {

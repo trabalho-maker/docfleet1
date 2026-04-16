@@ -1,5 +1,6 @@
 import type { DatabaseAdapter, DatabaseRow } from "@/lib/database/adapter";
 import { getDatabaseAdapter } from "@/lib/database/provider";
+import { createEmptyAssociateProfile } from "@/features/associates/server/associate-profile.repository";
 import type { Associate } from "@/features/associates/types";
 import type {
   AssociateOperationProfile,
@@ -44,6 +45,7 @@ function mapAssociateOperationRow(row: DatabaseRow): AssociateOperationRecord {
     admissionDate: String(row[6]),
     createdAt: String(row[7]),
     updatedAt: String(row[8]),
+    ...createEmptyAssociateProfile(),
   };
 
   const profileRow: AssociateOperationRow = {

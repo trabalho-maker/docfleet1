@@ -20,6 +20,7 @@ import type {
 export type UpdateAssociateActionResult =
   | {
       success: true;
+      associateId: string;
     }
   | {
       success: false;
@@ -58,7 +59,7 @@ export async function updateAssociateAction(
 
   try {
     const associateService = createAssociateService();
-    await associateService.updateAssociate(id, validation.data);
+    const updatedAssociate = await associateService.updateAssociate(id, validation.data);
 
     logger.info("associates.update.success", {
       userId: user.id,
@@ -69,6 +70,7 @@ export async function updateAssociateAction(
 
     return {
       success: true,
+      associateId: updatedAssociate.id,
     };
   } catch (error) {
     if (

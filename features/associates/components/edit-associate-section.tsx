@@ -13,7 +13,7 @@ import type {
 
 type EditAssociateSectionProps = {
   associateId: string;
-  initialValues: AssociateFormValues;
+  initialValues: Partial<AssociateFormValues>;
   userName: string;
   userEmail: string;
   userRole: string;
@@ -34,7 +34,10 @@ export function EditAssociateSection({
     text: string;
   } | null>(null);
 
-  async function handleSubmit(values: AssociateFormValues) {
+  async function handleSubmit(
+    values: AssociateFormValues,
+    intent: "save" | "saveAndPrint",
+  ) {
     setIsSubmitting(true);
     setServerErrors({});
     setMessage(null);
@@ -47,7 +50,6 @@ export function EditAssociateSection({
 
         if (result.notFound) {
           router.replace("/associados");
-          router.refresh();
           return;
         }
 
@@ -62,8 +64,12 @@ export function EditAssociateSection({
         return;
       }
 
-      router.push("/associados?success=updated");
-      router.refresh();
+      const targetUrl =
+        intent === "saveAndPrint"
+          ? `/associados/${result.associateId}/impressao?autoPrint=1`
+          : "/associados?success=updated";
+
+      router.push(targetUrl);
     } finally {
       setIsSubmitting(false);
     }
@@ -74,14 +80,22 @@ export function EditAssociateSection({
       <AssociatesPageHeader
         eyebrow="Edição de associados"
         title="Editar associado"
-        description="Atualize os dados cadastrais do associado mantendo a consistência da base e as validações do domínio."
+        description="Atualize os dados cadastrais do associado mantendo a consistência da base, da ficha institucional e das validações do domínio."
         userName={userName}
         userEmail={userEmail}
         userRole={userRole}
         action={
-          <Link href="/associados" className="df-button-secondary">
-            Voltar para associados
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={`/associados/${associateId}/impressao`}
+              className="df-button-secondary"
+            >
+              Ver ficha
+            </Link>
+            <Link href="/associados" className="df-button-secondary">
+              Voltar para associados
+            </Link>
+          </div>
         }
       />
 
@@ -89,6 +103,7 @@ export function EditAssociateSection({
         initialValues={initialValues}
         mode="edit"
         submitLabel="Salvar alterações"
+        saveAndPrintLabel="Salvar e imprimir"
         isSubmitting={isSubmitting}
         serverErrors={serverErrors}
         message={message}
