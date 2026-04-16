@@ -8,6 +8,7 @@ import {
 } from "@/features/documents/lib/expiration";
 import { logger, maskEmail } from "@/lib/logger";
 import type { Associate } from "@/features/associates/types";
+import type { AssociateOperationProfile } from "@/features/associates/operations/types";
 
 const defaultSeedRole = "Gestor de frota";
 
@@ -106,6 +107,39 @@ const seedAssociates: Associate[] = [
   },
 ];
 
+const seedAssociateOperationProfiles: AssociateOperationProfile[] = [
+  {
+    associateId: "asc_01",
+    operationType: "Taxista",
+    basicDocumentationDueDate: formatUtcDateOnly(addUtcDays(new Date(), 16)),
+    vehicleAuthorizationDueDate: null,
+    driverAuthorizationDueDate: null,
+    cargoLicensingDueDate: null,
+    createdAt: "2026-04-06T08:30:00.000Z",
+    updatedAt: "2026-04-06T08:30:00.000Z",
+  },
+  {
+    associateId: "asc_02",
+    operationType: "TransporteEscolar",
+    basicDocumentationDueDate: null,
+    vehicleAuthorizationDueDate: formatUtcDateOnly(addUtcDays(new Date(), 5)),
+    driverAuthorizationDueDate: formatUtcDateOnly(addUtcDays(new Date(), -2)),
+    cargoLicensingDueDate: null,
+    createdAt: "2026-04-06T08:35:00.000Z",
+    updatedAt: "2026-04-06T08:35:00.000Z",
+  },
+  {
+    associateId: "asc_03",
+    operationType: "Caminhao",
+    basicDocumentationDueDate: null,
+    vehicleAuthorizationDueDate: null,
+    driverAuthorizationDueDate: null,
+    cargoLicensingDueDate: formatUtcDateOnly(addUtcDays(new Date(), 45)),
+    createdAt: "2026-04-06T08:40:00.000Z",
+    updatedAt: "2026-04-06T08:40:00.000Z",
+  },
+];
+
 export async function seedSqliteDatabase(db: Database) {
   const seedDocuments = buildSeedDocuments();
   const seedUserName = process.env.SEED_USER_NAME?.trim();
@@ -132,6 +166,7 @@ export async function seedSqliteDatabase(db: Database) {
     db.run("DELETE FROM alerts");
     db.run("DELETE FROM password_reset_tokens");
     db.run("DELETE FROM auth_rate_limits");
+    db.run("DELETE FROM associate_operation_profiles");
     db.run("DELETE FROM associates");
 
     db.run(
@@ -193,12 +228,38 @@ export async function seedSqliteDatabase(db: Database) {
       );
     }
 
+    for (const profile of seedAssociateOperationProfiles) {
+      db.run(
+        `INSERT INTO associate_operation_profiles (
+          associate_id,
+          operation_type,
+          basic_documentation_due_date,
+          vehicle_authorization_due_date,
+          driver_authorization_due_date,
+          cargo_licensing_due_date,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          profile.associateId,
+          profile.operationType,
+          profile.basicDocumentationDueDate,
+          profile.vehicleAuthorizationDueDate,
+          profile.driverAuthorizationDueDate,
+          profile.cargoLicensingDueDate,
+          profile.createdAt,
+          profile.updatedAt,
+        ],
+      );
+    }
+
     db.run("COMMIT");
     logger.info("data.seed.completed", {
       userEmail: maskEmail(seedUserEmail),
       documents: seedDocuments.length,
       alerts: seedAlerts.length,
       associates: seedAssociates.length,
+      operationProfiles: seedAssociateOperationProfiles.length,
     });
   } catch (error) {
     db.run("ROLLBACK");

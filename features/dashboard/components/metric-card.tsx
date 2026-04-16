@@ -38,14 +38,21 @@ export function MetricCard({ metric }: MetricCardProps) {
 }
 
 function getMetricAccent(label: string) {
-  if (label.includes("Alertas")) {
+  const normalizedLabel = label.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+
+  if (normalizedLabel.includes("alerta") || normalizedLabel.includes("atencao")) {
     return {
       barClass: "bg-[#EAB308]",
       glowClass: "bg-amber-100/80",
     };
   }
 
-  if (label.includes("Pendencias") || label.includes("Pendências")) {
+  if (
+    normalizedLabel.includes("pendencia") ||
+    normalizedLabel.includes("critico") ||
+    normalizedLabel.includes("criticos") ||
+    normalizedLabel.includes("venc")
+  ) {
     return {
       barClass: "bg-[#EF4444]",
       glowClass: "bg-rose-100/80",

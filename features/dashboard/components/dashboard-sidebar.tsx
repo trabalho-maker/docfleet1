@@ -13,6 +13,9 @@ const navigationItems = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Documentos", href: "/documentos" },
   { label: "Associados", href: "/associados" },
+  { label: "Taxistas", href: "/taxistas" },
+  { label: "Transportes escolares", href: "/transportes-escolares" },
+  { label: "Caminhões", href: "/caminhoes" },
 ];
 
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
@@ -61,8 +64,8 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
         <div className="rounded-[28px] border border-white/10 bg-slate-950/16 p-4">
           <p className="text-sm font-semibold text-white">Governança documental</p>
           <p className="mt-2 text-sm leading-6 text-white/68">
-            Painel conectado a dados reais, alertas incrementais, associados e
-            autenticação com sessão ativa.
+            Painel conectado a dados reais, alertas incrementais, associados,
+            perfis operacionais e autenticação com sessão ativa.
           </p>
         </div>
       </div>

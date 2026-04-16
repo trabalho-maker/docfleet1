@@ -101,6 +101,18 @@ export function createSqliteSchema(db: Database) {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS associate_operation_profiles (
+      associate_id TEXT PRIMARY KEY,
+      operation_type TEXT NOT NULL,
+      basic_documentation_due_date TEXT,
+      vehicle_authorization_due_date TEXT,
+      driver_authorization_due_date TEXT,
+      cargo_licensing_due_date TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (associate_id) REFERENCES associates(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_documents_due_date
     ON documents(due_date);
 
@@ -130,6 +142,9 @@ export function createSqliteSchema(db: Database) {
 
     CREATE INDEX IF NOT EXISTS idx_associates_admission_date
     ON associates(admission_date);
+
+    CREATE INDEX IF NOT EXISTS idx_associate_operation_profiles_type
+    ON associate_operation_profiles(operation_type);
   `);
 
   migrateLegacyDocumentColumns(db);
