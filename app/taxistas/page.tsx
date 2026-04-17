@@ -9,8 +9,8 @@ import { createAssociateOperationService } from "@/features/associates/operation
 import { createEmptyAssociateOperationOverview } from "@/features/associates/operations/types";
 
 export const metadata: Metadata = {
-  title: "Taxistas",
-  description: "Visão operacional de taxistas no DocFleet.",
+  title: "TAXISTAS",
+  description: "Visao operacional dos taxistas no DocFleet.",
 };
 
 export default async function TaxistasPage() {

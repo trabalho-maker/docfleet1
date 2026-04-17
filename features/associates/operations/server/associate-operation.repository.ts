@@ -28,6 +28,15 @@ export interface AssociateOperationRepository {
   ): Promise<AssociateOperationRecord[]>;
 }
 
+const operationProfileCategoryMap: Partial<
+  Record<AssociateOperationType, "TAXI" | "CAMINHAO" | "ESCOLAR" | "CNPJ">
+> = {
+  Taxista: "TAXI",
+  TransporteEscolar: "ESCOLAR",
+  Caminhao: "CAMINHAO",
+  Empresa: "CNPJ",
+};
+
 function normalizeNullableDate(value: unknown) {
   const normalized = value == null ? null : String(value).trim();
   return normalized ? normalized : null;
@@ -76,6 +85,7 @@ export class SqliteAssociateOperationRepository
   async findByOperationType(
     operationType: AssociateOperationType,
   ): Promise<AssociateOperationRecord[]> {
+    const profileCategory = operationProfileCategoryMap[operationType];
     const rows =
       operationType === "Empresa"
         ? await this.database.query(
@@ -105,6 +115,34 @@ export class SqliteAssociateOperationRepository
             `,
             [operationType, operationType],
           )
+        : operationType === "Taxista"
+          ? await this.database.query(
+              `
+                SELECT
+                  a.id,
+                  a.name,
+                  a.category,
+                  a.registration_number,
+                  a.status,
+                  COALESCE(p.associate_id, a.id),
+                  COALESCE(p.operation_type, ?),
+                  p.basic_documentation_due_date,
+                  p.vehicle_authorization_due_date,
+                  p.driver_authorization_due_date,
+                  p.cargo_licensing_due_date,
+                  COALESCE(p.created_at, ap.created_at),
+                  COALESCE(p.updated_at, ap.updated_at)
+                FROM associate_profiles ap
+                INNER JOIN associates a
+                  ON a.id = ap.associate_id
+                LEFT JOIN associate_operation_profiles p
+                  ON a.id = p.associate_id
+                 AND p.operation_type = ?
+                WHERE UPPER(COALESCE(ap.modalidade_associado, '')) = ?
+                ORDER BY a.name ASC
+              `,
+              [operationType, operationType, profileCategory ?? ""],
+            )
         : await this.database.query(
             `
               SELECT
@@ -113,21 +151,27 @@ export class SqliteAssociateOperationRepository
                 a.category,
                 a.registration_number,
                 a.status,
-                p.associate_id,
-                p.operation_type,
+                COALESCE(p.associate_id, a.id),
+                COALESCE(p.operation_type, ?),
                 p.basic_documentation_due_date,
                 p.vehicle_authorization_due_date,
                 p.driver_authorization_due_date,
                 p.cargo_licensing_due_date,
-                p.created_at,
-                p.updated_at
-              FROM associate_operation_profiles p
-              INNER JOIN associates a
+                COALESCE(p.created_at, ap.created_at),
+                COALESCE(p.updated_at, ap.updated_at)
+              FROM associates a
+              LEFT JOIN associate_profiles ap
+                ON ap.associate_id = a.id
+              LEFT JOIN associate_operation_profiles p
                 ON a.id = p.associate_id
-              WHERE p.operation_type = ?
+               AND p.operation_type = ?
+              WHERE (
+                p.operation_type = ?
+                OR UPPER(COALESCE(ap.modalidade_associado, '')) = ?
+              )
               ORDER BY a.name ASC
             `,
-            [operationType],
+            [operationType, operationType, operationType, profileCategory ?? ""],
           );
 
     return rows.map(mapAssociateOperationRow);

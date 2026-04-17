@@ -22,9 +22,9 @@ export const associateStatuses: AssociateStatus[] = [
 export const associateSexOptions: AssociateSex[] = ["M", "F"];
 
 export const associateProfileCategories: AssociateProfileCategory[] = [
-  "Taxi",
-  "Caminhao",
-  "Escolar",
+  "TAXI",
+  "CAMINHAO",
+  "ESCOLAR",
   "CNPJ",
 ];
 

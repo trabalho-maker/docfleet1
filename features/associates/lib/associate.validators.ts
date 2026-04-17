@@ -519,7 +519,9 @@ function normalizeOptionalText(
 }
 
 function normalizeOptionalProfileCategory(value: unknown, errors: AssociateFieldErrors) {
-  const normalizedValue = normalizePlainTextInput(String(value ?? ""));
+  const normalizedValue = normalizeAssociateProfileCategoryValue(
+    normalizePlainTextInput(String(value ?? "")),
+  );
 
   if (!normalizedValue) {
     return null;
@@ -530,6 +532,36 @@ function normalizeOptionalProfileCategory(value: unknown, errors: AssociateField
   }
 
   return normalizedValue as AssociateProfileCategory;
+}
+
+function normalizeAssociateProfileCategoryValue(value: string) {
+  if (!value) {
+    return "";
+  }
+
+  const normalizedUpperValue = value.toUpperCase();
+
+  if (normalizedUpperValue === "TAXI" || normalizedUpperValue === "TAXISTA") {
+    return "TAXI";
+  }
+
+  if (normalizedUpperValue === "CAMINHAO" || normalizedUpperValue === "CAMINHÃO") {
+    return "CAMINHAO";
+  }
+
+  if (
+    normalizedUpperValue === "ESCOLAR" ||
+    normalizedUpperValue === "TRANSPORTEESCOLAR" ||
+    normalizedUpperValue === "TRANSPORTE_ESCOLAR"
+  ) {
+    return "ESCOLAR";
+  }
+
+  if (normalizedUpperValue === "CNPJ") {
+    return "CNPJ";
+  }
+
+  return normalizedUpperValue;
 }
 
 function normalizeOptionalCompanyDocument(value: unknown, errors: AssociateFieldErrors) {

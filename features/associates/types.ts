@@ -8,7 +8,7 @@ export type AssociateStatus = "Ativo" | "Inativo" | "Suspenso" | "Bloqueado";
 
 export type AssociateSex = "M" | "F";
 
-export type AssociateProfileCategory = "Taxi" | "Caminhao" | "Escolar" | "CNPJ";
+export type AssociateProfileCategory = "TAXI" | "CAMINHAO" | "ESCOLAR" | "CNPJ";
 
 export type AssociateProfileData = {
   modalidadeAssociado: AssociateProfileCategory | null;

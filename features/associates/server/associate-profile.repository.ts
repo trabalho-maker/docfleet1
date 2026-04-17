@@ -295,8 +295,7 @@ function mapAssociateProfile(row: DatabaseRow): AssociateProfileData {
   };
 
   return {
-    modalidadeAssociado:
-      (record.modalidade_associado as AssociateProfileData["modalidadeAssociado"]) ?? null,
+    modalidadeAssociado: normalizeProfileCategory(record.modalidade_associado),
     cnpjEmpresa: record.cnpj_empresa,
     nomeEmpresa: record.nome_empresa,
     enderecoCompleto: record.endereco_completo,
@@ -329,4 +328,36 @@ function mapAssociateProfile(row: DatabaseRow): AssociateProfileData {
 
 function normalizeNullable(value: unknown) {
   return value == null ? null : String(value);
+}
+
+function normalizeProfileCategory(
+  value: string | null,
+): AssociateProfileData["modalidadeAssociado"] {
+  if (!value) {
+    return null;
+  }
+
+  const normalizedValue = value.trim().toUpperCase();
+
+  if (normalizedValue === "TAXI" || normalizedValue === "TAXISTA") {
+    return "TAXI";
+  }
+
+  if (normalizedValue === "CAMINHAO" || normalizedValue === "CAMINHÃO") {
+    return "CAMINHAO";
+  }
+
+  if (
+    normalizedValue === "ESCOLAR" ||
+    normalizedValue === "TRANSPORTEESCOLAR" ||
+    normalizedValue === "TRANSPORTE_ESCOLAR"
+  ) {
+    return "ESCOLAR";
+  }
+
+  if (normalizedValue === "CNPJ") {
+    return "CNPJ";
+  }
+
+  return null;
 }

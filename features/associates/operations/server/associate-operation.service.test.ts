@@ -43,13 +43,13 @@ describe("associate operation service", () => {
     expect(overview.entries[0].requirements).toEqual([
       {
         key: "vehicleAuthorization",
-        label: "Autorização do veículo",
+        label: "Autorizacao do veiculo",
         dueDate: "2099-01-01",
         status: "Valido",
       },
       {
         key: "driverAuthorization",
-        label: "Autorização do condutor",
+        label: "Autorizacao do condutor",
         dueDate: "2000-01-01",
         status: "Vencido",
       },
@@ -97,7 +97,7 @@ describe("associate operation service", () => {
     expect(overview.entries[0].requirements).toEqual([
       {
         key: "companyDocumentation",
-        label: "Documentação empresarial",
+        label: "Documentacao empresarial",
         dueDate: "2099-01-01",
         status: "Valido",
       },

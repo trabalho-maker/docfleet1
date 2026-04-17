@@ -35,20 +35,18 @@ export const associateOperationConfigs: Record<
     type: "Taxista",
     route: "/taxistas",
     navigationLabel: "Taxistas",
-    eyebrow: "Operação por categoria",
-    title: "Taxistas",
-    description:
-      "Acompanhe associados vinculados à operação de táxi com foco em documentação básica, regularidade e prontidão operacional.",
-    summaryTitle: "Documentação essencial do taxista",
-    summaryDescription:
-      "Nesta visão, o DocFleet destaca o vencimento dos requisitos centrais para manter o associado apto à operação diária.",
+    eyebrow: "Operacao por categoria",
+    title: "TAXISTAS",
+    description: "Acompanhe os associados vinculados a operacao de taxi.",
+    summaryTitle: "Documentacao essencial",
+    summaryDescription: "Itens acompanhados nesta operacao.",
     emptyStateTitle: "Nenhum taxista vinculado ainda",
     emptyStateDescription:
-      "Assim que houver associados vinculados à operação de táxi, esta página passará a destacar documentação básica e status operacional.",
+      "Quando houver associados vinculados a operacao de taxi, eles aparecerao aqui com status documentais e operacionais.",
     requirements: [
       {
         key: "basicDocumentation",
-        label: "Documentação básica",
+        label: "Documentacao basica",
         field: "basicDocumentationDueDate",
       },
     ],
@@ -57,25 +55,25 @@ export const associateOperationConfigs: Record<
     type: "TransporteEscolar",
     route: "/transportes-escolares",
     navigationLabel: "Transportes escolares",
-    eyebrow: "Operação por categoria",
+    eyebrow: "Operacao por categoria",
     title: "Transportes escolares",
     description:
-      "Concentre a gestão dos associados vinculados ao transporte escolar com foco em autorizações do veículo e do condutor.",
-    summaryTitle: "Autorizações da operação escolar",
+      "Concentre a gestao dos associados vinculados ao transporte escolar com foco em autorizacoes do veiculo e do condutor.",
+    summaryTitle: "Autorizacoes da operacao escolar",
     summaryDescription:
-      "A base já está pronta para separar requisitos do veículo e do motorista sem duplicar o cadastro principal de associados.",
+      "A base ja esta pronta para separar requisitos do veiculo e do motorista sem duplicar o cadastro principal de associados.",
     emptyStateTitle: "Nenhum transporte escolar vinculado ainda",
     emptyStateDescription:
-      "Quando houver associados vinculados ao transporte escolar, esta visão passará a exibir autorizações do veículo e do condutor com status próprio.",
+      "Quando houver associados vinculados ao transporte escolar, esta visao passara a exibir autorizacoes do veiculo e do condutor com status proprio.",
     requirements: [
       {
         key: "vehicleAuthorization",
-        label: "Autorização do veículo",
+        label: "Autorizacao do veiculo",
         field: "vehicleAuthorizationDueDate",
       },
       {
         key: "driverAuthorization",
-        label: "Autorização do condutor",
+        label: "Autorizacao do condutor",
         field: "driverAuthorizationDueDate",
       },
     ],
@@ -83,21 +81,21 @@ export const associateOperationConfigs: Record<
   Caminhao: {
     type: "Caminhao",
     route: "/caminhoes",
-    navigationLabel: "Caminhões",
-    eyebrow: "Operação por categoria",
-    title: "Caminhões",
+    navigationLabel: "Caminhoes",
+    eyebrow: "Operacao por categoria",
+    title: "Caminhoes",
     description:
-      "Gerencie associados vinculados à operação de carga com leitura rápida do licenciamento e dos pontos que exigem ação imediata.",
-    summaryTitle: "Regularidade da operação de carga",
+      "Gerencie associados vinculados a operacao de carga com leitura rapida do licenciamento e dos pontos que exigem acao imediata.",
+    summaryTitle: "Regularidade da operacao de carga",
     summaryDescription:
-      "A visão por caminhões separa o contexto operacional da base sindical, preservando o CRUD principal e abrindo espaço para regras específicas.",
-    emptyStateTitle: "Nenhum caminhão vinculado ainda",
+      "A visao por caminhoes separa o contexto operacional da base sindical, preservando o CRUD principal e abrindo espaco para regras especificas.",
+    emptyStateTitle: "Nenhum caminhao vinculado ainda",
     emptyStateDescription:
-      "Quando houver associados vinculados à operação de carga, esta página passará a destacar licenciamento e prioridade operacional.",
+      "Quando houver associados vinculados a operacao de carga, esta pagina passara a destacar licenciamento e prioridade operacional.",
     requirements: [
       {
         key: "cargoLicensing",
-        label: "Licenciamento da operação",
+        label: "Licenciamento da operacao",
         field: "cargoLicensingDueDate",
       },
     ],
@@ -106,20 +104,20 @@ export const associateOperationConfigs: Record<
     type: "Empresa",
     route: "/empresas",
     navigationLabel: "Empresas",
-    eyebrow: "Operação por categoria",
+    eyebrow: "Operacao por categoria",
     title: "Empresas",
     description:
-      "Consolide os associados com perfil empresarial para acompanhar CNPJs cadastrados, documentação da empresa e leitura operacional em uma visão dedicada.",
-    summaryTitle: "Documentação empresarial",
+      "Consolide os associados com perfil empresarial para acompanhar CNPJs cadastrados, documentacao da empresa e leitura operacional em uma visao dedicada.",
+    summaryTitle: "Documentacao empresarial",
     summaryDescription:
-      "Esta visão reúne todos os cadastros com modalidade CNPJ e preserva o mesmo núcleo de associados, sem duplicar o CRUD nem misturar dados da ficha com outras operações.",
+      "Esta visao reune todos os cadastros com modalidade CNPJ e preserva o mesmo nucleo de associados, sem duplicar o CRUD nem misturar dados da ficha com outras operacoes.",
     emptyStateTitle: "Nenhuma empresa vinculada ainda",
     emptyStateDescription:
-      "Quando houver associados com modalidade CNPJ, esta página passará a exibir a documentação empresarial e o status operacional correspondente.",
+      "Quando houver associados com modalidade CNPJ, esta pagina passara a exibir a documentacao empresarial e o status operacional correspondente.",
     requirements: [
       {
         key: "companyDocumentation",
-        label: "Documentação empresarial",
+        label: "Documentacao empresarial",
         field: "basicDocumentationDueDate",
       },
     ],
