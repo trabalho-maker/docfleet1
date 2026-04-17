@@ -181,8 +181,14 @@ export function createSqliteSchema(db: Database) {
     CREATE INDEX IF NOT EXISTS idx_associate_operation_profiles_type
     ON associate_operation_profiles(operation_type);
 
+    CREATE INDEX IF NOT EXISTS idx_associate_operation_profiles_type_associate_id
+    ON associate_operation_profiles(operation_type, associate_id);
+
     CREATE INDEX IF NOT EXISTS idx_associate_profiles_email
     ON associate_profiles(email);
+
+    CREATE INDEX IF NOT EXISTS idx_associate_profiles_modalidade_associado
+    ON associate_profiles(modalidade_associado);
   `);
 
   migrateLegacyDocumentColumns(db);

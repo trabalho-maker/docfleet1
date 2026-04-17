@@ -16,6 +16,7 @@ const navigationItems = [
   { label: "Taxistas", href: "/taxistas" },
   { label: "Transportes escolares", href: "/transportes-escolares" },
   { label: "Caminhões", href: "/caminhoes" },
+  { label: "Empresas", href: "/empresas" },
 ];
 
 export function DashboardSidebar({ user }: DashboardSidebarProps) {

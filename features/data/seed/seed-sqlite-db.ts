@@ -109,6 +109,18 @@ const seedAssociates: Associate[] = [
     updatedAt: "2026-04-06T08:25:00.000Z",
     ...createEmptyAssociateProfile(),
   },
+  {
+    id: "asc_04",
+    name: "Transporte Azul Logística",
+    cpf: "27865757000",
+    category: "Titular",
+    registrationNumber: "MAT-2026-0004",
+    status: "Ativo",
+    admissionDate: "2021-07-22",
+    createdAt: "2026-04-06T08:28:00.000Z",
+    updatedAt: "2026-04-06T08:28:00.000Z",
+    ...createEmptyAssociateProfile(),
+  },
 ];
 
 const seedAssociateOperationProfiles: AssociateOperationProfile[] = [
@@ -141,6 +153,16 @@ const seedAssociateOperationProfiles: AssociateOperationProfile[] = [
     cargoLicensingDueDate: formatUtcDateOnly(addUtcDays(new Date(), 45)),
     createdAt: "2026-04-06T08:40:00.000Z",
     updatedAt: "2026-04-06T08:40:00.000Z",
+  },
+  {
+    associateId: "asc_04",
+    operationType: "Empresa",
+    basicDocumentationDueDate: formatUtcDateOnly(addUtcDays(new Date(), 24)),
+    vehicleAuthorizationDueDate: null,
+    driverAuthorizationDueDate: null,
+    cargoLicensingDueDate: null,
+    createdAt: "2026-04-06T08:42:00.000Z",
+    updatedAt: "2026-04-06T08:42:00.000Z",
   },
 ];
 
@@ -204,6 +226,39 @@ const seedAssociateProfiles = [
     fotoUrl: null,
     createdAt: "2026-04-06T08:50:00.000Z",
     updatedAt: "2026-04-06T08:50:00.000Z",
+  },
+  {
+    associateId: "asc_04",
+    modalidadeAssociado: "CNPJ",
+    cnpjEmpresa: "27865757000102",
+    nomeEmpresa: "Transporte Azul Logística Ltda.",
+    enderecoCompleto: "Rodovia SP-191, km 112",
+    bairro: "Distrito Industrial",
+    cidade: "Rio Claro",
+    estado: "SP",
+    cep: "13505680",
+    profissao: "Transporte de cargas",
+    sexo: null,
+    dataNascimento: null,
+    nacionalidade: "Brasileira",
+    naturalidade: "Rio Claro",
+    rg: null,
+    cnh: null,
+    estadoCivil: null,
+    nomePai: null,
+    nomeMae: null,
+    dependentes: null,
+    grauParentesco: null,
+    telefone: "(19) 3522-0004",
+    celular: "(19) 99888-0004",
+    email: "contato@transporteazul.com.br",
+    observacoes: "Empresa associada com cadastro empresarial ativo.",
+    situacaoFinanceira: "Mensalidade em dia.",
+    situacaoDocumental: "CNPJ e cadastro empresarial atualizados.",
+    historicoResumo: "Perfil empresarial criado para a nova operação.",
+    fotoUrl: null,
+    createdAt: "2026-04-06T08:55:00.000Z",
+    updatedAt: "2026-04-06T08:55:00.000Z",
   },
 ];
 
@@ -321,15 +376,18 @@ export async function seedSqliteDatabase(db: Database) {
       );
     }
 
-    for (const profile of seedAssociateProfiles) {
-      db.run(
-        `INSERT INTO associate_profiles (
-          associate_id,
-          endereco_completo,
-          bairro,
-          cidade,
-          estado,
-          cep,
+      for (const profile of seedAssociateProfiles) {
+        db.run(
+          `INSERT INTO associate_profiles (
+            associate_id,
+            modalidade_associado,
+            cnpj_empresa,
+            nome_empresa,
+            endereco_completo,
+            bairro,
+            cidade,
+            estado,
+            cep,
           profissao,
           sexo,
           data_nascimento,
@@ -347,18 +405,21 @@ export async function seedSqliteDatabase(db: Database) {
           email,
           observacoes,
           situacao_financeira,
-          situacao_documental,
-          historico_resumo,
-          foto_url,
-          created_at,
-          updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          profile.associateId,
-          profile.enderecoCompleto,
-          profile.bairro,
-          profile.cidade,
-          profile.estado,
+            situacao_documental,
+            historico_resumo,
+            foto_url,
+            created_at,
+            updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
+          [
+            profile.associateId,
+            profile.modalidadeAssociado ?? null,
+            profile.cnpjEmpresa ?? null,
+            profile.nomeEmpresa ?? null,
+            profile.enderecoCompleto,
+            profile.bairro,
+            profile.cidade,
+            profile.estado,
           profile.cep,
           profile.profissao,
           profile.sexo,

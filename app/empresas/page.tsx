@@ -9,22 +9,22 @@ import { createAssociateOperationService } from "@/features/associates/operation
 import { createEmptyAssociateOperationOverview } from "@/features/associates/operations/types";
 
 export const metadata: Metadata = {
-  title: "Taxistas",
-  description: "Visão operacional de taxistas no DocFleet.",
+  title: "Empresas",
+  description: "Visão operacional de empresas associadas no DocFleet.",
 };
 
-export default async function TaxistasPage() {
+export default async function EmpresasPage() {
   const user = await getCurrentUser();
   const canView = canViewAssociates(user);
   const accessMessage = getAssociateAccessMessage(user);
   const overview = canView
-    ? await createAssociateOperationService().getOperationOverview("Taxista")
-    : createEmptyAssociateOperationOverview("Taxista");
+    ? await createAssociateOperationService().getOperationOverview("Empresa")
+    : createEmptyAssociateOperationOverview("Empresa");
 
   return (
     <AssociateOperationPage
       user={user}
-      operationType="Taxista"
+      operationType="Empresa"
       overview={overview}
       canView={canView}
       accessMessage={accessMessage}

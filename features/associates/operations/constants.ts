@@ -17,11 +17,14 @@ export type AssociateOperationConfig = {
   type: AssociateOperationType;
   route: string;
   navigationLabel: string;
+  operationBadgeLabel: string;
   eyebrow: string;
   title: string;
   description: string;
   summaryTitle: string;
   summaryDescription: string;
+  emptyStateTitle: string;
+  emptyStateDescription: string;
   requirements: AssociateOperationRequirementDefinition[];
 };
 
@@ -33,6 +36,7 @@ export const associateOperationConfigs: Record<
     type: "Taxista",
     route: "/taxistas",
     navigationLabel: "Taxistas",
+    operationBadgeLabel: "Taxista",
     eyebrow: "Operação por categoria",
     title: "Taxistas",
     description:
@@ -40,6 +44,9 @@ export const associateOperationConfigs: Record<
     summaryTitle: "Documentação essencial do taxista",
     summaryDescription:
       "Nesta visão, o DocFleet destaca o vencimento dos requisitos centrais para manter o associado apto à operação diária.",
+    emptyStateTitle: "Nenhum taxista vinculado ainda",
+    emptyStateDescription:
+      "Assim que houver associados vinculados à operação de táxi, esta página passará a destacar documentação básica e status operacional.",
     requirements: [
       {
         key: "basicDocumentation",
@@ -52,6 +59,7 @@ export const associateOperationConfigs: Record<
     type: "TransporteEscolar",
     route: "/transportes-escolares",
     navigationLabel: "Transportes escolares",
+    operationBadgeLabel: "Transporte escolar",
     eyebrow: "Operação por categoria",
     title: "Transportes escolares",
     description:
@@ -59,6 +67,9 @@ export const associateOperationConfigs: Record<
     summaryTitle: "Autorizações da operação escolar",
     summaryDescription:
       "A base já está pronta para separar requisitos do veículo e do motorista sem duplicar o cadastro principal de associados.",
+    emptyStateTitle: "Nenhum transporte escolar vinculado ainda",
+    emptyStateDescription:
+      "Quando houver associados vinculados ao transporte escolar, esta visão passará a exibir autorizações do veículo e do condutor com status próprio.",
     requirements: [
       {
         key: "vehicleAuthorization",
@@ -76,6 +87,7 @@ export const associateOperationConfigs: Record<
     type: "Caminhao",
     route: "/caminhoes",
     navigationLabel: "Caminhões",
+    operationBadgeLabel: "Caminhão",
     eyebrow: "Operação por categoria",
     title: "Caminhões",
     description:
@@ -83,11 +95,37 @@ export const associateOperationConfigs: Record<
     summaryTitle: "Regularidade da operação de carga",
     summaryDescription:
       "A visão por caminhões separa o contexto operacional da base sindical, preservando o CRUD principal e abrindo espaço para regras específicas.",
+    emptyStateTitle: "Nenhum caminhão vinculado ainda",
+    emptyStateDescription:
+      "Quando houver associados vinculados à operação de carga, esta página passará a destacar licenciamento e prioridade operacional.",
     requirements: [
       {
         key: "cargoLicensing",
         label: "Licenciamento da operação",
         field: "cargoLicensingDueDate",
+      },
+    ],
+  },
+  Empresa: {
+    type: "Empresa",
+    route: "/empresas",
+    navigationLabel: "Empresas",
+    operationBadgeLabel: "Empresa",
+    eyebrow: "Operação por categoria",
+    title: "Empresas",
+    description:
+      "Consolide os associados com perfil empresarial para acompanhar CNPJs cadastrados, documentação da empresa e leitura operacional em uma visão dedicada.",
+    summaryTitle: "Documentação empresarial",
+    summaryDescription:
+      "Esta visão reúne todos os cadastros com modalidade CNPJ e preserva o mesmo núcleo de associados, sem duplicar o CRUD nem misturar dados da ficha com outras operações.",
+    emptyStateTitle: "Nenhuma empresa vinculada ainda",
+    emptyStateDescription:
+      "Quando houver associados com modalidade CNPJ, esta página passará a exibir a documentação empresarial e o status operacional correspondente.",
+    requirements: [
+      {
+        key: "companyDocumentation",
+        label: "Documentação empresarial",
+        field: "basicDocumentationDueDate",
       },
     ],
   },

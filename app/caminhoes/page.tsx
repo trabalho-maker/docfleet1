@@ -6,6 +6,7 @@ import {
 } from "@/features/associates/lib/associate-authorization";
 import { AssociateOperationPage } from "@/features/associates/operations/components/associate-operation-page";
 import { createAssociateOperationService } from "@/features/associates/operations/server/associate-operation.service";
+import { createEmptyAssociateOperationOverview } from "@/features/associates/operations/types";
 
 export const metadata: Metadata = {
   title: "Caminhões",
@@ -18,16 +19,7 @@ export default async function TrucksPage() {
   const accessMessage = getAssociateAccessMessage(user);
   const overview = canView
     ? await createAssociateOperationService().getOperationOverview("Caminhao")
-    : {
-        operationType: "Caminhao" as const,
-        entries: [],
-        metrics: {
-          totalAssociates: 0,
-          valid: 0,
-          attention: 0,
-          critical: 0,
-        },
-      };
+    : createEmptyAssociateOperationOverview("Caminhao");
 
   return (
     <AssociateOperationPage

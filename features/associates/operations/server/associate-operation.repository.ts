@@ -1,8 +1,7 @@
 import type { DatabaseAdapter, DatabaseRow } from "@/lib/database/adapter";
 import { getDatabaseAdapter } from "@/lib/database/provider";
-import { createEmptyAssociateProfile } from "@/features/associates/server/associate-profile.repository";
-import type { Associate } from "@/features/associates/types";
 import type {
+  AssociateOperationAssociate,
   AssociateOperationProfile,
   AssociateOperationType,
 } from "@/features/associates/operations/types";
@@ -19,7 +18,7 @@ type AssociateOperationRow = {
 };
 
 export type AssociateOperationRecord = {
-  associate: Associate;
+  associate: AssociateOperationAssociate;
   profile: AssociateOperationProfile;
 };
 
@@ -35,28 +34,23 @@ function normalizeNullableDate(value: unknown) {
 }
 
 function mapAssociateOperationRow(row: DatabaseRow): AssociateOperationRecord {
-  const associate: Associate = {
+  const associate: AssociateOperationAssociate = {
     id: String(row[0]),
     name: String(row[1]),
-    cpf: String(row[2]),
-    category: row[3] as Associate["category"],
-    registrationNumber: String(row[4]),
-    status: row[5] as Associate["status"],
-    admissionDate: String(row[6]),
-    createdAt: String(row[7]),
-    updatedAt: String(row[8]),
-    ...createEmptyAssociateProfile(),
+    category: row[2] as AssociateOperationAssociate["category"],
+    registrationNumber: String(row[3]),
+    status: row[4] as AssociateOperationAssociate["status"],
   };
 
   const profileRow: AssociateOperationRow = {
-    associateId: String(row[9]),
-    operationType: row[10] as AssociateOperationType,
-    basicDocumentationDueDate: normalizeNullableDate(row[11]),
-    vehicleAuthorizationDueDate: normalizeNullableDate(row[12]),
-    driverAuthorizationDueDate: normalizeNullableDate(row[13]),
-    cargoLicensingDueDate: normalizeNullableDate(row[14]),
-    createdAt: String(row[15]),
-    updatedAt: String(row[16]),
+    associateId: String(row[5]),
+    operationType: row[6] as AssociateOperationType,
+    basicDocumentationDueDate: normalizeNullableDate(row[7]),
+    vehicleAuthorizationDueDate: normalizeNullableDate(row[8]),
+    driverAuthorizationDueDate: normalizeNullableDate(row[9]),
+    cargoLicensingDueDate: normalizeNullableDate(row[10]),
+    createdAt: String(row[11]),
+    updatedAt: String(row[12]),
   };
 
   return {
@@ -82,34 +76,59 @@ export class SqliteAssociateOperationRepository
   async findByOperationType(
     operationType: AssociateOperationType,
   ): Promise<AssociateOperationRecord[]> {
-    const rows = await this.database.query(
-      `
-        SELECT
-          a.id,
-          a.name,
-          a.cpf,
-          a.category,
-          a.registration_number,
-          a.status,
-          a.admission_date,
-          a.created_at,
-          a.updated_at,
-          p.associate_id,
-          p.operation_type,
-          p.basic_documentation_due_date,
-          p.vehicle_authorization_due_date,
-          p.driver_authorization_due_date,
-          p.cargo_licensing_due_date,
-          p.created_at,
-          p.updated_at
-        FROM associate_operation_profiles p
-        INNER JOIN associates a
-          ON a.id = p.associate_id
-        WHERE p.operation_type = ?
-        ORDER BY a.name ASC
-      `,
-      [operationType],
-    );
+    const rows =
+      operationType === "Empresa"
+        ? await this.database.query(
+            `
+              SELECT
+                a.id,
+                a.name,
+                a.category,
+                a.registration_number,
+                a.status,
+                a.id,
+                ?,
+                p.basic_documentation_due_date,
+                p.vehicle_authorization_due_date,
+                p.driver_authorization_due_date,
+                p.cargo_licensing_due_date,
+                COALESCE(p.created_at, ap.created_at),
+                COALESCE(p.updated_at, ap.updated_at)
+              FROM associate_profiles ap
+              INNER JOIN associates a
+                ON a.id = ap.associate_id
+              LEFT JOIN associate_operation_profiles p
+                ON p.associate_id = a.id
+               AND p.operation_type = ?
+              WHERE ap.modalidade_associado = 'CNPJ'
+              ORDER BY a.name ASC
+            `,
+            [operationType, operationType],
+          )
+        : await this.database.query(
+            `
+              SELECT
+                a.id,
+                a.name,
+                a.category,
+                a.registration_number,
+                a.status,
+                p.associate_id,
+                p.operation_type,
+                p.basic_documentation_due_date,
+                p.vehicle_authorization_due_date,
+                p.driver_authorization_due_date,
+                p.cargo_licensing_due_date,
+                p.created_at,
+                p.updated_at
+              FROM associate_operation_profiles p
+              INNER JOIN associates a
+                ON a.id = p.associate_id
+              WHERE p.operation_type = ?
+              ORDER BY a.name ASC
+            `,
+            [operationType],
+          );
 
     return rows.map(mapAssociateOperationRow);
   }

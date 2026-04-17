@@ -4,13 +4,15 @@ import type { DocumentStatus } from "@/features/data/types";
 export type AssociateOperationType =
   | "Taxista"
   | "TransporteEscolar"
-  | "Caminhao";
+  | "Caminhao"
+  | "Empresa";
 
 export type AssociateOperationRequirementKey =
   | "basicDocumentation"
   | "vehicleAuthorization"
   | "driverAuthorization"
-  | "cargoLicensing";
+  | "cargoLicensing"
+  | "companyDocumentation";
 
 export type AssociateOperationRequirementStatus = DocumentStatus | "Missing";
 
@@ -32,8 +34,16 @@ export type AssociateOperationRequirement = {
   status: AssociateOperationRequirementStatus;
 };
 
+export type AssociateOperationAssociate = {
+  id: Associate["id"];
+  name: Associate["name"];
+  category: Associate["category"];
+  registrationNumber: Associate["registrationNumber"];
+  status: Associate["status"];
+};
+
 export type AssociateOperationEntry = {
-  associate: Associate;
+  associate: AssociateOperationAssociate;
   profile: AssociateOperationProfile;
   requirements: AssociateOperationRequirement[];
   overallStatus: AssociateOperationRequirementStatus;
@@ -51,3 +61,18 @@ export type AssociateOperationOverview = {
   entries: AssociateOperationEntry[];
   metrics: AssociateOperationMetrics;
 };
+
+export function createEmptyAssociateOperationOverview(
+  operationType: AssociateOperationType,
+): AssociateOperationOverview {
+  return {
+    operationType,
+    entries: [],
+    metrics: {
+      totalAssociates: 0,
+      valid: 0,
+      attention: 0,
+      critical: 0,
+    },
+  };
+}

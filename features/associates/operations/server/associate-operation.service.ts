@@ -8,12 +8,14 @@ import {
   type AssociateOperationRepository,
 } from "@/features/associates/operations/server/associate-operation.repository";
 import type {
+  AssociateOperationAssociate,
   AssociateOperationEntry,
   AssociateOperationOverview,
   AssociateOperationRequirement,
   AssociateOperationRequirementStatus,
   AssociateOperationType,
 } from "@/features/associates/operations/types";
+import { createEmptyAssociateOperationOverview } from "@/features/associates/operations/types";
 
 type AssociateOperationServiceOptions = {
   repository?: AssociateOperationRepository;
@@ -31,41 +33,35 @@ export function createAssociateOperationService(
     ): Promise<AssociateOperationOverview> {
       const config = getAssociateOperationConfig(operationType);
       const records = await repository.findByOperationType(operationType);
-      const entries = records.map((record) =>
-        buildAssociateOperationEntry(record.associate, record.profile, config),
+      return records.reduce<AssociateOperationOverview>(
+        (overview, record) => {
+          const entry = buildAssociateOperationEntry(
+            record.associate,
+            record.profile,
+            config,
+          );
+
+          overview.entries.push(entry);
+          overview.metrics.totalAssociates += 1;
+
+          if (entry.overallStatus === "Valido") {
+            overview.metrics.valid += 1;
+          } else if (entry.overallStatus === "Atencao") {
+            overview.metrics.attention += 1;
+          } else {
+            overview.metrics.critical += 1;
+          }
+
+          return overview;
+        },
+        createEmptyAssociateOperationOverview(operationType),
       );
-
-      return {
-        operationType,
-        entries,
-        metrics: entries.reduce(
-          (metrics, entry) => {
-            metrics.totalAssociates += 1;
-
-            if (entry.overallStatus === "Valido") {
-              metrics.valid += 1;
-            } else if (entry.overallStatus === "Atencao") {
-              metrics.attention += 1;
-            } else {
-              metrics.critical += 1;
-            }
-
-            return metrics;
-          },
-          {
-            totalAssociates: 0,
-            valid: 0,
-            attention: 0,
-            critical: 0,
-          },
-        ),
-      };
     },
   };
 }
 
 function buildAssociateOperationEntry(
-  associate: AssociateOperationEntry["associate"],
+  associate: AssociateOperationAssociate,
   profile: AssociateOperationEntry["profile"],
   config: AssociateOperationConfig,
 ): AssociateOperationEntry {

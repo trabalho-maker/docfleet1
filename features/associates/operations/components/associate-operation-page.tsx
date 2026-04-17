@@ -132,8 +132,8 @@ export function AssociateOperationPage({
                   {overview.entries.length === 0 ? (
                     <FeedbackAlert
                       type="info"
-                      title="Nenhum associado vinculado ainda"
-                      message="A base da Sprint 4 já está pronta. O próximo passo pode incluir formulário ou ação administrativa para vincular associados a esta operação."
+                      title={config.emptyStateTitle}
+                      message={config.emptyStateDescription}
                     />
                   ) : (
                     overview.entries.map((entry) => (
@@ -154,7 +154,7 @@ export function AssociateOperationPage({
                             <div className="mt-3 flex flex-wrap gap-2">
                               <AssociateStatusBadge status={entry.associate.status} />
                               <span className="df-badge-pill bg-slate-100 text-slate-700">
-                                {entry.associate.category}
+                                {config.operationBadgeLabel}
                               </span>
                               <span className="df-badge-pill bg-slate-100 text-slate-700">
                                 {entry.associate.registrationNumber}
