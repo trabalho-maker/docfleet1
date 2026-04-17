@@ -46,3 +46,16 @@ export function getRequestOriginFromHeaders(headers: HeaderBag) {
 
   return `${protocol}://${host}`;
 }
+
+export function isSafeLocalOrigin(origin: string | null | undefined) {
+  if (!origin) {
+    return false;
+  }
+
+  try {
+    const url = new URL(origin);
+    return ["localhost", "127.0.0.1", "::1", "[::1]"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}

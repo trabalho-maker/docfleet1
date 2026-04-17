@@ -49,10 +49,11 @@ describe("dashboard alerts integration", () => {
     );
     expect(generatedAlert).toBeDefined();
     expect(generatedAlert?.title).toContain("Laudo da frota critica");
-    expect(overview.metrics).toEqual(
+    expect(overview.alertCount).toBeGreaterThan(0);
+    expect(overview.kpis).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          label: "Alertas abertos",
+          label: "Documentos Vencidos",
         }),
       ]),
     );

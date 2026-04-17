@@ -17,7 +17,6 @@ export type AssociateOperationConfig = {
   type: AssociateOperationType;
   route: string;
   navigationLabel: string;
-  operationBadgeLabel: string;
   eyebrow: string;
   title: string;
   description: string;
@@ -36,7 +35,6 @@ export const associateOperationConfigs: Record<
     type: "Taxista",
     route: "/taxistas",
     navigationLabel: "Taxistas",
-    operationBadgeLabel: "Taxista",
     eyebrow: "Operação por categoria",
     title: "Taxistas",
     description:
@@ -59,7 +57,6 @@ export const associateOperationConfigs: Record<
     type: "TransporteEscolar",
     route: "/transportes-escolares",
     navigationLabel: "Transportes escolares",
-    operationBadgeLabel: "Transporte escolar",
     eyebrow: "Operação por categoria",
     title: "Transportes escolares",
     description:
@@ -87,7 +84,6 @@ export const associateOperationConfigs: Record<
     type: "Caminhao",
     route: "/caminhoes",
     navigationLabel: "Caminhões",
-    operationBadgeLabel: "Caminhão",
     eyebrow: "Operação por categoria",
     title: "Caminhões",
     description:
@@ -110,7 +106,6 @@ export const associateOperationConfigs: Record<
     type: "Empresa",
     route: "/empresas",
     navigationLabel: "Empresas",
-    operationBadgeLabel: "Empresa",
     eyebrow: "Operação por categoria",
     title: "Empresas",
     description:

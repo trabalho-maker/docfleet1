@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
+  associateCategories,
   associateCivilStates,
   associateProfileCategories,
   associateSexOptions,
@@ -192,7 +193,7 @@ export function AssociateForm({
             : "Cadastre um novo associado conforme a ficha institucional"}
         </h2>
         <p className="text-sm leading-6 text-[var(--color-muted)]">
-          A ficha interna do sistema continua titular por padrao, enquanto a categoria exibida abaixo define o tipo de associado na ficha impressa.
+          Separe a categoria sindical da modalidade operacional para manter a base consistente e a ficha institucional fiel ao cadastro.
         </p>
       </div>
 
@@ -244,10 +245,27 @@ export function AssociateForm({
             />
           </div>
 
-          <div className="grid gap-5 md:grid-cols-4">
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+            <Select
+              id="associate-category"
+              label="Categoria sindical"
+              value={values.category}
+              error={errors.category}
+              options={associateCategories.map((category) => ({
+                value: category,
+                label: category,
+              }))}
+              onChange={(event) =>
+                updateField(
+                  "category",
+                  event.target.value as AssociateFormValues["category"],
+                )
+              }
+            />
+
             <Select
               id="associate-profile-category"
-              label="Categoria"
+              label="Modalidade da ficha"
               value={values.modalidadeAssociado ?? ""}
               error={errors.modalidadeAssociado}
               placeholder="Selecione"

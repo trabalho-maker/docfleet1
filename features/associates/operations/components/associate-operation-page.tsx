@@ -154,7 +154,7 @@ export function AssociateOperationPage({
                             <div className="mt-3 flex flex-wrap gap-2">
                               <AssociateStatusBadge status={entry.associate.status} />
                               <span className="df-badge-pill bg-slate-100 text-slate-700">
-                                {config.operationBadgeLabel}
+                                {entry.associate.category}
                               </span>
                               <span className="df-badge-pill bg-slate-100 text-slate-700">
                                 {entry.associate.registrationNumber}

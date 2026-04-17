@@ -13,6 +13,7 @@ import {
 import {
   getClientIpFromHeaders,
   getRequestOriginFromHeaders,
+  isSafeLocalOrigin,
 } from "@/lib/security/request";
 
 export type RequestPasswordResetState = {
@@ -44,13 +45,22 @@ export async function requestPasswordResetAction(
 
   try {
     await consumePasswordResetAttempt(normalizedEmail, ipAddress);
+    const configuredBaseUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || null;
+    const requestOrigin = getRequestOriginFromHeaders(requestHeaders);
     const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL?.trim() || getRequestOriginFromHeaders(requestHeaders);
+      configuredBaseUrl ||
+      (process.env.NODE_ENV !== "production" && isSafeLocalOrigin(requestOrigin)
+        ? requestOrigin
+        : null);
 
     if (!baseUrl) {
       logger.error("auth.password_reset.request.missing_base_url", {
         email: maskEmail(normalizedEmail),
         ipAddress: maskIp(ipAddress),
+        requestOrigin:
+          process.env.NODE_ENV !== "production" && isSafeLocalOrigin(requestOrigin)
+            ? requestOrigin
+            : undefined,
       });
 
       return {

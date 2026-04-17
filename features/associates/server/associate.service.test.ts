@@ -98,15 +98,15 @@ describe("associate service", () => {
       service.countByCategory(),
     ]);
 
-    expect(total).toBe(3);
+    expect(total).toBe(4);
     expect(byStatus).toMatchObject({
-      Ativo: 2,
+      Ativo: 3,
       Inativo: 0,
       Suspenso: 1,
       Bloqueado: 0,
     });
     expect(byCategory).toMatchObject({
-      Titular: 1,
+      Titular: 2,
       Dependente: 1,
       Pensionista: 0,
       Contribuinte: 1,

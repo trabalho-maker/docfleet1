@@ -1,7 +1,15 @@
 import type { NextAuthConfig } from "next-auth";
 import { NextResponse } from "next/server";
 
-const privateRoutePrefixes = ["/dashboard", "/documentos", "/associados"];
+const privateRoutePrefixes = [
+  "/dashboard",
+  "/documentos",
+  "/associados",
+  "/taxistas",
+  "/transportes-escolares",
+  "/caminhoes",
+  "/empresas",
+];
 const publicAuthRoutes = [
   "/login",
   "/cadastro",
