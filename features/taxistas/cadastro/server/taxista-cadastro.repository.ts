@@ -1,0 +1,262 @@
+import type { DatabaseAdapter, DatabaseRow } from "@/lib/database/adapter";
+import { getDatabaseAdapter } from "@/lib/database/provider";
+import {
+  createEmptyTaxistaCadastroProfile,
+  type TaxistaAlvaraStatus,
+  type TaxistaCadastroProfile,
+  type TaxistaCadastroRecord,
+} from "@/features/taxistas/cadastro/types";
+
+export interface TaxistaCadastroRepository {
+  findMany(): Promise<TaxistaCadastroRecord[]>;
+  findByAssociateId(associateId: string): Promise<TaxistaCadastroRecord | null>;
+  upsertProfile(
+    associateId: string,
+    profile: Omit<TaxistaCadastroProfile, "associateId" | "createdAt" | "updatedAt">,
+  ): Promise<TaxistaCadastroProfile>;
+  updateStatusAlvara(
+    associateId: string,
+    statusAlvara: TaxistaAlvaraStatus,
+  ): Promise<void>;
+  clearReadyStatuses(): Promise<void>;
+}
+
+export class SqliteTaxistaCadastroRepository
+  implements TaxistaCadastroRepository
+{
+  constructor(private readonly database: DatabaseAdapter = getDatabaseAdapter()) {}
+
+  async findMany(): Promise<TaxistaCadastroRecord[]> {
+    const rows = await this.database.query(
+      `${buildSelectSql()} ORDER BY a.name ASC`,
+      ["TAXI"],
+    );
+    return rows.map(mapTaxistaCadastroRecord);
+  }
+
+  async findByAssociateId(associateId: string): Promise<TaxistaCadastroRecord | null> {
+    const row = await this.database.queryOne(
+      `${buildSelectSql()} AND a.id = ? ORDER BY a.name ASC`,
+      ["TAXI", associateId],
+    );
+
+    return row ? mapTaxistaCadastroRecord(row) : null;
+  }
+
+  async upsertProfile(
+    associateId: string,
+    profile: Omit<TaxistaCadastroProfile, "associateId" | "createdAt" | "updatedAt">,
+  ): Promise<TaxistaCadastroProfile> {
+    return this.database.write(async (session) => {
+      const existing = await session.queryOne(
+        "SELECT created_at FROM taxista_profiles WHERE associate_id = ? LIMIT 1",
+        [associateId],
+      );
+      const now = new Date().toISOString();
+      const createdAt = existing ? String(existing[0]) : now;
+
+      await session.execute(
+        `
+          INSERT INTO taxista_profiles (
+            associate_id,
+            status_alvara,
+            selo,
+            ponto,
+            placa,
+            modelo_veiculo,
+            numero_taximetro,
+            modelo_taximetro,
+            constante,
+            inmetro,
+            instalacao,
+            troca_taximetro,
+            pneu,
+            deca,
+            lacre_modulo,
+            lacre_taxi,
+            modulo,
+            cinta,
+            colocado,
+            retirado,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(associate_id) DO UPDATE SET
+            status_alvara = excluded.status_alvara,
+            selo = excluded.selo,
+            ponto = excluded.ponto,
+            placa = excluded.placa,
+            modelo_veiculo = excluded.modelo_veiculo,
+            numero_taximetro = excluded.numero_taximetro,
+            modelo_taximetro = excluded.modelo_taximetro,
+            constante = excluded.constante,
+            inmetro = excluded.inmetro,
+            instalacao = excluded.instalacao,
+            troca_taximetro = excluded.troca_taximetro,
+            pneu = excluded.pneu,
+            deca = excluded.deca,
+            lacre_modulo = excluded.lacre_modulo,
+            lacre_taxi = excluded.lacre_taxi,
+            modulo = excluded.modulo,
+            cinta = excluded.cinta,
+            colocado = excluded.colocado,
+            retirado = excluded.retirado,
+            updated_at = excluded.updated_at
+        `,
+        [
+          associateId,
+          profile.statusAlvara,
+          profile.selo,
+          profile.ponto,
+          profile.placa,
+          profile.modeloVeiculo,
+          profile.numeroTaximetro,
+          profile.modeloTaximetro,
+          profile.constante,
+          profile.inmetro,
+          profile.instalacao,
+          profile.trocaTaximetro,
+          profile.pneu,
+          profile.deca,
+          profile.lacreModulo,
+          profile.lacreTaxi,
+          profile.modulo,
+          profile.cinta,
+          profile.colocado,
+          profile.retirado,
+          createdAt,
+          now,
+        ],
+      );
+
+      return {
+        ...createEmptyTaxistaCadastroProfile(associateId),
+        ...profile,
+        associateId,
+        createdAt,
+        updatedAt: now,
+      };
+    });
+  }
+
+  async updateStatusAlvara(
+    associateId: string,
+    statusAlvara: TaxistaAlvaraStatus,
+  ): Promise<void> {
+    await this.database.write(async (session) => {
+      const existing = await session.queryOne(
+        "SELECT created_at FROM taxista_profiles WHERE associate_id = ? LIMIT 1",
+        [associateId],
+      );
+      const now = new Date().toISOString();
+      const createdAt = existing ? String(existing[0]) : now;
+
+      await session.execute(
+        `
+          INSERT INTO taxista_profiles (
+            associate_id,
+            status_alvara,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?)
+          ON CONFLICT(associate_id) DO UPDATE SET
+            status_alvara = excluded.status_alvara,
+            updated_at = excluded.updated_at
+        `,
+        [associateId, statusAlvara, createdAt, now],
+      );
+    });
+  }
+
+  async clearReadyStatuses(): Promise<void> {
+    await this.database.write(async (session) => {
+      await session.execute(
+        `
+          UPDATE taxista_profiles
+          SET status_alvara = 'CADASTRO',
+              updated_at = ?
+          WHERE status_alvara = 'PRONTO'
+        `,
+        [new Date().toISOString()],
+      );
+    });
+  }
+}
+
+function buildSelectSql() {
+  return `
+    SELECT
+      a.id,
+      a.name,
+      a.cpf,
+      COALESCE(ap.telefone, ap.celular),
+      ap.endereco_completo,
+      a.registration_number,
+      a.status,
+      COALESCE(tp.status_alvara, 'CADASTRO'),
+      tp.selo,
+      tp.ponto,
+      tp.placa,
+      tp.modelo_veiculo,
+      tp.numero_taximetro,
+      tp.modelo_taximetro,
+      tp.constante,
+      tp.inmetro,
+      tp.instalacao,
+      tp.troca_taximetro,
+      tp.pneu,
+      tp.deca,
+      tp.lacre_modulo,
+      tp.lacre_taxi,
+      tp.modulo,
+      tp.cinta,
+      tp.colocado,
+      tp.retirado
+    FROM associates a
+    INNER JOIN associate_profiles ap
+      ON ap.associate_id = a.id
+    LEFT JOIN taxista_profiles tp
+      ON tp.associate_id = a.id
+    WHERE UPPER(COALESCE(ap.modalidade_associado, '')) = ?
+  `;
+}
+
+function mapTaxistaCadastroRecord(row: DatabaseRow): TaxistaCadastroRecord {
+  return {
+    associateId: String(row[0]),
+    name: String(row[1]),
+    cpf: String(row[2]),
+    telefone: normalizeNullable(row[3]),
+    endereco: normalizeNullable(row[4]),
+    registrationNumber: String(row[5]),
+    status: String(row[6]) as TaxistaCadastroRecord["status"],
+    statusAlvara: String(row[7]) as TaxistaCadastroRecord["statusAlvara"],
+    selo: normalizeNullable(row[8]),
+    ponto: normalizeNullable(row[9]),
+    placa: normalizeNullable(row[10]),
+    modeloVeiculo: normalizeNullable(row[11]),
+    numeroTaximetro: normalizeNullable(row[12]),
+    modeloTaximetro: normalizeNullable(row[13]),
+    constante: normalizeNullable(row[14]),
+    inmetro: normalizeNullable(row[15]),
+    instalacao: normalizeNullable(row[16]),
+    trocaTaximetro: normalizeNullable(row[17]),
+    pneu: normalizeNullable(row[18]),
+    deca: normalizeNullable(row[19]),
+    lacreModulo: normalizeNullable(row[20]),
+    lacreTaxi: normalizeNullable(row[21]),
+    modulo: normalizeNullable(row[22]),
+    cinta: normalizeNullable(row[23]),
+    colocado: normalizeNullable(row[24]),
+    retirado: normalizeNullable(row[25]),
+  };
+}
+
+function normalizeNullable(value: unknown) {
+  if (value == null) {
+    return null;
+  }
+
+  const normalized = String(value).trim();
+  return normalized ? normalized : null;
+}

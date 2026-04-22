@@ -148,6 +148,32 @@ export function createSqliteSchema(db: Database) {
       FOREIGN KEY (associate_id) REFERENCES associates(id)
     );
 
+    CREATE TABLE IF NOT EXISTS taxista_profiles (
+      associate_id TEXT PRIMARY KEY,
+      status_alvara TEXT NOT NULL DEFAULT 'CADASTRO',
+      selo TEXT,
+      ponto TEXT,
+      placa TEXT,
+      modelo_veiculo TEXT,
+      numero_taximetro TEXT,
+      modelo_taximetro TEXT,
+      constante TEXT,
+      inmetro TEXT,
+      instalacao TEXT,
+      troca_taximetro TEXT,
+      pneu TEXT,
+      deca TEXT,
+      lacre_modulo TEXT,
+      lacre_taxi TEXT,
+      modulo TEXT,
+      cinta TEXT,
+      colocado TEXT,
+      retirado TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (associate_id) REFERENCES associates(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_documents_due_date
     ON documents(due_date);
 
@@ -189,6 +215,9 @@ export function createSqliteSchema(db: Database) {
 
     CREATE INDEX IF NOT EXISTS idx_associate_profiles_modalidade_associado
     ON associate_profiles(modalidade_associado);
+
+    CREATE INDEX IF NOT EXISTS idx_taxista_profiles_placa
+    ON taxista_profiles(placa);
   `);
 
   migrateLegacyDocumentColumns(db);
@@ -197,6 +226,12 @@ export function createSqliteSchema(db: Database) {
   ensureColumnExists(db, "associate_profiles", "modalidade_associado", "TEXT");
   ensureColumnExists(db, "associate_profiles", "cnpj_empresa", "TEXT");
   ensureColumnExists(db, "associate_profiles", "nome_empresa", "TEXT");
+  ensureColumnExists(
+    db,
+    "taxista_profiles",
+    "status_alvara",
+    "TEXT NOT NULL DEFAULT 'CADASTRO'",
+  );
   ensureColumnExists(
     db,
     "auth_rate_limits",

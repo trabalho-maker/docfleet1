@@ -10,6 +10,7 @@ import { logger, maskEmail } from "@/lib/logger";
 import { createEmptyAssociateProfile } from "@/features/associates/server/associate-profile.repository";
 import type { Associate } from "@/features/associates/types";
 import type { AssociateOperationProfile } from "@/features/associates/operations/types";
+import type { TaxistaCadastroProfile } from "@/features/taxistas/cadastro/types";
 
 const defaultSeedRole = "Gestor de frota";
 
@@ -295,6 +296,33 @@ const seedAssociateProfiles = [
   },
 ];
 
+const seedTaxistaProfiles: TaxistaCadastroProfile[] = [
+  {
+    associateId: "asc_01",
+    statusAlvara: "CADASTRO",
+    selo: "SL-0241",
+    ponto: "Rodoviaria Central",
+    placa: "FKD-3241",
+    modeloVeiculo: "Chevrolet Spin",
+    numeroTaximetro: "TX-98124",
+    modeloTaximetro: "Fiphot 7000",
+    constante: "K-824",
+    inmetro: "INM-2026-451",
+    instalacao: "2025-11-18",
+    trocaTaximetro: null,
+    pneu: "Revisado",
+    deca: "DECA-22",
+    lacreModulo: "LM-4451",
+    lacreTaxi: "LT-8830",
+    modulo: "MD-140",
+    cinta: "CI-19",
+    colocado: "2026-02-12",
+    retirado: null,
+    createdAt: "2026-04-06T08:58:00.000Z",
+    updatedAt: "2026-04-06T08:58:00.000Z",
+  },
+];
+
 export async function seedSqliteDatabase(db: Database) {
   const seedDocuments = buildSeedDocuments();
   const seedUserName = process.env.SEED_USER_NAME?.trim();
@@ -321,6 +349,7 @@ export async function seedSqliteDatabase(db: Database) {
     db.run("DELETE FROM alerts");
     db.run("DELETE FROM password_reset_tokens");
     db.run("DELETE FROM auth_rate_limits");
+    db.run("DELETE FROM taxista_profiles");
     db.run("DELETE FROM associate_operation_profiles");
     db.run("DELETE FROM associate_profiles");
     db.run("DELETE FROM associates");
@@ -409,6 +438,59 @@ export async function seedSqliteDatabase(db: Database) {
       );
     }
 
+    for (const profile of seedTaxistaProfiles) {
+      db.run(
+        `INSERT INTO taxista_profiles (
+          associate_id,
+          status_alvara,
+          selo,
+          ponto,
+          placa,
+          modelo_veiculo,
+          numero_taximetro,
+          modelo_taximetro,
+          constante,
+          inmetro,
+          instalacao,
+          troca_taximetro,
+          pneu,
+          deca,
+          lacre_modulo,
+          lacre_taxi,
+          modulo,
+          cinta,
+          colocado,
+          retirado,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          profile.associateId,
+          profile.statusAlvara,
+          profile.selo,
+          profile.ponto,
+          profile.placa,
+          profile.modeloVeiculo,
+          profile.numeroTaximetro,
+          profile.modeloTaximetro,
+          profile.constante,
+          profile.inmetro,
+          profile.instalacao,
+          profile.trocaTaximetro,
+          profile.pneu,
+          profile.deca,
+          profile.lacreModulo,
+          profile.lacreTaxi,
+          profile.modulo,
+          profile.cinta,
+          profile.colocado,
+          profile.retirado,
+          profile.createdAt,
+          profile.updatedAt,
+        ],
+      );
+    }
+
       for (const profile of seedAssociateProfiles) {
         db.run(
           `INSERT INTO associate_profiles (
@@ -488,6 +570,7 @@ export async function seedSqliteDatabase(db: Database) {
       associates: seedAssociates.length,
       operationProfiles: seedAssociateOperationProfiles.length,
       associateProfiles: seedAssociateProfiles.length,
+      taxistaProfiles: seedTaxistaProfiles.length,
     });
   } catch (error) {
     db.run("ROLLBACK");

@@ -168,6 +168,7 @@ export function AssociateOperationPage({
                 entries={overview.entries}
                 emptyStateTitle="Nenhum taxista vinculado ainda"
                 emptyStateDescription="Quando houver associados vinculados a operacao de taxi, eles aparecerao aqui com status documentais e operacionais."
+                documentsHrefBase={isTaxistaPage ? "/taxistas/cadastro" : undefined}
               />
             </section>
           </>

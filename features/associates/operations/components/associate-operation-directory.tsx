@@ -16,6 +16,7 @@ type AssociateOperationDirectoryProps = {
   entries: AssociateOperationEntry[];
   emptyStateTitle: string;
   emptyStateDescription: string;
+  documentsHrefBase?: string;
   loading?: boolean;
 };
 
@@ -36,6 +37,7 @@ export function AssociateOperationDirectory({
   entries,
   emptyStateTitle,
   emptyStateDescription,
+  documentsHrefBase,
   loading = false,
 }: AssociateOperationDirectoryProps) {
   const [nameQuery, setNameQuery] = useState("");
@@ -348,6 +350,13 @@ export function AssociateOperationDirectory({
                     <AssociateActionsMenu
                       associateId={row.entry.associate.id}
                       associateName={row.entry.associate.name}
+                      documentsHref={
+                        documentsHrefBase
+                          ? `${documentsHrefBase}?taxista=${encodeURIComponent(
+                              row.entry.associate.id,
+                            )}`
+                          : "/documentos"
+                      }
                       open={openMenuId === row.entry.associate.id}
                       onToggle={() =>
                         setOpenMenuId((current) =>

@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 type AssociateActionsMenuProps = {
   associateId: string;
   associateName: string;
+  documentsHref?: string;
   open: boolean;
   onToggle: () => void;
   onClose: () => void;
@@ -14,6 +15,7 @@ type AssociateActionsMenuProps = {
 export function AssociateActionsMenu({
   associateId,
   associateName,
+  documentsHref = "/documentos",
   open,
   onToggle,
   onClose,
@@ -69,7 +71,7 @@ export function AssociateActionsMenu({
             label="Ver associado"
             onClick={onClose}
           />
-          <MenuLink href="/documentos" label="Documentos" onClick={onClose} />
+          <MenuLink href={documentsHref} label="Documentos" onClick={onClose} />
           <MenuLink
             href={`/associados/${associateId}/editar`}
             label="Editar"

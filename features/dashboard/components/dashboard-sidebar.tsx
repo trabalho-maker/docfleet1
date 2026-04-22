@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { JSX, ReactNode } from "react";
+import { useState, type JSX, type ReactNode } from "react";
 import { signOutAction } from "@/features/auth/actions/sign-out";
 import type { AuthUser } from "@/features/auth/types";
 
@@ -20,12 +20,14 @@ const navigationItems = [
     href: "/transportes-escolares",
     icon: SchoolBusIcon,
   },
-  { label: "Caminhões", href: "/caminhoes", icon: TruckIcon },
+  { label: "Caminhoes", href: "/caminhoes", icon: TruckIcon },
   { label: "Empresas", href: "/empresas", icon: BuildingsIcon },
 ];
 
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
   const pathname = usePathname();
+  const [taxistasExpanded, setTaxistasExpanded] = useState(false);
+  const taxistasMenuVisible = taxistasExpanded || pathname.startsWith("/taxistas");
 
   return (
     <aside className="flex h-full flex-col bg-[linear-gradient(180deg,#1B3555_0%,#243F62_100%)] text-white md:sticky md:top-0 md:min-h-screen">
@@ -36,7 +38,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           </div>
           <div className="hidden xl:block">
             <p className="text-base font-semibold tracking-tight">TransDocs</p>
-            <p className="text-sm text-white/65">Gestão de Documentos</p>
+            <p className="text-sm text-white/65">Gestao de Documentos</p>
           </div>
         </div>
       </div>
@@ -53,19 +55,68 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
         </div>
       </div>
 
-      <nav aria-label="Navegação principal" className="flex-1 px-3 py-6">
+      <nav aria-label="Navegacao principal" className="flex-1 px-3 py-6">
         <div className="space-y-2">
-          {navigationItems.map((item) => (
-            <NavigationItem
-              key={item.href}
-              href={item.href}
-              active={isActivePath(pathname, item.href)}
-              icon={item.icon}
-              title={item.label}
-            >
-              {item.label}
-            </NavigationItem>
-          ))}
+          {navigationItems.map((item) =>
+            item.href === "/taxistas" ? (
+              <div key={item.href} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <NavigationItem
+                    href={item.href}
+                    active={isActivePath(pathname, item.href)}
+                    icon={item.icon}
+                    title={item.label}
+                    onClick={() => setTaxistasExpanded(true)}
+                    className="flex-1"
+                  >
+                    {item.label}
+                  </NavigationItem>
+                  <button
+                    type="button"
+                    aria-label={
+                      taxistasMenuVisible
+                        ? "Recolher submenu de taxistas"
+                        : "Expandir submenu de taxistas"
+                    }
+                    onClick={() =>
+                      setTaxistasExpanded((current) =>
+                        pathname.startsWith("/taxistas") ? !taxistasMenuVisible : !current,
+                      )
+                    }
+                    className="hidden xl:inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-white/74 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    <ChevronIcon expanded={taxistasMenuVisible} />
+                  </button>
+                </div>
+
+                {taxistasMenuVisible ? (
+                  <div className="hidden pl-4 pr-2 xl:block">
+                    <Link
+                      href="/taxistas/cadastro"
+                      className={`flex items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                        pathname === "/taxistas/cadastro"
+                          ? "bg-white/10 text-white"
+                          : "text-white/62 hover:bg-white/8 hover:text-white"
+                      }`}
+                    >
+                      <span className="inline-flex h-2 w-2 rounded-full bg-[#F59E0B]" />
+                      <span>Cadastro</span>
+                    </Link>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <NavigationItem
+                key={item.href}
+                href={item.href}
+                active={isActivePath(pathname, item.href)}
+                icon={item.icon}
+                title={item.label}
+              >
+                {item.label}
+              </NavigationItem>
+            ),
+          )}
         </div>
       </nav>
 
@@ -97,23 +148,28 @@ function NavigationItem({
   icon: Icon,
   children,
   title,
+  onClick,
+  className,
 }: {
   href: string;
   active: boolean;
   icon: (props: { active: boolean }) => JSX.Element;
   children: string;
   title: string;
+  onClick?: () => void;
+  className?: string;
 }) {
   return (
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
       title={title}
+      onClick={onClick}
       className={`group flex items-center justify-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors xl:justify-start ${
         active
           ? "bg-[#F59E0B] text-white shadow-[0_14px_28px_rgba(245,158,11,0.24)]"
           : "text-white/74 hover:bg-white/8 hover:text-white"
-      }`}
+      } ${className ?? ""}`}
     >
       <Icon active={active} />
       <span className="hidden xl:inline">{children}</span>
@@ -340,6 +396,23 @@ function LogoutIcon() {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <path d="m16 17 5-5-5-5" />
       <path d="M21 12H9" />
+    </svg>
+  );
+}
+
+function ChevronIcon({ expanded }: { expanded: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m6 9 6 6 6-6" />
     </svg>
   );
 }
