@@ -93,7 +93,7 @@ export function TaxistaCadastroModal({
       {
         title: "Taximetro",
         fields: [
-          { key: "numeroTaximetro", label: "Nº Taximetro" },
+          { key: "numeroTaximetro", label: "No. Taximetro" },
           { key: "modeloTaximetro", label: "Modelo do taximetro" },
           { key: "constante", label: "Constante" },
           { key: "inmetro", label: "Inmetro" },
@@ -186,9 +186,6 @@ export function TaxistaCadastroModal({
               <h2 className="mt-2 text-2xl font-semibold tracking-tight">
                 {modalRecord.name}
               </h2>
-              <p className="mt-2 text-sm text-blue-50/76">
-                Atualize os dados operacionais do taxista sem sair da base do modulo.
-              </p>
             </div>
 
             <button

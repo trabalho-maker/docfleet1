@@ -1,4 +1,11 @@
-import { createAssociateService } from "@/features/associates/server/associate.service";
+import {
+  normalizeAssociateCpf,
+  validateAssociateCpf,
+} from "@/features/associates/lib/associate.validators";
+import {
+  AssociateConflictError,
+  AssociateNotFoundError,
+} from "@/features/associates/server/associate.service";
 import {
   SqliteTaxistaCadastroRepository,
   type TaxistaCadastroRepository,
@@ -18,7 +25,6 @@ export function createTaxistaCadastroService(
 ) {
   const repository =
     options.repository ?? new SqliteTaxistaCadastroRepository();
-  const associateService = createAssociateService();
 
   return {
     listTaxistas() {
@@ -63,36 +69,52 @@ export function createTaxistaCadastroService(
         return validation;
       }
 
-      await associateService.updateAssociate(associateId, {
-        name: validation.data.name,
-        cpf: validation.data.cpf,
-        telefone: validation.data.telefone ?? null,
-        enderecoCompleto: validation.data.endereco ?? null,
-      });
-
       const currentRecord = await repository.findByAssociateId(associateId);
 
-      await repository.upsertProfile(associateId, {
-        statusAlvara: currentRecord?.statusAlvara ?? "CADASTRO",
-        selo: validation.data.selo,
-        ponto: validation.data.ponto,
-        placa: validation.data.placa,
-        modeloVeiculo: validation.data.modeloVeiculo,
-        numeroTaximetro: validation.data.numeroTaximetro,
-        modeloTaximetro: validation.data.modeloTaximetro,
-        constante: validation.data.constante,
-        inmetro: validation.data.inmetro,
-        instalacao: validation.data.instalacao,
-        trocaTaximetro: validation.data.trocaTaximetro,
-        pneu: validation.data.pneu,
-        deca: validation.data.deca,
-        lacreModulo: validation.data.lacreModulo,
-        lacreTaxi: validation.data.lacreTaxi,
-        modulo: validation.data.modulo,
-        cinta: validation.data.cinta,
-        colocado: validation.data.colocado,
-        retirado: validation.data.retirado,
-      });
+      if (!currentRecord) {
+        throw new AssociateNotFoundError();
+      }
+
+      try {
+        await repository.saveCadastro(associateId, {
+          name: validation.data.name,
+          cpf: validation.data.cpf,
+          telefone: validation.data.telefone,
+          endereco: validation.data.endereco,
+          statusAlvara: currentRecord.statusAlvara,
+          selo: validation.data.selo,
+          ponto: validation.data.ponto,
+          placa: validation.data.placa,
+          modeloVeiculo: validation.data.modeloVeiculo,
+          numeroTaximetro: validation.data.numeroTaximetro,
+          modeloTaximetro: validation.data.modeloTaximetro,
+          constante: validation.data.constante,
+          inmetro: validation.data.inmetro,
+          instalacao: validation.data.instalacao,
+          trocaTaximetro: validation.data.trocaTaximetro,
+          pneu: validation.data.pneu,
+          deca: validation.data.deca,
+          lacreModulo: validation.data.lacreModulo,
+          lacreTaxi: validation.data.lacreTaxi,
+          modulo: validation.data.modulo,
+          cinta: validation.data.cinta,
+          colocado: validation.data.colocado,
+          retirado: validation.data.retirado,
+        });
+      } catch (error) {
+        if (error instanceof Error && error.message === "ASSOCIATE_NOT_FOUND") {
+          throw new AssociateNotFoundError();
+        }
+
+        if (
+          error instanceof Error &&
+          error.message === "ASSOCIATE_CPF_ALREADY_EXISTS"
+        ) {
+          throw new AssociateConflictError("ASSOCIATE_CPF_ALREADY_EXISTS");
+        }
+
+        throw error;
+      }
 
       return validation;
     },
@@ -121,6 +143,8 @@ function validateTaxistaCadastroInput(
 
   if (!normalized.cpf) {
     fieldErrors.cpf = "Informe o CPF do taxista.";
+  } else if (!validateAssociateCpf(normalized.cpf)) {
+    fieldErrors.cpf = "Informe um CPF valido.";
   }
 
   if (Object.keys(fieldErrors).length > 0) {
@@ -139,7 +163,7 @@ function validateTaxistaCadastroInput(
 function normalizeTaxistaCadastroInput(input: TaxistaCadastroFormValues) {
   return {
     name: normalizeRequiredText(input.name),
-    cpf: normalizeRequiredText(input.cpf),
+    cpf: normalizeAssociateCpf(input.cpf),
     telefone: normalizeOptionalText(input.telefone),
     endereco: normalizeOptionalText(input.endereco),
     selo: normalizeOptionalText(input.selo),

@@ -7,6 +7,12 @@ import { canEditAssociate } from "@/features/associates/lib/associate-authorizat
 import { clearTaxistaProntosAction } from "@/features/taxistas/cadastro/actions/clear-taxista-prontos";
 import { updateTaxistaAlvaraStatusAction } from "@/features/taxistas/cadastro/actions/update-taxista-alvara-status";
 import { TaxistaCadastroModal } from "@/features/taxistas/cadastro/components/taxista-cadastro-modal";
+import {
+  countTaxistaCadastroRecords,
+  filterTaxistaCadastroRecords,
+  sortTaxistaCadastroRecords,
+  type TaxistaCadastroFilterMode,
+} from "@/features/taxistas/cadastro/lib/taxista-cadastro-filters";
 import type {
   TaxistaAlvaraStatus,
   TaxistaCadastroRecord,
@@ -18,15 +24,13 @@ type TaxistaCadastroSectionProps = {
   initialSelectedAssociateId?: string;
 };
 
-type FilterMode = "ALL" | "PROTOCOLADO" | "PRONTO";
-
 export function TaxistaCadastroSection({
   user,
   records,
   initialSelectedAssociateId,
 }: TaxistaCadastroSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterMode, setFilterMode] = useState<FilterMode>("ALL");
+  const [filterMode, setFilterMode] = useState<TaxistaCadastroFilterMode>("ALL");
   const [isClearingReady, setIsClearingReady] = useState(false);
   const [pendingStatusById, setPendingStatusById] = useState<
     Partial<Record<string, TaxistaAlvaraStatus>>
@@ -46,52 +50,21 @@ export function TaxistaCadastroSection({
     [records, selectedAssociateId],
   );
 
-  const sortedRecords = useMemo(
-    () =>
-      [...records].sort((left, right) =>
-        left.name.localeCompare(right.name, "pt-BR", { sensitivity: "base" }),
-      ),
-    [records],
-  );
+  const sortedRecords = useMemo(() => sortTaxistaCadastroRecords(records), [records]);
 
   const counts = useMemo(
-    () => ({
-      all: sortedRecords.length,
-      protocolado: sortedRecords.filter(
-        (record) => record.statusAlvara === "PROTOCOLADO",
-      ).length,
-      pronto: sortedRecords.filter((record) => record.statusAlvara === "PRONTO")
-        .length,
-    }),
+    () => countTaxistaCadastroRecords(sortedRecords),
     [sortedRecords],
   );
 
-  const filteredRecords = useMemo(() => {
-    const normalizedQuery = normalizeSearch(deferredSearchQuery);
-
-    return sortedRecords.filter((record) => {
-      if (filterMode === "PROTOCOLADO" && record.statusAlvara !== "PROTOCOLADO") {
-        return false;
-      }
-
-      if (filterMode === "PRONTO" && record.statusAlvara !== "PRONTO") {
-        return false;
-      }
-
-      if (!normalizedQuery) {
-        return true;
-      }
-
-      const fields = [
-        record.name,
-        record.cpf,
-        record.selo ?? "",
-        record.placa ?? "",
-      ];
-
-      return fields.some((field) => normalizeSearch(field).includes(normalizedQuery));
-    });
-  }, [deferredSearchQuery, filterMode, sortedRecords]);
+  const filteredRecords = useMemo(
+    () =>
+      filterTaxistaCadastroRecords(sortedRecords, {
+        query: deferredSearchQuery,
+        mode: filterMode,
+      }),
+    [deferredSearchQuery, filterMode, sortedRecords],
+  );
 
   function openModal(associateId: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -199,7 +172,7 @@ export function TaxistaCadastroSection({
                   type="button"
                   onClick={handleClearReady}
                   disabled={!canEdit || counts.pronto === 0 || isClearingReady}
-                  className="df-button-secondary min-h-11 rounded-[16px] disabled:cursor-not-allowed disabled:opacity-55"
+                  className="inline-flex min-h-11 items-center justify-center rounded-[16px] bg-[#F39C12] px-5 text-sm font-semibold text-[#163559] shadow-[0_14px_32px_rgba(243,156,18,0.24)] transition hover:brightness-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:hover:brightness-100"
                 >
                   {isClearingReady ? "Limpando..." : "Limpar prontos"}
                 </button>
@@ -333,7 +306,7 @@ export function TaxistaCadastroSection({
                                     )
                                   }
                                   disabled={!canEdit || isUpdating}
-                                  className="inline-flex h-9 items-center justify-center rounded-full border border-[#FDE68A] bg-[#FFF7ED] px-3 text-xs font-semibold text-[#B45309] transition-colors hover:bg-[#FFEDD5] disabled:cursor-not-allowed disabled:opacity-55"
+                                  className="inline-flex h-9 items-center justify-center rounded-full bg-[#F39C12] px-3 text-xs font-semibold text-[#163559] shadow-[0_10px_24px_rgba(243,156,18,0.22)] transition hover:brightness-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:hover:brightness-100"
                                 >
                                   {pendingStatus === "PROTOCOLADO"
                                     ? "Salvando..."
@@ -345,7 +318,7 @@ export function TaxistaCadastroSection({
                                     handleStatusUpdate(record.associateId, "PRONTO")
                                   }
                                   disabled={!canEdit || !canMoveToReady || isUpdating}
-                                  className="inline-flex h-9 items-center justify-center rounded-full border border-[#BBF7D0] bg-[#F0FDF4] px-3 text-xs font-semibold text-[#15803D] transition-colors hover:bg-[#DCFCE7] disabled:cursor-not-allowed disabled:opacity-55"
+                                  className="inline-flex h-9 items-center justify-center rounded-full bg-[#F39C12] px-3 text-xs font-semibold text-[#163559] shadow-[0_10px_24px_rgba(243,156,18,0.22)] transition hover:brightness-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:hover:brightness-100"
                                 >
                                   {pendingStatus === "PRONTO"
                                     ? "Salvando..."
@@ -502,13 +475,4 @@ function SearchIcon() {
       <path d="m20 20-3.5-3.5" />
     </svg>
   );
-}
-
-function normalizeSearch(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/[^\p{L}\p{N}]+/gu, "")
-    .toLowerCase()
-    .trim();
 }

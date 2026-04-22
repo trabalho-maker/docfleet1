@@ -10,6 +10,34 @@ import {
 export interface TaxistaCadastroRepository {
   findMany(): Promise<TaxistaCadastroRecord[]>;
   findByAssociateId(associateId: string): Promise<TaxistaCadastroRecord | null>;
+  saveCadastro(
+    associateId: string,
+    input: {
+      name: string;
+      cpf: string;
+      telefone: string | null;
+      endereco: string | null;
+      statusAlvara: TaxistaAlvaraStatus;
+      selo: string | null;
+      ponto: string | null;
+      placa: string | null;
+      modeloVeiculo: string | null;
+      numeroTaximetro: string | null;
+      modeloTaximetro: string | null;
+      constante: string | null;
+      inmetro: string | null;
+      instalacao: string | null;
+      trocaTaximetro: string | null;
+      pneu: string | null;
+      deca: string | null;
+      lacreModulo: string | null;
+      lacreTaxi: string | null;
+      modulo: string | null;
+      cinta: string | null;
+      colocado: string | null;
+      retirado: string | null;
+    },
+  ): Promise<void>;
   upsertProfile(
     associateId: string,
     profile: Omit<TaxistaCadastroProfile, "associateId" | "createdAt" | "updatedAt">,
@@ -41,6 +69,192 @@ export class SqliteTaxistaCadastroRepository
     );
 
     return row ? mapTaxistaCadastroRecord(row) : null;
+  }
+
+  async saveCadastro(
+    associateId: string,
+    input: {
+      name: string;
+      cpf: string;
+      telefone: string | null;
+      endereco: string | null;
+      statusAlvara: TaxistaAlvaraStatus;
+      selo: string | null;
+      ponto: string | null;
+      placa: string | null;
+      modeloVeiculo: string | null;
+      numeroTaximetro: string | null;
+      modeloTaximetro: string | null;
+      constante: string | null;
+      inmetro: string | null;
+      instalacao: string | null;
+      trocaTaximetro: string | null;
+      pneu: string | null;
+      deca: string | null;
+      lacreModulo: string | null;
+      lacreTaxi: string | null;
+      modulo: string | null;
+      cinta: string | null;
+      colocado: string | null;
+      retirado: string | null;
+    },
+  ): Promise<void> {
+    await this.database.write(async (session) => {
+      const associate = await session.queryOne(
+        `
+          SELECT id
+          FROM associates
+          WHERE id = ?
+          LIMIT 1
+        `,
+        [associateId],
+      );
+
+      if (!associate) {
+        throw new Error("ASSOCIATE_NOT_FOUND");
+      }
+
+      const cpfConflict = await session.queryOne(
+        `
+          SELECT id
+          FROM associates
+          WHERE cpf = ?
+            AND id <> ?
+          LIMIT 1
+        `,
+        [input.cpf, associateId],
+      );
+
+      if (cpfConflict) {
+        throw new Error("ASSOCIATE_CPF_ALREADY_EXISTS");
+      }
+
+      const profileMetadata = await session.queryOne(
+        `
+          SELECT created_at, modalidade_associado
+          FROM associate_profiles
+          WHERE associate_id = ?
+          LIMIT 1
+        `,
+        [associateId],
+      );
+      const now = new Date().toISOString();
+      const profileCreatedAt = profileMetadata ? String(profileMetadata[0]) : now;
+      const modalidadeAssociado = profileMetadata?.[1]
+        ? String(profileMetadata[1])
+        : "TAXI";
+
+      await session.execute(
+        `
+          UPDATE associates
+          SET
+            name = ?,
+            cpf = ?,
+            updated_at = ?
+          WHERE id = ?
+        `,
+        [input.name, input.cpf, now, associateId],
+      );
+
+      await session.execute(
+        `
+          INSERT INTO associate_profiles (
+            associate_id,
+            modalidade_associado,
+            endereco_completo,
+            telefone,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?)
+          ON CONFLICT(associate_id) DO UPDATE SET
+            endereco_completo = excluded.endereco_completo,
+            telefone = excluded.telefone,
+            updated_at = excluded.updated_at
+        `,
+        [
+          associateId,
+          modalidadeAssociado,
+          input.endereco,
+          input.telefone,
+          profileCreatedAt,
+          now,
+        ],
+      );
+
+      await session.execute(
+        `
+          INSERT INTO taxista_profiles (
+            associate_id,
+            status_alvara,
+            selo,
+            ponto,
+            placa,
+            modelo_veiculo,
+            numero_taximetro,
+            modelo_taximetro,
+            constante,
+            inmetro,
+            instalacao,
+            troca_taximetro,
+            pneu,
+            deca,
+            lacre_modulo,
+            lacre_taxi,
+            modulo,
+            cinta,
+            colocado,
+            retirado,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(associate_id) DO UPDATE SET
+            status_alvara = excluded.status_alvara,
+            selo = excluded.selo,
+            ponto = excluded.ponto,
+            placa = excluded.placa,
+            modelo_veiculo = excluded.modelo_veiculo,
+            numero_taximetro = excluded.numero_taximetro,
+            modelo_taximetro = excluded.modelo_taximetro,
+            constante = excluded.constante,
+            inmetro = excluded.inmetro,
+            instalacao = excluded.instalacao,
+            troca_taximetro = excluded.troca_taximetro,
+            pneu = excluded.pneu,
+            deca = excluded.deca,
+            lacre_modulo = excluded.lacre_modulo,
+            lacre_taxi = excluded.lacre_taxi,
+            modulo = excluded.modulo,
+            cinta = excluded.cinta,
+            colocado = excluded.colocado,
+            retirado = excluded.retirado,
+            updated_at = excluded.updated_at
+        `,
+        [
+          associateId,
+          input.statusAlvara,
+          input.selo,
+          input.ponto,
+          input.placa,
+          input.modeloVeiculo,
+          input.numeroTaximetro,
+          input.modeloTaximetro,
+          input.constante,
+          input.inmetro,
+          input.instalacao,
+          input.trocaTaximetro,
+          input.pneu,
+          input.deca,
+          input.lacreModulo,
+          input.lacreTaxi,
+          input.modulo,
+          input.cinta,
+          input.colocado,
+          input.retirado,
+          now,
+          now,
+        ],
+      );
+    });
   }
 
   async upsertProfile(

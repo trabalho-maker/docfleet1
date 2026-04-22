@@ -38,11 +38,11 @@ export const associateOperationConfigs: Record<
     eyebrow: "Operacao por categoria",
     title: "TAXISTAS",
     description: "Acompanhe os associados vinculados a operacao de taxi.",
-    summaryTitle: "Documentacao essencial",
-    summaryDescription: "Itens acompanhados nesta operacao.",
+    summaryTitle: "Exigencia operacional",
+    summaryDescription: "A operacao acompanha um unico vencimento basico por taxista.",
     emptyStateTitle: "Nenhum taxista vinculado ainda",
     emptyStateDescription:
-      "Quando houver associados vinculados a operacao de taxi, eles aparecerao aqui com status documentais e operacionais.",
+      "Quando houver associados com modalidade TAXI, eles aparecerao aqui com leitura operacional da exigencia basica.",
     requirements: [
       {
         key: "basicDocumentation",

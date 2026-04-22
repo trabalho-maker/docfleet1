@@ -6,9 +6,9 @@ import {
   canViewAssociates,
   getAssociateAccessMessage,
 } from "@/features/associates/lib/associate-authorization";
-import { AssociatesPageHeader } from "@/features/associates/components/associates-page-header";
 import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
 import { AppShell } from "@/features/dashboard/components/app-shell";
+import { ModuleHeader } from "@/features/dashboard/components/module-header";
 import { TaxistaCadastroSection } from "@/features/taxistas/cadastro/components/taxista-cadastro-section";
 import { createTaxistaCadastroService } from "@/features/taxistas/cadastro/server/taxista-cadastro.service";
 
@@ -33,25 +33,37 @@ export default async function TaxistasCadastroPage({
   const records = canView
     ? await createTaxistaCadastroService().listTaxistas()
     : [];
+  const headerMetrics = [
+    { label: "Cadastrados", value: records.length },
+    {
+      label: "Protocolado",
+      value: records.filter((record) => record.statusAlvara === "PROTOCOLADO").length,
+    },
+    {
+      label: "Pronto",
+      value: records.filter((record) => record.statusAlvara === "PRONTO").length,
+    },
+  ];
 
   return (
     <AppShell user={user}>
       <div className="flex w-full flex-1 flex-col gap-6 py-2 sm:py-4">
-        <AssociatesPageHeader
+        <ModuleHeader
           title="Cadastro"
-          userName={user.name}
-          userEmail={user.email}
-          userRole={user.role}
-          headerClassName="border-transparent bg-[linear-gradient(135deg,#173450_0%,#1E3A5F_55%,#29476B_100%)] shadow-[0_24px_55px_rgba(15,23,42,0.22)]"
-          bodyClassName="gap-6 lg:items-center lg:gap-10"
-          titleClassName="text-[#F3A81D] text-[2.4rem] font-bold tracking-[-0.05em] sm:text-[3rem]"
-          action={
+          metrics={headerMetrics}
+          actions={
             <div className="flex flex-wrap gap-3">
-              <Link href="/taxistas" className="df-button-secondary">
+              <Link
+                href="/taxistas"
+                className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full bg-[#F39C12] px-5 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(243,156,18,0.28)] transition hover:brightness-95"
+              >
                 Voltar ao modulo
               </Link>
               {canEdit ? (
-                <Link href="/associados" className="df-button-secondary">
+                <Link
+                  href="/associados"
+                  className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full bg-[#F39C12] px-5 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(243,156,18,0.28)] transition hover:brightness-95"
+                >
                   Base de associados
                 </Link>
               ) : null}

@@ -12,11 +12,15 @@ import type {
 
 type AssociateOperationDirectoryProps = {
   title: string;
-  description: string;
+  description?: string;
   entries: AssociateOperationEntry[];
   emptyStateTitle: string;
   emptyStateDescription: string;
   documentsHrefBase?: string;
+  statusColumnLabel?: string;
+  statusFilterLabel?: string;
+  noRequirementsLabel?: string;
+  missingStatusLabel?: string;
   loading?: boolean;
 };
 
@@ -38,6 +42,10 @@ export function AssociateOperationDirectory({
   emptyStateTitle,
   emptyStateDescription,
   documentsHrefBase,
+  statusColumnLabel = "Situacao documental",
+  statusFilterLabel = "Status documental",
+  noRequirementsLabel = "Sem requisitos configurados",
+  missingStatusLabel = "Sem documentos",
   loading = false,
 }: AssociateOperationDirectoryProps) {
   const [nameQuery, setNameQuery] = useState("");
@@ -143,9 +151,11 @@ export function AssociateOperationDirectory({
                 {summary.filtered} de {summary.total}
               </span>
             </div>
-            <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-              {description}
-            </p>
+            {description ? (
+              <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                {description}
+              </p>
+            ) : null}
           </div>
 
           <div className="grid gap-2 sm:grid-cols-3">
@@ -188,7 +198,7 @@ export function AssociateOperationDirectory({
               }
               className="w-full border-none bg-transparent text-sm outline-none"
             >
-              <option value="">Status documental</option>
+              <option value="">{statusFilterLabel}</option>
               <option value="Valido">Regular</option>
               <option value="Atencao">Em atencao</option>
               <option value="Vencido">Critico</option>
@@ -275,7 +285,7 @@ export function AssociateOperationDirectory({
               <tr className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
                 <th className="px-6 py-4 lg:px-7">Nome</th>
                 <th className="px-6 py-4">Matricula</th>
-                <th className="px-6 py-4">Situacao documental</th>
+                <th className="px-6 py-4">{statusColumnLabel}</th>
                 <th className="px-6 py-4">Proximo vencimento</th>
                 <th className="px-6 py-4">Status operacional</th>
                 <th className="px-6 py-4 text-right lg:px-7">Acoes</th>
@@ -298,7 +308,7 @@ export function AssociateOperationDirectory({
                         </span>
                         {row.entry.requirements.length === 0 ? (
                           <span className="text-xs text-[var(--color-muted)]">
-                            Sem requisitos configurados
+                            {noRequirementsLabel}
                           </span>
                         ) : (
                           <span className="text-xs text-[var(--color-muted)]">
@@ -317,6 +327,7 @@ export function AssociateOperationDirectory({
                     <OperationalHealthBadge
                       status={row.documentationStatus}
                       hasRequirements={row.entry.requirements.length > 0}
+                      missingStatusLabel={missingStatusLabel}
                     />
                   </td>
                   <td className="px-6 py-4">
@@ -407,14 +418,16 @@ function SummaryChip({
 function OperationalHealthBadge({
   status,
   hasRequirements,
+  missingStatusLabel,
 }: {
   status: AssociateOperationRequirementStatus;
   hasRequirements: boolean;
+  missingStatusLabel: string;
 }) {
   if (!hasRequirements) {
     return (
       <span className="df-badge-pill bg-slate-200 text-slate-700">
-        Sem documentos
+        {missingStatusLabel}
       </span>
     );
   }
