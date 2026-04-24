@@ -37,7 +37,7 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
     user,
     title: "Dashboard",
     description:
-      "Visao geral do sistema de documentos com leitura rapida das pendencias mais importantes.",
+      "Visao geral do sistema com foco nas pendencias documentais e alertas atuais.",
     alertCount: totalAlerts,
     recentDocuments: allDocuments.slice(0, 8),
     alerts,

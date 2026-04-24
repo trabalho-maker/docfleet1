@@ -30,17 +30,18 @@ export function DashboardHeader({
             <SearchIcon />
             <input
               type="text"
-              placeholder="Buscar documento, alerta, associado..."
+              placeholder="Busca ainda nao disponivel nesta tela."
               className="w-full min-w-0 border-none bg-transparent text-sm text-[#0F172A] outline-none placeholder:text-[#94A3B8]"
-              aria-label="Buscar"
+              aria-label="Busca indisponivel"
+              disabled
             />
           </label>
 
           <div className="flex items-center justify-between gap-3 sm:justify-start">
-            <button
-              type="button"
+            <div
               className="relative inline-flex h-12 w-12 items-center justify-center rounded-full border border-[#E2E8F0] bg-white text-[#475569] shadow-[0_10px_24px_rgba(15,23,42,0.05)] transition-colors hover:bg-[#F8FAFC]"
-              aria-label="Notificações"
+              aria-label="Total de alertas abertos"
+              role="img"
             >
               <BellIcon />
               {alertCount > 0 ? (
@@ -48,7 +49,7 @@ export function DashboardHeader({
                   {alertCount}
                 </span>
               ) : null}
-            </button>
+            </div>
 
             <div className="flex min-w-0 items-center gap-3 rounded-full border border-[#E2E8F0] bg-white pl-2 pr-3 py-2 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#1E3A5F] text-sm font-semibold text-white">

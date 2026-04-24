@@ -4,7 +4,7 @@ import { getDashboardOverview } from "@/features/dashboard/server/get-dashboard-
 
 export const metadata: Metadata = {
   title: "Dashboard",
-  description: "Visão consolidada de documentos, alertas e operação.",
+  description: "Visao consolidada de documentos, alertas e operacao.",
 };
 
 export default async function DashboardPage() {

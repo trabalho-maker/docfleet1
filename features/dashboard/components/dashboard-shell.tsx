@@ -55,10 +55,10 @@ export function DashboardShell({ overview }: DashboardShellProps) {
             <div className="flex flex-col gap-4 border-b border-[#E2E8F0] px-6 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-7">
               <div>
                 <p className="text-[1.15rem] font-semibold tracking-tight text-[#163559]">
-                  Documentos Recentes
+                  PRÓXIMOS VENCIMENTOS
                 </p>
                 <p className="mt-1 text-sm text-[#64748B]">
-                  Itens mais proximos do vencimento e com visao rapida de status.
+                  Documentos com vencimento mais proximo e leitura rapida de status.
                 </p>
               </div>
               <Link href="/documentos" className="df-button-secondary">

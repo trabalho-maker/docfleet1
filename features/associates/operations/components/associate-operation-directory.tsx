@@ -167,8 +167,8 @@ export function AssociateOperationDirectory({
       </div>
 
       <div className="border-b border-[var(--color-border)] bg-[linear-gradient(180deg,#FBFDFF_0%,#F8FAFC_100%)] px-6 py-5 lg:px-7">
-        <div className="grid gap-3 xl:grid-cols-[1.2fr_0.9fr_0.8fr_0.85fr_0.85fr_auto]">
-          <label className="df-input-shell">
+        <div className="grid gap-3">
+          <label className="df-input-shell w-full min-w-0">
             <SearchIcon />
             <input
               value={nameQuery}
@@ -179,76 +179,80 @@ export function AssociateOperationDirectory({
             />
           </label>
 
-          <label className="df-input-shell">
-            <IdCardIcon />
-            <input
-              value={registrationQuery}
-              onChange={(event) => setRegistrationQuery(event.target.value)}
-              type="text"
-              placeholder="Matricula"
-              className="w-full border-none bg-transparent text-sm outline-none placeholder:text-[var(--color-muted-soft)]"
-            />
-          </label>
-
-          <label className="df-select-shell">
-            <select
-              value={documentationFilter}
-              onChange={(event) =>
-                setDocumentationFilter(event.target.value as DocumentationFilterValue)
-              }
-              className="w-full border-none bg-transparent text-sm outline-none"
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setNameQuery("");
+                setRegistrationQuery("");
+                setDocumentationFilter("");
+                setOperationalFilter("");
+                setPriorityFilter("");
+              }}
+              className="df-button-secondary min-h-12 min-w-[11rem] shrink-0 rounded-[16px]"
             >
-              <option value="">{statusFilterLabel}</option>
-              <option value="Valido">Regular</option>
-              <option value="Atencao">Em atencao</option>
-              <option value="Vencido">Critico</option>
-              <option value="Missing">Pendente</option>
-            </select>
-          </label>
+              Limpar filtros
+            </button>
+          </div>
 
-          <label className="df-select-shell">
-            <select
-              value={operationalFilter}
-              onChange={(event) => setOperationalFilter(event.target.value)}
-              className="w-full border-none bg-transparent text-sm outline-none"
-            >
-              <option value="">Status operacional</option>
-              <option value="Ativo">Ativo</option>
-              <option value="Inativo">Inativo</option>
-              <option value="Suspenso">Suspenso</option>
-              <option value="Bloqueado">Bloqueado</option>
-            </select>
-          </label>
+          <div className="flex flex-wrap gap-3">
+            <label className="df-input-shell min-w-[9rem] flex-[1_1_11rem] shrink-0">
+              <IdCardIcon />
+              <input
+                value={registrationQuery}
+                onChange={(event) => setRegistrationQuery(event.target.value)}
+                type="text"
+                placeholder="Matricula"
+                className="w-full border-none bg-transparent text-sm outline-none placeholder:text-[var(--color-muted-soft)]"
+              />
+            </label>
 
-          <label className="df-select-shell">
-            <select
-              value={priorityFilter}
-              onChange={(event) =>
-                setPriorityFilter(event.target.value as PriorityFilterValue)
-              }
-              className="w-full border-none bg-transparent text-sm outline-none"
-            >
-              <option value="">Prioridade</option>
-              <option value="critical">Criticos e pendentes</option>
-              <option value="attention">Em atencao</option>
-              <option value="regular">Regulares</option>
-              <option value="missing_date">Sem vencimento</option>
-            </select>
-          </label>
+            <label className="df-select-shell min-w-[9rem] flex-[1_1_10rem] shrink-0">
+              <select
+                value={documentationFilter}
+                onChange={(event) =>
+                  setDocumentationFilter(event.target.value as DocumentationFilterValue)
+                }
+                className="w-full border-none bg-transparent text-sm outline-none"
+              >
+                <option value="">{statusFilterLabel}</option>
+                <option value="Valido">Regular</option>
+                <option value="Atencao">Em atencao</option>
+                <option value="Vencido">Critico</option>
+                <option value="Missing">Pendente</option>
+              </select>
+            </label>
 
-          <button
-            type="button"
-            onClick={() => {
-              setNameQuery("");
-              setRegistrationQuery("");
-              setDocumentationFilter("");
-              setOperationalFilter("");
-              setPriorityFilter("");
-            }}
-            className="df-button-secondary min-h-12 rounded-[16px]"
-          >
-            Limpar filtros
-          </button>
+            <label className="df-select-shell min-w-[9rem] flex-[1_1_10rem] shrink-0">
+              <select
+                value={operationalFilter}
+                onChange={(event) => setOperationalFilter(event.target.value)}
+                className="w-full border-none bg-transparent text-sm outline-none"
+              >
+                <option value="">Status operacional</option>
+                <option value="Ativo">Ativo</option>
+                <option value="Inativo">Inativo</option>
+                <option value="Suspenso">Suspenso</option>
+                <option value="Bloqueado">Bloqueado</option>
+              </select>
+            </label>
+
+            <label className="df-select-shell min-w-[9rem] flex-[1_1_10rem] shrink-0">
+              <select
+                value={priorityFilter}
+                onChange={(event) =>
+                  setPriorityFilter(event.target.value as PriorityFilterValue)
+                }
+                className="w-full border-none bg-transparent text-sm outline-none"
+              >
+                <option value="">Prioridade</option>
+                <option value="critical">Criticos e pendentes</option>
+                <option value="attention">Em atencao</option>
+                <option value="regular">Regulares</option>
+                <option value="missing_date">Sem vencimento</option>
+              </select>
+            </label>
+          </div>
         </div>
       </div>
 
