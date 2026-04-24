@@ -71,7 +71,7 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
 
     if (!result || result.error) {
       setErrors({
-        general: "Email ou senha inválidos.",
+        general: "Email ou senha invalidos.",
       });
       return;
     }
@@ -85,7 +85,7 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
       <div className="space-y-9">
         <header className="space-y-5">
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Área segura
+            Area segura
           </div>
           <div className="space-y-3">
             <h2 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2.1rem]">
@@ -93,7 +93,7 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
             </h2>
             <p className="max-w-md text-sm leading-7 text-slate-500">
               Acesse seu painel para acompanhar vencimentos, alertas operacionais e
-              documentos da frota em um único lugar.
+              documentos da frota em um unico lugar.
             </p>
           </div>
         </header>
@@ -192,7 +192,7 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
           ) : null}
 
           <p className="text-sm text-slate-500">
-            Ainda não tem acesso?{" "}
+            Ainda nao tem acesso?{" "}
             <Link
               href="/cadastro"
               className="font-semibold text-slate-900 transition-colors hover:text-[#f97316]"

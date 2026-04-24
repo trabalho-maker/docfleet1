@@ -362,15 +362,15 @@ export async function seedSqliteDatabase(db: Database) {
   db.run("BEGIN");
 
   try {
-    db.run("DELETE FROM users");
-    db.run("DELETE FROM documents");
     db.run("DELETE FROM alerts");
-    db.run("DELETE FROM password_reset_tokens");
     db.run("DELETE FROM auth_rate_limits");
+    db.run("DELETE FROM password_reset_tokens");
     db.run("DELETE FROM taxista_profiles");
     db.run("DELETE FROM associate_operation_profiles");
     db.run("DELETE FROM associate_profiles");
+    db.run("DELETE FROM documents");
     db.run("DELETE FROM associates");
+    db.run("DELETE FROM users");
 
     db.run(
       "INSERT INTO users (id, name, email, role, password_hash) VALUES (?, ?, ?, ?, ?)",
@@ -382,38 +382,6 @@ export async function seedSqliteDatabase(db: Database) {
         passwordHash,
       ],
     );
-
-    for (const document of seedDocuments) {
-      db.run(
-        `INSERT INTO documents (
-          id,
-          name,
-          owner,
-          type,
-          status,
-          due_date,
-          associate_id,
-          notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          document.id,
-          document.name,
-          document.owner,
-          document.documentType,
-          document.status,
-          document.dueDate,
-          document.associateId,
-          document.notes,
-        ],
-      );
-    }
-
-    for (const alert of seedAlerts) {
-      db.run(
-        "INSERT INTO alerts (id, title, severity, team, created_at) VALUES (?, ?, ?, ?, ?)",
-        [alert.id, alert.title, alert.severity, alert.team, alert.createdAt],
-      );
-    }
 
     for (const associate of seedAssociates) {
       db.run(
@@ -438,6 +406,77 @@ export async function seedSqliteDatabase(db: Database) {
           associate.admissionDate,
           associate.createdAt,
           associate.updatedAt,
+        ],
+      );
+    }
+
+    for (const profile of seedAssociateProfiles) {
+      db.run(
+        `INSERT INTO associate_profiles (
+          associate_id,
+          modalidade_associado,
+          cnpj_empresa,
+          nome_empresa,
+          endereco_completo,
+          bairro,
+          cidade,
+          estado,
+          cep,
+          profissao,
+          sexo,
+          data_nascimento,
+          nacionalidade,
+          naturalidade,
+          rg,
+          cnh,
+          estado_civil,
+          nome_pai,
+          nome_mae,
+          dependentes,
+          grau_parentesco,
+          telefone,
+          celular,
+          email,
+          observacoes,
+          situacao_financeira,
+          situacao_documental,
+          historico_resumo,
+          foto_url,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
+        [
+          profile.associateId,
+          profile.modalidadeAssociado ?? null,
+          profile.cnpjEmpresa ?? null,
+          profile.nomeEmpresa ?? null,
+          profile.enderecoCompleto,
+          profile.bairro,
+          profile.cidade,
+          profile.estado,
+          profile.cep,
+          profile.profissao,
+          profile.sexo,
+          profile.dataNascimento,
+          profile.nacionalidade,
+          profile.naturalidade,
+          profile.rg,
+          profile.cnh,
+          profile.estadoCivil,
+          profile.nomePai,
+          profile.nomeMae,
+          profile.dependentes,
+          profile.grauParentesco,
+          profile.telefone,
+          profile.celular,
+          profile.email,
+          profile.observacoes,
+          profile.situacaoFinanceira,
+          profile.situacaoDocumental,
+          profile.historicoResumo,
+          profile.fotoUrl,
+          profile.createdAt,
+          profile.updatedAt,
         ],
       );
     }
@@ -524,74 +563,35 @@ export async function seedSqliteDatabase(db: Database) {
       );
     }
 
-      for (const profile of seedAssociateProfiles) {
-        db.run(
-          `INSERT INTO associate_profiles (
-            associate_id,
-            modalidade_associado,
-            cnpj_empresa,
-            nome_empresa,
-            endereco_completo,
-            bairro,
-            cidade,
-            estado,
-            cep,
-          profissao,
-          sexo,
-          data_nascimento,
-          nacionalidade,
-          naturalidade,
-          rg,
-          cnh,
-          estado_civil,
-          nome_pai,
-          nome_mae,
-          dependentes,
-          grau_parentesco,
-          telefone,
-          celular,
-          email,
-          observacoes,
-          situacao_financeira,
-            situacao_documental,
-            historico_resumo,
-            foto_url,
-            created_at,
-            updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
-          [
-            profile.associateId,
-            profile.modalidadeAssociado ?? null,
-            profile.cnpjEmpresa ?? null,
-            profile.nomeEmpresa ?? null,
-            profile.enderecoCompleto,
-            profile.bairro,
-            profile.cidade,
-            profile.estado,
-          profile.cep,
-          profile.profissao,
-          profile.sexo,
-          profile.dataNascimento,
-          profile.nacionalidade,
-          profile.naturalidade,
-          profile.rg,
-          profile.cnh,
-          profile.estadoCivil,
-          profile.nomePai,
-          profile.nomeMae,
-          profile.dependentes,
-          profile.grauParentesco,
-          profile.telefone,
-          profile.celular,
-          profile.email,
-          profile.observacoes,
-          profile.situacaoFinanceira,
-          profile.situacaoDocumental,
-          profile.historicoResumo,
-          profile.fotoUrl,
-          profile.createdAt,
-          profile.updatedAt,
+    for (const document of seedDocuments) {
+      db.run(
+        `INSERT INTO documents (
+          id,
+          name,
+          owner,
+          type,
+          status,
+          due_date,
+          associate_id,
+          notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          document.id,
+          document.name,
+          document.owner,
+          document.documentType,
+          document.status,
+          document.dueDate,
+          document.associateId,
+          document.notes,
         ],
+      );
+    }
+
+    for (const alert of seedAlerts) {
+      db.run(
+        "INSERT INTO alerts (id, title, severity, team, created_at) VALUES (?, ?, ?, ?, ?)",
+        [alert.id, alert.title, alert.severity, alert.team, alert.createdAt],
       );
     }
 

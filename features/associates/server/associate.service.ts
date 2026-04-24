@@ -21,6 +21,9 @@ import type {
   CreateAssociateInput,
   UpdateAssociateInput,
 } from "@/features/associates/types";
+import type { DatabaseAdapter } from "@/lib/database/adapter";
+import { getDatabaseAdapter } from "@/lib/database/provider";
+import { createSessionDatabaseAdapter } from "@/lib/database/session-adapter";
 
 export class AssociateValidationError extends Error {
   constructor(message: string) {
@@ -44,14 +47,48 @@ export class AssociateNotFoundError extends Error {
 }
 
 type AssociateServiceOptions = {
+  adapter?: DatabaseAdapter;
   repository?: AssociateRepository;
   profileRepository?: AssociateProfileRepository;
+  repositoryFactory?: (adapter: DatabaseAdapter) => AssociateRepository;
+  profileRepositoryFactory?: (adapter: DatabaseAdapter) => AssociateProfileRepository;
 };
 
 export function createAssociateService(options: AssociateServiceOptions = {}) {
-  const repository = options.repository ?? new SqliteAssociateRepository();
+  const adapter = options.adapter ?? getDatabaseAdapter();
+  const repositoryFactory =
+    options.repositoryFactory ??
+    ((scopedAdapter: DatabaseAdapter) => new SqliteAssociateRepository(scopedAdapter));
+  const profileRepositoryFactory =
+    options.profileRepositoryFactory ??
+    ((scopedAdapter: DatabaseAdapter) => new SqliteAssociateProfileRepository(scopedAdapter));
+  const repository = options.repository ?? repositoryFactory(adapter);
   const profileRepository =
-    options.profileRepository ?? new SqliteAssociateProfileRepository();
+    options.profileRepository ?? profileRepositoryFactory(adapter);
+  const canUseScopedTransaction = !options.repository && !options.profileRepository;
+
+  async function runWriteOperation<T>(
+    operation: (repositories: {
+      repository: AssociateRepository;
+      profileRepository: AssociateProfileRepository;
+    }) => Promise<T>,
+  ) {
+    if (!canUseScopedTransaction) {
+      return operation({
+        repository,
+        profileRepository,
+      });
+    }
+
+    return adapter.write(async (session) => {
+      const scopedAdapter = createSessionDatabaseAdapter(adapter.provider, session);
+
+      return operation({
+        repository: repositoryFactory(scopedAdapter),
+        profileRepository: profileRepositoryFactory(scopedAdapter),
+      });
+    });
+  }
 
   return {
     listAssociates(filters?: AssociateFilters) {
@@ -92,68 +129,75 @@ export function createAssociateService(options: AssociateServiceOptions = {}) {
         throw new AssociateValidationError(getFirstErrorMessage(validation.errors));
       }
 
-      await assertCpfAvailable(repository, validation.data.cpf);
-      await assertRegistrationNumberAvailable(
-        repository,
-        validation.data.registrationNumber,
-      );
+      return runWriteOperation(async ({ repository, profileRepository }) => {
+        await assertCpfAvailable(repository, validation.data.cpf);
+        await assertRegistrationNumberAvailable(
+          repository,
+          validation.data.registrationNumber,
+        );
 
-      const createdAssociate = await repository.create(validation.data);
-      const savedProfile = await profileRepository.upsertByAssociateId(
-        createdAssociate.id,
-        extractAssociateProfileData(validation.data),
-      );
+        const createdAssociate = await repository.create(validation.data);
+        const savedProfile = await profileRepository.upsertByAssociateId(
+          createdAssociate.id,
+          extractAssociateProfileData(validation.data),
+        );
 
-      return mergeAssociateWithProfile(createdAssociate, savedProfile);
+        return mergeAssociateWithProfile(createdAssociate, savedProfile);
+      });
     },
 
     async updateAssociate(id: string, input: UpdateAssociateInput) {
       const associateId = normalizeRequiredId(id);
-      const existingAssociate = await getAssociateById(repository, associateId);
       const validation = validateUpdateAssociateInput(input);
 
       if (!validation.success) {
         throw new AssociateValidationError(getFirstErrorMessage(validation.errors));
       }
 
-      if (
-        validation.data.cpf &&
-        validation.data.cpf !== existingAssociate.cpf
-      ) {
-        await assertCpfAvailable(repository, validation.data.cpf, existingAssociate.id);
-      }
+      return runWriteOperation(async ({ repository, profileRepository }) => {
+        const existingAssociate = await getAssociateById(repository, associateId);
 
-      if (
-        validation.data.registrationNumber &&
-        validation.data.registrationNumber !== existingAssociate.registrationNumber
-      ) {
-        await assertRegistrationNumberAvailable(
-          repository,
-          validation.data.registrationNumber,
-          existingAssociate.id,
+        if (
+          validation.data.cpf &&
+          validation.data.cpf !== existingAssociate.cpf
+        ) {
+          await assertCpfAvailable(repository, validation.data.cpf, existingAssociate.id);
+        }
+
+        if (
+          validation.data.registrationNumber &&
+          validation.data.registrationNumber !== existingAssociate.registrationNumber
+        ) {
+          await assertRegistrationNumberAvailable(
+            repository,
+            validation.data.registrationNumber,
+            existingAssociate.id,
+          );
+        }
+
+        const updatedAssociate = await repository.update(associateId, validation.data);
+        const existingProfile =
+          (await profileRepository.findByAssociateId(associateId)) ??
+          createEmptyAssociateProfile();
+        const savedProfile = await profileRepository.upsertByAssociateId(
+          associateId,
+          {
+            ...existingProfile,
+            ...extractAssociateProfileData(validation.data),
+          },
         );
-      }
 
-      const updatedAssociate = await repository.update(associateId, validation.data);
-      const existingProfile =
-        (await profileRepository.findByAssociateId(associateId)) ??
-        createEmptyAssociateProfile();
-      const savedProfile = await profileRepository.upsertByAssociateId(
-        associateId,
-        {
-          ...existingProfile,
-          ...extractAssociateProfileData(validation.data),
-        },
-      );
-
-      return mergeAssociateWithProfile(updatedAssociate, savedProfile);
+        return mergeAssociateWithProfile(updatedAssociate, savedProfile);
+      });
     },
 
     async deleteAssociate(id: string) {
       const associateId = normalizeRequiredId(id);
-      await getAssociateById(repository, associateId);
-      await profileRepository.removeByAssociateId(associateId);
-      await repository.remove(associateId);
+
+      await runWriteOperation(async ({ repository }) => {
+        await getAssociateById(repository, associateId);
+        await repository.remove(associateId);
+      });
     },
   };
 }
@@ -225,7 +269,7 @@ function getFirstErrorMessage(errors: Record<string, string | undefined>) {
     }
   }
 
-  return "Dados inválidos para o associado.";
+  return "Dados invalidos para o associado.";
 }
 
 function mergeAssociateWithProfile(

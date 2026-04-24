@@ -9,6 +9,13 @@ import {
   getSqlJsWasmDirectory,
 } from "@/lib/server/runtime-paths";
 
+// IMPORTANT:
+// This runtime keeps a single in-memory sql.js database per Node.js process and
+// periodically persists full snapshots to disk. It is safe only for single-
+// process usage and must not be treated as a concurrent multi-instance store.
+// For horizontal scaling or shared-write workloads, migrate to a real database
+// adapter (for example Postgres/MySQL) instead of reusing this runtime.
+
 let sqlJsPromise: ReturnType<typeof initSqlJs> | null = null;
 let writeQueue = Promise.resolve();
 let databasePromise: Promise<Database> | null = null;
@@ -41,6 +48,10 @@ async function writeDatabaseSnapshot(db: Database, reason: string) {
   });
 }
 
+function configureSqliteConnection(db: Database) {
+  db.run("PRAGMA foreign_keys = ON");
+}
+
 async function loadSqliteDatabase(): Promise<Database> {
   const databasePath = getSqliteDatabasePath();
   await mkdir(path.dirname(databasePath), { recursive: true });
@@ -50,6 +61,7 @@ async function loadSqliteDatabase(): Promise<Database> {
   try {
     const file = await readFile(databasePath);
     const db = new SQL.Database(new Uint8Array(file));
+    configureSqliteConnection(db);
     createSqliteSchema(db);
     logger.info("storage.sqlite.loaded", {
       databasePath,
@@ -59,6 +71,7 @@ async function loadSqliteDatabase(): Promise<Database> {
     return db;
   } catch {
     const db = new SQL.Database();
+    configureSqliteConnection(db);
     createSqliteSchema(db);
     await seedSqliteDatabase(db);
     await writeDatabaseSnapshot(db, "seed");
@@ -116,6 +129,7 @@ export async function withSqliteDatabase<T>(
 ): Promise<T> {
   await writeQueue;
   const db = await getSqliteDatabase();
+  configureSqliteConnection(db);
   return operation(db);
 }
 
@@ -130,6 +144,7 @@ export async function withSqliteWriteLock<T>(
   const persistReason = options?.reason ?? "write";
   const run = async () => {
     const db = await getSqliteDatabase();
+    configureSqliteConnection(db);
     const result = await operation(db);
     isDatabaseDirty = true;
 
@@ -173,14 +188,16 @@ export async function flushSqliteDatabase(reason = "flush") {
 export async function resetSqliteDatabase() {
   return withSqliteWriteLock(
     async (db) => {
-      db.run("DROP TABLE IF EXISTS users");
-      db.run("DROP TABLE IF EXISTS documents");
       db.run("DROP TABLE IF EXISTS alerts");
       db.run("DROP TABLE IF EXISTS password_reset_tokens");
       db.run("DROP TABLE IF EXISTS auth_rate_limits");
-      db.run("DROP TABLE IF EXISTS associate_profiles");
+      db.run("DROP TABLE IF EXISTS taxista_profiles");
       db.run("DROP TABLE IF EXISTS associate_operation_profiles");
+      db.run("DROP TABLE IF EXISTS associate_profiles");
+      db.run("DROP TABLE IF EXISTS documents");
       db.run("DROP TABLE IF EXISTS associates");
+      db.run("DROP TABLE IF EXISTS users");
+      configureSqliteConnection(db);
       createSqliteSchema(db);
       await seedSqliteDatabase(db);
       logger.warn("storage.sqlite.reset");

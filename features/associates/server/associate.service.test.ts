@@ -1,6 +1,7 @@
-﻿import {
+import {
   resetSqliteDatabase,
   resetSqliteStorageState,
+  withSqliteDatabase,
 } from "@/lib/storage/sqlite-storage";
 import { SqliteAssociateRepository } from "@/features/associates/server/associate.repository";
 import {
@@ -8,10 +9,12 @@ import {
   AssociateNotFoundError,
   createAssociateService,
 } from "@/features/associates/server/associate.service";
+import { createDataLayer } from "@/features/data/repositories";
+import { createDocumentWithAlerts } from "@/features/documents/server/document-service";
 
 describe("associate service", () => {
   const repository = new SqliteAssociateRepository();
-  const service = createAssociateService({ repository });
+  const service = createAssociateService();
 
   beforeEach(async () => {
     await resetSqliteStorageState();
@@ -75,6 +78,86 @@ describe("associate service", () => {
     );
   });
 
+  it("deletes an associate without leaving orphaned records", async () => {
+    const dataLayer = createDataLayer();
+    const generatedDocument = await createDocumentWithAlerts({
+      associateId: "asc_01",
+      documentType: "TACOGRAFO",
+      dueDate: "2000-01-03",
+      owner: "Equipe Operacional",
+      notes: "Documento para validar cascata.",
+    });
+
+    await service.deleteAssociate("asc_01");
+
+    await expect(service.getAssociateById("asc_01")).rejects.toThrow(
+      AssociateNotFoundError,
+    );
+    expect(await dataLayer.documents.findByAssociateId("asc_01")).toHaveLength(0);
+    expect(
+      await dataLayer.alerts.findGeneratedBySourceDocumentId(generatedDocument.id),
+    ).toBeNull();
+
+    await withSqliteDatabase((db) => {
+      const associateProfiles =
+        Number(
+          db.exec(
+            "SELECT COUNT(*) FROM associate_profiles WHERE associate_id = ?",
+            ["asc_01"],
+          )[0]?.values[0]?.[0],
+        ) || 0;
+      const operationProfiles =
+        Number(
+          db.exec(
+            "SELECT COUNT(*) FROM associate_operation_profiles WHERE associate_id = ?",
+            ["asc_01"],
+          )[0]?.values[0]?.[0],
+        ) || 0;
+      const taxistaProfiles =
+        Number(
+          db.exec(
+            "SELECT COUNT(*) FROM taxista_profiles WHERE associate_id = ?",
+            ["asc_01"],
+          )[0]?.values[0]?.[0],
+        ) || 0;
+
+      expect({
+        associateProfiles,
+        operationProfiles,
+        taxistaProfiles,
+      }).toEqual({
+        associateProfiles: 0,
+        operationProfiles: 0,
+        taxistaProfiles: 0,
+      });
+    });
+  });
+
+  it("rolls back the associate creation flow when profile persistence fails", async () => {
+    const failingService = createAssociateService({
+      profileRepositoryFactory: () => ({
+        findByAssociateId: async () => null,
+        upsertByAssociateId: async () => {
+          throw new Error("PROFILE_WRITE_FAILED");
+        },
+        removeByAssociateId: async () => undefined,
+      }),
+    });
+
+    await expect(
+      failingService.createAssociate({
+        name: "Carlos Alberto",
+        cpf: "529.982.247-25",
+        category: "Titular",
+        registrationNumber: "MAT-2026-0100",
+        status: "Ativo",
+        admissionDate: "2025-03-20",
+      }),
+    ).rejects.toThrow("PROFILE_WRITE_FAILED");
+
+    expect(await repository.findByRegistrationNumber("MAT-2026-0100")).toBeNull();
+  });
+
   it("filters associates by search, CPF, category and status", async () => {
     const byName = await service.listAssociates({ search: "Maria" });
     const byCpf = await service.listAssociates({ search: "390.533.447-05" });
@@ -113,4 +196,3 @@ describe("associate service", () => {
     });
   });
 });
-

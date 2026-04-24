@@ -90,6 +90,7 @@ public/             assets estaticos
 - features separadas para auth, dashboard e data layer
 - Auth.js com credenciais reais e sessao ativa
 - persistencia local em SQLite para ambiente inicial
+- runtime SQLite atual opera em modo single-process com snapshot local; para concorrencia real, use um adapter de banco gerenciado
 - cadastro de usuario com validacao server-side
 - recuperacao de senha com token seguro e entrega via SMTP
 - CRUD de documentos, logica de vencimento e alertas incrementais

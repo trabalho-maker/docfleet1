@@ -37,7 +37,7 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
     user,
     title: "Dashboard",
     description:
-      "Visão geral do sistema de documentos com leitura rápida das pendências mais importantes.",
+      "Visao geral do sistema de documentos com leitura rapida das pendencias mais importantes.",
     alertCount: totalAlerts,
     recentDocuments: allDocuments.slice(0, 8),
     alerts,
@@ -45,14 +45,14 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
       {
         label: "Total de Documentos",
         value: totalDocuments,
-        helper: "Base documental disponível no sistema.",
+        helper: "Base documental disponivel no sistema.",
         tone: "neutral",
         icon: "documents",
       },
       {
-        label: "Próximos do Vencimento",
+        label: "Proximos do Vencimento",
         value: attentionDocuments,
-        helper: "Documentos dentro da janela de atenção operacional.",
+        helper: "Documentos dentro da janela de atencao operacional.",
         tone: "warning",
         icon: "attention",
       },
@@ -61,8 +61,8 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
         value: expiredDocuments,
         helper:
           expiredDocuments > 0
-            ? "Ação necessária para regularização."
-            : "Nenhuma pendência vencida no momento.",
+            ? "Acao necessaria para regularizacao."
+            : "Nenhuma pendencia vencida no momento.",
         tone: "danger",
         icon: "expired",
       },
@@ -72,7 +72,7 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
         helper:
           pendingDocuments > 0
             ? `${pendingDocuments} item(ns) exigem acompanhamento.`
-            : "Base sem pendências críticas abertas.",
+            : "Base sem pendencias criticas abertas.",
         tone: "success",
         icon: "associates",
       },

@@ -42,6 +42,16 @@ describe("repositories", () => {
     );
   });
 
+  it("keeps SQLite foreign keys enabled in the runtime connection", async () => {
+    await withSqliteWriteLock((db) => {
+      const foreignKeysEnabled = Number(
+        db.exec("PRAGMA foreign_keys")[0]?.values[0]?.[0] ?? 0,
+      );
+
+      expect(foreignKeysEnabled).toBe(1);
+    });
+  });
+
   it("rejects duplicate users by email", async () => {
     await expect(
       userRepository.create({
@@ -199,6 +209,17 @@ describe("repositories", () => {
     expect(afterDelete).toBeNull();
   });
 
+  it("rejects documents linked to a non-existent associate when foreign keys are enabled", async () => {
+    await expect(
+      documentRepository.create({
+        associateId: "asc_missing",
+        documentType: "CNH",
+        dueDate: "2099-05-10",
+        owner: "Equipe Financeira",
+      }),
+    ).rejects.toThrow();
+  });
+
   it("upserts an existing associate document instead of creating duplicates", async () => {
     const upserted = await documentRepository.create({
       associateId: "asc_01",
@@ -231,6 +252,43 @@ describe("repositories", () => {
       "alt_01",
     ]);
     expect(totalAlerts).toBe(3);
+  });
+
+  it("upserts generated alerts without duplicating the same source document", async () => {
+    await alertRepository.upsertGeneratedForDocument({
+      title: "CNH de Maria vence em 2 dias",
+      severity: "Alta",
+      team: "Origem documental",
+      createdAt: "2026-04-08 10:00",
+      sourceDocumentId: "doc_01",
+      kind: "document_expiration",
+    });
+    await alertRepository.upsertGeneratedForDocument({
+      title: "CNH de Maria vence hoje",
+      severity: "Alta",
+      team: "Origem documental",
+      createdAt: "2026-04-09 10:00",
+      sourceDocumentId: "doc_01",
+      kind: "document_expiration",
+    });
+
+    const storedAlert = await alertRepository.findGeneratedBySourceDocumentId("doc_01");
+
+    expect(storedAlert).toMatchObject({
+      title: "CNH de Maria vence hoje",
+      createdAt: "2026-04-09 10:00",
+    });
+
+    await withSqliteWriteLock((db) => {
+      const duplicateCount = Number(
+        db.exec(
+          "SELECT COUNT(*) FROM alerts WHERE source_document_id = ?",
+          ["doc_01"],
+        )[0]?.values[0]?.[0] ?? 0,
+      );
+
+      expect(duplicateCount).toBe(1);
+    });
   });
 
   it("creates and resolves a valid password reset token", async () => {

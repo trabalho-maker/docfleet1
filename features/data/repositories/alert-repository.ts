@@ -27,6 +27,26 @@ function mapAlert(row: DatabaseRow): OperationalAlert {
   };
 }
 
+async function queryUniqueGeneratedAlertBySourceDocumentId(
+  database: Pick<DatabaseAdapter, "query">,
+  documentId: string,
+) {
+  const rows = await database.query(
+    `
+      SELECT id, title, severity, team, created_at, kind, source_document_id
+      FROM alerts
+      WHERE kind = ? AND source_document_id = ?
+    `,
+    ["document_expiration", documentId],
+  );
+
+  if (rows.length > 1) {
+    throw new Error("ALERT_DUPLICATE_SOURCE_DOCUMENT");
+  }
+
+  return rows[0] ? mapAlert(rows[0]) : null;
+}
+
 export class SqliteAlertRepository implements AlertRepository {
   constructor(private readonly database: DatabaseAdapter = getDatabaseAdapter()) {}
 
@@ -65,58 +85,22 @@ export class SqliteAlertRepository implements AlertRepository {
   async findGeneratedBySourceDocumentId(
     documentId: string,
   ): Promise<OperationalAlert | null> {
-    const row = await this.database.queryOne(
-      `
-        SELECT id, title, severity, team, created_at, kind, source_document_id
-        FROM alerts
-        WHERE kind = ? AND source_document_id = ?
-        LIMIT 1
-      `,
-      ["document_expiration", documentId],
-    );
-
-    return row ? mapAlert(row) : null;
+    return queryUniqueGeneratedAlertBySourceDocumentId(this.database, documentId);
   }
 
   async upsertGeneratedForDocument(alert: GeneratedOperationalAlertInput): Promise<void> {
     return this.database.write(async (session) => {
-      const existingRow = await session.queryOne(
-        `
-        SELECT id
-        FROM alerts
-        WHERE kind = ? AND source_document_id = ?
-        LIMIT 1
-      `,
-        [alert.kind, alert.sourceDocumentId],
-      );
-      const existingId = existingRow?.[0];
-
-      if (existingId) {
-        await session.execute(
-          `
-            UPDATE alerts
-            SET title = ?, severity = ?, team = ?, created_at = ?, kind = ?, source_document_id = ?
-            WHERE id = ?
-          `,
-          [
-            alert.title,
-            alert.severity,
-            alert.team,
-            alert.createdAt,
-            alert.kind,
-            alert.sourceDocumentId,
-            existingId,
-          ],
-        );
-
-        return;
-      }
-
       await session.execute(
         `
           INSERT INTO alerts
             (id, title, severity, team, created_at, kind, source_document_id)
           VALUES (?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(source_document_id) DO UPDATE SET
+            title = excluded.title,
+            severity = excluded.severity,
+            team = excluded.team,
+            created_at = excluded.created_at,
+            kind = excluded.kind
         `,
         [
           randomUUID(),

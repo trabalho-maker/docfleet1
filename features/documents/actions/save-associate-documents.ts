@@ -8,7 +8,6 @@ import { SqliteAssociateRepository } from "@/features/associates/server/associat
 import {
   associateDocumentTypes,
   getDocumentTypeLabel,
-  type AssociateDocumentType,
 } from "@/features/documents/constants";
 import { parseDocumentDueDate } from "@/features/documents/lib/expiration";
 import { syncAssociateDocumentsWithAlerts } from "@/features/documents/server/document-service";
