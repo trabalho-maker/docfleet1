@@ -17,18 +17,14 @@ export const metadata: Metadata = {
   description: "Gerenciamento operacional do cadastro do modulo TAXISTAS.",
 };
 
-type TaxistasCadastroPageProps = {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-};
-
 export default async function TaxistasCadastroPage({
   searchParams,
-}: TaxistasCadastroPageProps) {
+}: PageProps<"/taxistas/cadastro">) {
   const user = await getCurrentUser();
   const canView = canViewAssociates(user);
   const canEdit = canEditAssociate(user);
   const accessMessage = getAssociateAccessMessage(user);
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const resolvedSearchParams = await searchParams;
   const selectedAssociateId = getSingleSearchParam(resolvedSearchParams?.taxista);
   const records = canView
     ? await createTaxistaCadastroService().listTaxistas()

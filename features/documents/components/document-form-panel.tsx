@@ -1,23 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { FleetDocument } from "@/features/data/types";
-import { DocumentStatusBadge } from "@/features/documents/components/document-status-badge";
 import type {
   DocumentFormErrors,
   DocumentFormValues,
   DocumentUiMessage,
+  DocumentsApiResponse,
 } from "@/features/documents/types";
+import { DocumentStatusBadge } from "@/features/documents/components/document-status-badge";
+import { getDocumentTypeLabel } from "@/features/documents/constants";
 
 type DocumentFormPanelProps = {
   canViewDocuments: boolean;
   canManageDocuments: boolean;
   accessMessage?: string | null;
-  editingId: string | null;
+  editingDocument: DocumentsApiResponse["documents"][number] | null;
   formValues: DocumentFormValues;
   formErrors: DocumentFormErrors;
-  calculatedStatus: FleetDocument["status"] | null;
   isSubmitting: boolean;
   message: DocumentUiMessage | null;
   onFieldChange: <K extends keyof DocumentFormValues>(
@@ -32,10 +33,9 @@ export function DocumentFormPanel({
   canViewDocuments,
   canManageDocuments,
   accessMessage = null,
-  editingId,
+  editingDocument,
   formValues,
   formErrors,
-  calculatedStatus,
   isSubmitting,
   message,
   onFieldChange,
@@ -46,23 +46,17 @@ export function DocumentFormPanel({
     <article className="df-section-card p-6">
       <div className="space-y-2">
         <p className="df-eyebrow">
-          {canManageDocuments
-            ? editingId
-              ? "Editar documento"
-              : "Novo documento"
-            : "Permissões do módulo"}
+          {editingDocument ? "Editar documento" : "Base documental"}
         </p>
         <h2 className="text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
-          {canManageDocuments
-            ? editingId
-              ? "Atualize os dados do documento selecionado"
-              : "Cadastre um documento da operação"
-            : "Visualização somente leitura"}
+          {editingDocument
+            ? "Atualize o vencimento selecionado"
+            : "Documentos vinculados aos associados"}
         </h2>
         <p className="text-sm leading-6 text-[var(--color-muted)]">
-          {canManageDocuments
-            ? "Preencha os campos do documento e acompanhe o status calculado automaticamente a partir do vencimento."
-            : "Seu perfil pode acompanhar os registros existentes, mas não pode alterar a base documental."}
+          {editingDocument
+            ? "Ajuste a data de vencimento e a observacao do registro selecionado."
+            : "Novos documentos sao cadastrados pela etapa complementar do associado para manter uma unica origem documental."}
         </p>
       </div>
 
@@ -81,82 +75,75 @@ export function DocumentFormPanel({
 
       {!canViewDocuments ? (
         <div className="mt-6 rounded-[24px] border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
-          {accessMessage ?? "Seu perfil não pode acessar os documentos."}
+          {accessMessage ?? "Seu perfil nao pode acessar os documentos."}
         </div>
       ) : null}
 
       {canViewDocuments && !canManageDocuments ? (
         <div className="mt-6 rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
           {accessMessage ??
-            "Seu perfil pode consultar documentos, mas não pode criar, editar ou excluir registros."}
+            "Seu perfil pode consultar documentos, mas nao pode alterar a base documental."}
         </div>
       ) : null}
 
-      <form className="mt-6 grid gap-5" onSubmit={onSubmit} noValidate>
-        <Input
-          id="document-name"
-          label="Nome"
-          value={formValues.name}
-          onChange={(event) => onFieldChange("name", event.target.value)}
-          placeholder="Ex.: Licenciamento da frota leve"
-          error={formErrors.name}
-          disabled={!canManageDocuments}
-          required
-        />
-
-        <Input
-          id="document-type"
-          label="Tipo"
-          value={formValues.type}
-          onChange={(event) => onFieldChange("type", event.target.value)}
-          placeholder="Ex.: Veículos"
-          error={formErrors.type}
-          disabled={!canManageDocuments}
-          required
-        />
-
-        <Input
-          id="document-due-date"
-          label="Data de vencimento"
-          type="date"
-          value={formValues.dueDate}
-          onChange={(event) => onFieldChange("dueDate", event.target.value)}
-          error={formErrors.dueDate}
-          disabled={!canManageDocuments}
-          required
-        />
-
-        <div className="df-surface-card px-4 py-4">
-          <p className="text-sm font-semibold text-[var(--color-foreground)]">
-            Status calculado automaticamente
-          </p>
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-            {calculatedStatus ? (
-              <DocumentStatusBadge status={calculatedStatus} />
-            ) : (
-              <span className="df-badge-pill bg-slate-200 text-slate-600">
-                Informe a data
-              </span>
-            )}
-            <p className="text-sm leading-6 text-[var(--color-muted)]">
-              O sistema compara a data atual com o vencimento para classificar o
-              documento como válido, em atenção ou vencido.
+      {editingDocument ? (
+        <form className="mt-6 grid gap-5" onSubmit={onSubmit} noValidate>
+          <div className="df-surface-card px-4 py-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm font-semibold text-[var(--color-foreground)]">
+                {getDocumentTypeLabel(editingDocument.documentType)}
+              </p>
+              <DocumentStatusBadge status={editingDocument.status} />
+            </div>
+            <p className="mt-3 text-sm text-[var(--color-muted)]">
+              {editingDocument.associateName ?? "Associado nao informado"}
+              {editingDocument.associateCategory
+                ? ` · ${editingDocument.associateCategory}`
+                : ""}
+            </p>
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
+              Matricula: {editingDocument.associateRegistrationNumber ?? "Nao informada"}
             </p>
           </div>
-        </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button
-            type="submit"
-            isLoading={isSubmitting}
-            loadingLabel={editingId ? "Salvando..." : "Criando..."}
+          <Input
+            id="document-due-date"
+            label="Data de vencimento"
+            type="date"
+            value={formValues.dueDate}
+            onChange={(event) => onFieldChange("dueDate", event.target.value)}
+            error={formErrors.dueDate}
             disabled={!canManageDocuments}
-            className="sm:flex-1"
-          >
-            {editingId ? "Salvar alterações" : "Criar documento"}
-          </Button>
+            required
+          />
 
-          {editingId ? (
+          <label htmlFor="document-notes" className="grid gap-2 text-sm font-medium text-slate-700">
+            <span>Observacao</span>
+            <textarea
+              id="document-notes"
+              value={formValues.notes}
+              onChange={(event) => onFieldChange("notes", event.target.value)}
+              disabled={!canManageDocuments}
+              rows={5}
+              className="min-h-[120px] rounded-[18px] border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-colors focus:border-[var(--color-accent-strong)]"
+              placeholder="Observacoes operacionais do documento"
+            />
+            {formErrors.notes ? (
+              <span className="text-sm text-red-600">{formErrors.notes}</span>
+            ) : null}
+          </label>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button
+              type="submit"
+              isLoading={isSubmitting}
+              loadingLabel="Salvando..."
+              disabled={!canManageDocuments}
+              className="sm:flex-1"
+            >
+              Salvar alteracoes
+            </Button>
+
             <button
               type="button"
               onClick={onCancelEdit}
@@ -165,9 +152,23 @@ export function DocumentFormPanel({
             >
               Cancelar
             </button>
-          ) : null}
+          </div>
+        </form>
+      ) : (
+        <div className="mt-6 rounded-[24px] border border-dashed border-[var(--color-border)] bg-[linear-gradient(180deg,#F8FAFC_0%,#FFFFFF_100%)] p-6">
+          <p className="text-sm font-semibold text-[var(--color-foreground)]">
+            Selecione um documento da lista para editar
+          </p>
+          <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+            Para criar documentos novos, acesse a etapa complementar do associado.
+          </p>
+          <div className="mt-4">
+            <Link href="/associados" className="df-button-secondary">
+              Abrir associados
+            </Link>
+          </div>
         </div>
-      </form>
+      )}
     </article>
   );
 }

@@ -22,6 +22,7 @@ export interface TaxistaCadastroRepository {
       ponto: string | null;
       placa: string | null;
       modeloVeiculo: string | null;
+      pressaoKgfM2: string | null;
       numeroTaximetro: string | null;
       modeloTaximetro: string | null;
       constante: string | null;
@@ -36,6 +37,7 @@ export interface TaxistaCadastroRepository {
       cinta: string | null;
       colocado: string | null;
       retirado: string | null;
+      observacao: string | null;
     },
   ): Promise<void>;
   upsertProfile(
@@ -83,6 +85,7 @@ export class SqliteTaxistaCadastroRepository
       ponto: string | null;
       placa: string | null;
       modeloVeiculo: string | null;
+      pressaoKgfM2: string | null;
       numeroTaximetro: string | null;
       modeloTaximetro: string | null;
       constante: string | null;
@@ -97,6 +100,7 @@ export class SqliteTaxistaCadastroRepository
       cinta: string | null;
       colocado: string | null;
       retirado: string | null;
+      observacao: string | null;
     },
   ): Promise<void> {
     await this.database.write(async (session) => {
@@ -190,6 +194,7 @@ export class SqliteTaxistaCadastroRepository
             ponto,
             placa,
             modelo_veiculo,
+            pressao_kgf_m2,
             numero_taximetro,
             modelo_taximetro,
             constante,
@@ -204,15 +209,17 @@ export class SqliteTaxistaCadastroRepository
             cinta,
             colocado,
             retirado,
+            observacao,
             created_at,
             updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(associate_id) DO UPDATE SET
             status_alvara = excluded.status_alvara,
             selo = excluded.selo,
             ponto = excluded.ponto,
             placa = excluded.placa,
             modelo_veiculo = excluded.modelo_veiculo,
+            pressao_kgf_m2 = excluded.pressao_kgf_m2,
             numero_taximetro = excluded.numero_taximetro,
             modelo_taximetro = excluded.modelo_taximetro,
             constante = excluded.constante,
@@ -227,6 +234,7 @@ export class SqliteTaxistaCadastroRepository
             cinta = excluded.cinta,
             colocado = excluded.colocado,
             retirado = excluded.retirado,
+            observacao = excluded.observacao,
             updated_at = excluded.updated_at
         `,
         [
@@ -236,6 +244,7 @@ export class SqliteTaxistaCadastroRepository
           input.ponto,
           input.placa,
           input.modeloVeiculo,
+          input.pressaoKgfM2,
           input.numeroTaximetro,
           input.modeloTaximetro,
           input.constante,
@@ -250,6 +259,7 @@ export class SqliteTaxistaCadastroRepository
           input.cinta,
           input.colocado,
           input.retirado,
+          input.observacao,
           now,
           now,
         ],
@@ -278,6 +288,7 @@ export class SqliteTaxistaCadastroRepository
             ponto,
             placa,
             modelo_veiculo,
+            pressao_kgf_m2,
             numero_taximetro,
             modelo_taximetro,
             constante,
@@ -292,15 +303,17 @@ export class SqliteTaxistaCadastroRepository
             cinta,
             colocado,
             retirado,
+            observacao,
             created_at,
             updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(associate_id) DO UPDATE SET
             status_alvara = excluded.status_alvara,
             selo = excluded.selo,
             ponto = excluded.ponto,
             placa = excluded.placa,
             modelo_veiculo = excluded.modelo_veiculo,
+            pressao_kgf_m2 = excluded.pressao_kgf_m2,
             numero_taximetro = excluded.numero_taximetro,
             modelo_taximetro = excluded.modelo_taximetro,
             constante = excluded.constante,
@@ -315,6 +328,7 @@ export class SqliteTaxistaCadastroRepository
             cinta = excluded.cinta,
             colocado = excluded.colocado,
             retirado = excluded.retirado,
+            observacao = excluded.observacao,
             updated_at = excluded.updated_at
         `,
         [
@@ -324,6 +338,7 @@ export class SqliteTaxistaCadastroRepository
           profile.ponto,
           profile.placa,
           profile.modeloVeiculo,
+          profile.pressaoKgfM2,
           profile.numeroTaximetro,
           profile.modeloTaximetro,
           profile.constante,
@@ -338,6 +353,7 @@ export class SqliteTaxistaCadastroRepository
           profile.cinta,
           profile.colocado,
           profile.retirado,
+          profile.observacao,
           createdAt,
           now,
         ],
@@ -412,6 +428,7 @@ function buildSelectSql() {
       tp.ponto,
       tp.placa,
       tp.modelo_veiculo,
+      tp.pressao_kgf_m2,
       tp.numero_taximetro,
       tp.modelo_taximetro,
       tp.constante,
@@ -425,7 +442,8 @@ function buildSelectSql() {
       tp.modulo,
       tp.cinta,
       tp.colocado,
-      tp.retirado
+      tp.retirado,
+      tp.observacao
     FROM associates a
     INNER JOIN associate_profiles ap
       ON ap.associate_id = a.id
@@ -449,20 +467,22 @@ function mapTaxistaCadastroRecord(row: DatabaseRow): TaxistaCadastroRecord {
     ponto: normalizeNullable(row[9]),
     placa: normalizeNullable(row[10]),
     modeloVeiculo: normalizeNullable(row[11]),
-    numeroTaximetro: normalizeNullable(row[12]),
-    modeloTaximetro: normalizeNullable(row[13]),
-    constante: normalizeNullable(row[14]),
-    inmetro: normalizeNullable(row[15]),
-    instalacao: normalizeNullable(row[16]),
-    trocaTaximetro: normalizeNullable(row[17]),
-    pneu: normalizeNullable(row[18]),
-    deca: normalizeNullable(row[19]),
-    lacreModulo: normalizeNullable(row[20]),
-    lacreTaxi: normalizeNullable(row[21]),
-    modulo: normalizeNullable(row[22]),
-    cinta: normalizeNullable(row[23]),
-    colocado: normalizeNullable(row[24]),
-    retirado: normalizeNullable(row[25]),
+    pressaoKgfM2: normalizeNullable(row[12]),
+    numeroTaximetro: normalizeNullable(row[13]),
+    modeloTaximetro: normalizeNullable(row[14]),
+    constante: normalizeNullable(row[15]),
+    inmetro: normalizeNullable(row[16]),
+    instalacao: normalizeNullable(row[17]),
+    trocaTaximetro: normalizeNullable(row[18]),
+    pneu: normalizeNullable(row[19]),
+    deca: normalizeNullable(row[20]),
+    lacreModulo: normalizeNullable(row[21]),
+    lacreTaxi: normalizeNullable(row[22]),
+    modulo: normalizeNullable(row[23]),
+    cinta: normalizeNullable(row[24]),
+    colocado: normalizeNullable(row[25]),
+    retirado: normalizeNullable(row[26]),
+    observacao: normalizeNullable(row[27]),
   };
 }
 

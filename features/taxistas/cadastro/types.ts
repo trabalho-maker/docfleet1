@@ -7,6 +7,7 @@ export type TaxistaCadastroProfile = {
   ponto: string | null;
   placa: string | null;
   modeloVeiculo: string | null;
+  pressaoKgfM2: string | null;
   numeroTaximetro: string | null;
   modeloTaximetro: string | null;
   constante: string | null;
@@ -21,6 +22,7 @@ export type TaxistaCadastroProfile = {
   cinta: string | null;
   colocado: string | null;
   retirado: string | null;
+  observacao: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -38,6 +40,7 @@ export type TaxistaCadastroRecord = {
   ponto: string | null;
   placa: string | null;
   modeloVeiculo: string | null;
+  pressaoKgfM2: string | null;
   numeroTaximetro: string | null;
   modeloTaximetro: string | null;
   constante: string | null;
@@ -52,6 +55,7 @@ export type TaxistaCadastroRecord = {
   cinta: string | null;
   colocado: string | null;
   retirado: string | null;
+  observacao: string | null;
 };
 
 export type TaxistaCadastroFormValues = {
@@ -63,6 +67,7 @@ export type TaxistaCadastroFormValues = {
   ponto: string;
   placa: string;
   modeloVeiculo: string;
+  pressaoKgfM2: string;
   numeroTaximetro: string;
   modeloTaximetro: string;
   constante: string;
@@ -95,6 +100,7 @@ export function createEmptyTaxistaCadastroProfile(
     ponto: null,
     placa: null,
     modeloVeiculo: null,
+    pressaoKgfM2: null,
     numeroTaximetro: null,
     modeloTaximetro: null,
     constante: null,
@@ -109,6 +115,7 @@ export function createEmptyTaxistaCadastroProfile(
     cinta: null,
     colocado: null,
     retirado: null,
+    observacao: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -126,6 +133,7 @@ export function mapTaxistaCadastroRecordToFormValues(
     ponto: record.ponto ?? "",
     placa: record.placa ?? "",
     modeloVeiculo: record.modeloVeiculo ?? "",
+    pressaoKgfM2: record.pressaoKgfM2 ?? "",
     numeroTaximetro: record.numeroTaximetro ?? "",
     modeloTaximetro: record.modeloTaximetro ?? "",
     constante: record.constante ?? "",

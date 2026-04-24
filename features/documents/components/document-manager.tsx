@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { type FleetDocument } from "@/features/data/types";
 import { MetricCard } from "@/features/dashboard/components/metric-card";
 import { DocumentFormPanel } from "@/features/documents/components/document-form-panel";
 import { DocumentManagerHeader } from "@/features/documents/components/document-manager-header";
 import { DocumentsListPanel } from "@/features/documents/components/documents-list-panel";
-import { calculateDocumentStatus } from "@/features/documents/lib/expiration";
 import type {
   DocumentApiResponse,
   DocumentFormErrors,
   DocumentFormValues,
+  DocumentListFilters,
   DocumentUiMessage,
   DocumentsApiResponse,
 } from "@/features/documents/types";
@@ -25,9 +24,8 @@ type DocumentManagerProps = {
 };
 
 const initialValues: DocumentFormValues = {
-  name: "",
-  type: "",
   dueDate: "",
+  notes: "",
 };
 
 export function DocumentManager({
@@ -39,19 +37,28 @@ export function DocumentManager({
   accessMessage = null,
 }: DocumentManagerProps) {
   const pageSize = 25;
-  const [documents, setDocuments] = useState<FleetDocument[]>([]);
+  const [documents, setDocuments] = useState<DocumentsApiResponse["documents"]>([]);
   const [page, setPage] = useState(1);
   const [reloadKey, setReloadKey] = useState(0);
-  const [totalDocuments, setTotalDocuments] = useState(0);
-  const [documentsRequiringAttention, setDocumentsRequiringAttention] = useState(0);
-  const [documentsInAttention, setDocumentsInAttention] = useState(0);
+  const [filters, setFilters] = useState<DocumentListFilters>({
+    category: "",
+  });
+  const [summary, setSummary] = useState<DocumentsApiResponse["summary"]>({
+    total: 0,
+    expired: 0,
+    dueIn15Days: 0,
+    dueIn30Days: 0,
+  });
   const [totalPages, setTotalPages] = useState(1);
   const [formValues, setFormValues] = useState<DocumentFormValues>(initialValues);
   const [formErrors, setFormErrors] = useState<DocumentFormErrors>({});
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingDocument, setEditingDocument] =
+    useState<DocumentsApiResponse["documents"][number] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<DocumentUiMessage | null>(null);
+
+  const editingDocumentId = editingDocument?.id ?? null;
 
   useEffect(() => {
     if (!canViewDocuments) {
@@ -65,8 +72,11 @@ export function DocumentManager({
     async function loadDocuments(targetPage: number) {
       try {
         setIsLoading(true);
+        const categoryQuery = filters.category
+          ? `&category=${encodeURIComponent(filters.category)}`
+          : "";
         const response = await fetch(
-          `/api/documents?page=${targetPage}&pageSize=${pageSize}`,
+          `/api/documents?page=${targetPage}&pageSize=${pageSize}${categoryQuery}`,
           {
             credentials: "include",
           },
@@ -79,17 +89,29 @@ export function DocumentManager({
           throw new Error(
             "error" in payload && payload.error
               ? payload.error
-              : "Não foi possível carregar os documentos.",
+              : "Nao foi possivel carregar os documentos.",
           );
         }
 
         if (active) {
           setDocuments(payload.documents);
           setPage(payload.pagination.page);
-          setTotalDocuments(payload.summary.total);
-          setDocumentsRequiringAttention(payload.summary.requiringAttention);
-          setDocumentsInAttention(payload.summary.attention);
+          setSummary(payload.summary);
           setTotalPages(payload.pagination.totalPages);
+
+          if (editingDocumentId) {
+            const refreshedSelection =
+              payload.documents.find((document) => document.id === editingDocumentId) ?? null;
+
+            setEditingDocument(refreshedSelection);
+
+            if (refreshedSelection) {
+              setFormValues({
+                dueDate: refreshedSelection.dueDate,
+                notes: refreshedSelection.notes ?? "",
+              });
+            }
+          }
         }
       } catch (error) {
         if (active) {
@@ -98,7 +120,7 @@ export function DocumentManager({
             text:
               error instanceof Error
                 ? error.message
-                : "Não foi possível carregar os documentos.",
+                : "Nao foi possivel carregar os documentos.",
           });
         }
       } finally {
@@ -113,23 +135,17 @@ export function DocumentManager({
     return () => {
       active = false;
     };
-  }, [canViewDocuments, page, pageSize, reloadKey]);
+  }, [canViewDocuments, editingDocumentId, filters.category, page, pageSize, reloadKey]);
 
-  const metrics = useMemo(() => {
-    return [
-      { label: "Documentos", value: String(totalDocuments) },
-      { label: "Requer atenção", value: String(documentsRequiringAttention) },
-      { label: "Em atenção", value: String(documentsInAttention) },
-    ];
-  }, [documentsInAttention, documentsRequiringAttention, totalDocuments]);
-
-  const calculatedStatus = useMemo(() => {
-    if (!formValues.dueDate) {
-      return null;
-    }
-
-    return calculateDocumentStatus(formValues.dueDate);
-  }, [formValues.dueDate]);
+  const metrics = useMemo(
+    () => [
+      { label: "Documentos", value: String(summary.total) },
+      { label: "Vencidos", value: String(summary.expired) },
+      { label: "Ate 15 dias", value: String(summary.dueIn15Days) },
+      { label: "16 a 30 dias", value: String(summary.dueIn30Days) },
+    ],
+    [summary],
+  );
 
   function updateField<K extends keyof DocumentFormValues>(
     field: K,
@@ -148,27 +164,34 @@ export function DocumentManager({
   function resetForm() {
     setFormValues(initialValues);
     setFormErrors({});
-    setEditingId(null);
+    setEditingDocument(null);
   }
 
-  function fillForm(document: FleetDocument) {
+  function fillForm(document: DocumentsApiResponse["documents"][number]) {
     setFormValues({
-      name: document.name,
-      type: document.type,
       dueDate: document.dueDate,
+      notes: document.notes ?? "",
     });
     setFormErrors({});
-    setEditingId(document.id);
+    setEditingDocument(document);
     setMessage(null);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (!editingDocument) {
+      setMessage({
+        type: "error",
+        text: "Selecione um documento para editar.",
+      });
+      return;
+    }
+
     if (!canManageDocuments) {
       setMessage({
         type: "error",
-        text: accessMessage ?? "Seu perfil não pode criar ou editar documentos.",
+        text: accessMessage ?? "Seu perfil nao pode editar documentos.",
       });
       return;
     }
@@ -176,12 +199,9 @@ export function DocumentManager({
     setIsSubmitting(true);
     setMessage(null);
 
-    const method = editingId ? "PUT" : "POST";
-    const endpoint = editingId ? `/api/documents/${editingId}` : "/api/documents";
-
     try {
-      const response = await fetch(endpoint, {
-        method,
+      const response = await fetch(`/api/documents/${editingDocument.id}`, {
+        method: "PUT",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
@@ -198,30 +218,27 @@ export function DocumentManager({
         throw new Error(
           "error" in payload && payload.error
             ? payload.error
-            : "Não foi possível salvar o documento.",
+            : "Nao foi possivel salvar o documento.",
         );
       }
 
       if (!("document" in payload)) {
-        throw new Error("Resposta inválida ao salvar o documento.");
+        throw new Error("Resposta invalida ao salvar o documento.");
       }
 
-      setPage(1);
       setReloadKey((current) => current + 1);
       setMessage({
         type: "success",
-        text: editingId
-          ? "Documento atualizado com sucesso."
-          : "Documento criado com sucesso.",
+        text: "Documento atualizado com sucesso.",
       });
-      resetForm();
+      fillForm(payload.document);
     } catch (error) {
       setMessage({
         type: "error",
         text:
           error instanceof Error
             ? error.message
-            : "Não foi possível salvar o documento.",
+            : "Nao foi possivel salvar o documento.",
       });
     } finally {
       setIsSubmitting(false);
@@ -232,7 +249,7 @@ export function DocumentManager({
     if (!canManageDocuments) {
       setMessage({
         type: "error",
-        text: accessMessage ?? "Seu perfil não pode excluir documentos.",
+        text: accessMessage ?? "Seu perfil nao pode excluir documentos.",
       });
       return;
     }
@@ -253,10 +270,10 @@ export function DocumentManager({
       const payload = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        throw new Error(payload.error || "Não foi possível excluir o documento.");
+        throw new Error(payload.error || "Nao foi possivel excluir o documento.");
       }
 
-      if (editingId === documentId) {
+      if (editingDocument?.id === documentId) {
         resetForm();
       }
 
@@ -276,7 +293,7 @@ export function DocumentManager({
         text:
           error instanceof Error
             ? error.message
-            : "Não foi possível excluir o documento.",
+            : "Nao foi possivel excluir o documento.",
       });
     }
   }
@@ -289,7 +306,7 @@ export function DocumentManager({
         userRole={userRole}
       />
 
-      <section className="grid gap-5 md:grid-cols-3">
+      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => (
           <MetricCard
             key={metric.label}
@@ -306,10 +323,9 @@ export function DocumentManager({
           canViewDocuments={canViewDocuments}
           canManageDocuments={canManageDocuments}
           accessMessage={accessMessage}
-          editingId={editingId}
+          editingDocument={editingDocument}
           formValues={formValues}
           formErrors={formErrors}
-          calculatedStatus={calculatedStatus}
           isSubmitting={isSubmitting}
           message={message}
           onFieldChange={updateField}
@@ -319,7 +335,8 @@ export function DocumentManager({
 
         <DocumentsListPanel
           documents={documents}
-          totalDocuments={totalDocuments}
+          summary={summary}
+          filters={filters}
           page={page}
           totalPages={totalPages}
           isLoading={isLoading}
@@ -329,6 +346,10 @@ export function DocumentManager({
           onEditDocument={fillForm}
           onDeleteDocument={(documentId) => {
             void handleDelete(documentId);
+          }}
+          onFilterChange={(nextCategory) => {
+            setPage(1);
+            setFilters({ category: nextCategory });
           }}
           onPreviousPage={() => setPage((current) => Math.max(1, current - 1))}
           onNextPage={() =>

@@ -32,8 +32,8 @@ describe("dashboard alerts integration", () => {
   it("reconciles generated alerts and exposes them through the dashboard overview", async () => {
     const dataLayer = createDataLayer();
     const createdDocument = await dataLayer.documents.create({
-      name: "Laudo da frota critica",
-      type: "Seguranca",
+      associateId: "asc_01",
+      documentType: "TACOGRAFO",
       dueDate: "2000-01-03",
       owner: "Seguranca Operacional",
     });
@@ -48,7 +48,8 @@ describe("dashboard alerts integration", () => {
       true,
     );
     expect(generatedAlert).toBeDefined();
-    expect(generatedAlert?.title).toContain("Laudo da frota critica");
+    expect(generatedAlert?.title).toContain("Maria de Souza");
+    expect(generatedAlert?.team).toBe("Origem documental");
     expect(overview.alertCount).toBeGreaterThan(0);
     expect(overview.kpis).toEqual(
       expect.arrayContaining([

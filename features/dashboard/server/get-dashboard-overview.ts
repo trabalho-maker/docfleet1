@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/features/auth/server/session";
 import { createDataLayer } from "@/features/data/repositories";
 import type { FleetDocument } from "@/features/data/types";
 import type { DashboardOverview } from "@/features/dashboard/types";
+import { getDocumentTypeLabel } from "@/features/documents/constants";
 
 export async function getDashboardOverview(): Promise<DashboardOverview> {
   const user = await getCurrentUser();
@@ -88,8 +89,9 @@ function buildDocumentsByType(documents: FleetDocument[]) {
   >();
 
   for (const document of documents) {
-    const current = items.get(document.type) ?? {
-      type: document.type,
+    const typeLabel = getDocumentTypeLabel(document.documentType);
+    const current = items.get(typeLabel) ?? {
+      type: typeLabel,
       valid: 0,
       attention: 0,
       expired: 0,
@@ -103,7 +105,7 @@ function buildDocumentsByType(documents: FleetDocument[]) {
       current.expired += 1;
     }
 
-    items.set(document.type, current);
+    items.set(typeLabel, current);
   }
 
   return Array.from(items.values())

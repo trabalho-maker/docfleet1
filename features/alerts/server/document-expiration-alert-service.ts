@@ -7,7 +7,8 @@ import type {
 import { getDaysUntilDocumentDueDate } from "@/features/documents/lib/expiration";
 import { logger } from "@/lib/logger";
 
-const URGENT_ALERT_WINDOW_DAYS = 7;
+const HIGH_PRIORITY_ALERT_WINDOW_DAYS = 15;
+const DOCUMENT_ALERT_ORIGIN_LABEL = "Origem documental";
 
 type IncrementalAlertSyncAction = "created" | "updated" | "deleted" | "unchanged";
 
@@ -42,33 +43,42 @@ function getAlertSeverity(document: FleetDocument, now: Date): OperationalAlert[
     return "Alta";
   }
 
-  if (daysUntilDue !== null && daysUntilDue <= URGENT_ALERT_WINDOW_DAYS) {
-    return "Media";
+  if (daysUntilDue !== null && daysUntilDue <= HIGH_PRIORITY_ALERT_WINDOW_DAYS) {
+    return "Alta";
   }
 
-  return "Baixa";
+  return "Media";
+}
+
+function getDocumentAlertLabel(document: FleetDocument) {
+  if (document.associateName) {
+    return `${document.name} de ${document.associateName}`;
+  }
+
+  return document.name;
 }
 
 function buildAlertTitle(document: FleetDocument, now: Date) {
   const daysUntilDue = getDaysUntilDocumentDueDate(document.dueDate, now);
+  const label = getDocumentAlertLabel(document);
 
   if (document.status === "Vencido" || (daysUntilDue !== null && daysUntilDue < 0)) {
-    return `${document.name} esta vencido`;
+    return `${label} esta vencido`;
   }
 
   if (daysUntilDue === 0) {
-    return `${document.name} vence hoje`;
+    return `${label} vence hoje`;
   }
 
   if (daysUntilDue === 1) {
-    return `${document.name} vence amanha`;
+    return `${label} vence amanha`;
   }
 
   if (typeof daysUntilDue === "number") {
-    return `${document.name} vence em ${daysUntilDue} dias`;
+    return `${label} vence em ${daysUntilDue} dias`;
   }
 
-  return `${document.name} requer atencao`;
+  return `${label} requer atencao`;
 }
 
 function toGeneratedAlert(
@@ -82,7 +92,9 @@ function toGeneratedAlert(
   return {
     title: buildAlertTitle(document, now),
     severity: getAlertSeverity(document, now),
-    team: document.owner,
+    // `team` is a legacy display field. Generated expiration alerts should use
+    // a neutral origin label instead of exposing the document author as a team.
+    team: DOCUMENT_ALERT_ORIGIN_LABEL,
     createdAt: formatAlertTimestamp(now),
     sourceDocumentId: document.id,
     kind: "document_expiration",

@@ -21,6 +21,7 @@ type ModalFieldDefinition = {
   key: keyof TaxistaCadastroFormValues;
   label: string;
   span?: string;
+  type?: "text" | "date";
 };
 
 type ModalSection = {
@@ -80,14 +81,17 @@ export function TaxistaCadastroModal({
           { key: "cpf", label: "CPF" },
           { key: "telefone", label: "Telefone" },
           { key: "endereco", label: "Endereco", span: "sm:col-span-2" },
-          { key: "ponto", label: "Ponto", span: "sm:col-span-2" },
+          { key: "ponto", label: "Ponto" },
+          { key: "deca", label: "Deca" },
         ] as const,
       },
       {
         title: "Veiculo",
         fields: [
           { key: "placa", label: "Placa" },
-          { key: "modeloVeiculo", label: "Modelo do veiculo", span: "sm:col-span-2" },
+          { key: "modeloVeiculo", label: "Modelo veiculo", span: "sm:col-span-2" },
+          { key: "pneu", label: "Pneu" },
+          { key: "pressaoKgfM2", label: "Pressao KGF/M2" },
         ] as const,
       },
       {
@@ -97,15 +101,17 @@ export function TaxistaCadastroModal({
           { key: "modeloTaximetro", label: "Modelo do taximetro" },
           { key: "constante", label: "Constante" },
           { key: "inmetro", label: "Inmetro" },
-          { key: "instalacao", label: "Instalacao" },
-          { key: "trocaTaximetro", label: "Troca do taximetro" },
+          {
+            key: "trocaTaximetro",
+            label: "Troca de taximetro",
+            type: "date",
+          },
         ] as const,
       },
       {
         title: "Equipamentos e controle",
         fields: [
-          { key: "pneu", label: "Pneu" },
-          { key: "deca", label: "Deca" },
+          { key: "instalacao", label: "Instalacao", type: "date" },
           { key: "lacreModulo", label: "Lacre modulo" },
           { key: "lacreTaxi", label: "Lacre taxi" },
           { key: "modulo", label: "Modulo" },
@@ -220,6 +226,7 @@ export function TaxistaCadastroModal({
                         error={fieldErrors[field.key]}
                       >
                         <input
+                          type={field.type ?? "text"}
                           value={formValues[field.key]}
                           onChange={(event) =>
                             updateField(field.key, event.target.value)
@@ -232,6 +239,20 @@ export function TaxistaCadastroModal({
                   </div>
                 </section>
               ))}
+
+              <section className="rounded-[24px] border border-slate-200 bg-[#FAFCFF] p-5">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#35577E]">
+                  Observacao
+                </h3>
+
+                <div className="mt-4">
+                  <textarea
+                    readOnly
+                    value={modalRecord.observacao ?? "Nenhuma alteracao registrada ainda."}
+                    className="min-h-[108px] w-full resize-none rounded-[16px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none"
+                  />
+                </div>
+              </section>
 
               {formError ? (
                 <div className="rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">

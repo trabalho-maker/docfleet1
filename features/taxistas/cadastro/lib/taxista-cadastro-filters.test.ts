@@ -18,6 +18,7 @@ const baseRecord: TaxistaCadastroRecord = {
   ponto: null,
   placa: null,
   modeloVeiculo: null,
+  pressaoKgfM2: null,
   numeroTaximetro: null,
   modeloTaximetro: null,
   constante: null,
@@ -32,6 +33,7 @@ const baseRecord: TaxistaCadastroRecord = {
   cinta: null,
   colocado: null,
   retirado: null,
+  observacao: null,
 };
 
 describe("taxista cadastro filters", () => {

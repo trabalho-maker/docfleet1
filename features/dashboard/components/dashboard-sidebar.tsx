@@ -27,7 +27,6 @@ const navigationItems = [
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
   const pathname = usePathname();
   const [taxistasExpanded, setTaxistasExpanded] = useState(false);
-  const taxistasMenuVisible = taxistasExpanded || pathname.startsWith("/taxistas");
 
   return (
     <aside className="flex h-full flex-col bg-[linear-gradient(180deg,#1B3555_0%,#243F62_100%)] text-white md:sticky md:top-0 md:min-h-screen">
@@ -66,7 +65,6 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                     active={isActivePath(pathname, item.href)}
                     icon={item.icon}
                     title={item.label}
-                    onClick={() => setTaxistasExpanded(true)}
                     className="flex-1"
                   >
                     {item.label}
@@ -74,22 +72,19 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                   <button
                     type="button"
                     aria-label={
-                      taxistasMenuVisible
+                      taxistasExpanded
                         ? "Recolher submenu de taxistas"
                         : "Expandir submenu de taxistas"
                     }
-                    onClick={() =>
-                      setTaxistasExpanded((current) =>
-                        pathname.startsWith("/taxistas") ? !taxistasMenuVisible : !current,
-                      )
-                    }
-                    className="hidden xl:inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-white/74 transition-colors hover:bg-white/10 hover:text-white"
+                    aria-expanded={taxistasExpanded}
+                    onClick={() => setTaxistasExpanded((current) => !current)}
+                    className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-[#F39C12] transition-all duration-200 hover:bg-white/10 hover:text-[#FFB238] xl:inline-flex"
                   >
-                    <ChevronIcon expanded={taxistasMenuVisible} />
+                    <ChevronIcon expanded={taxistasExpanded} />
                   </button>
                 </div>
 
-                {taxistasMenuVisible ? (
+                {taxistasExpanded ? (
                   <div className="hidden pl-4 pr-2 xl:block">
                     <Link
                       href="/taxistas/cadastro"
@@ -405,14 +400,14 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
     <svg
       aria-hidden="true"
       viewBox="0 0 24 24"
-      className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+      className={`h-4 w-4 transition-transform duration-200 ${expanded ? "rotate-90" : ""}`}
       fill="none"
       stroke="currentColor"
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="m6 9 6 6 6-6" />
+      <path d="m9 6 6 6-6 6" />
     </svg>
   );
 }

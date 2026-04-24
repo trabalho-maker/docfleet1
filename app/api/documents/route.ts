@@ -4,9 +4,15 @@ import {
   canManageOperationalData,
   canViewOperationalData,
 } from "@/features/auth/lib/role-authorization";
+import { SqliteAssociateRepository } from "@/features/associates/server/associate.repository";
 import { createDataLayer } from "@/features/data/repositories";
 import { createDocumentWithAlerts } from "@/features/documents/server/document-service";
 import { validateDocumentInput } from "@/features/documents/server/validation";
+import {
+  type DocumentCategoryFilter,
+  documentCategoryFilters,
+  parseDocumentType,
+} from "@/features/documents/constants";
 import { logger } from "@/lib/logger";
 import { parseJsonBody } from "@/lib/server/request-body";
 
@@ -23,11 +29,25 @@ function parsePositiveInteger(value: string | null, fallback: number) {
   return parsed;
 }
 
+function parseCategoryFilter(value: string | null) {
+  if (!value) {
+    return "" as const;
+  }
+
+  const normalizedValue = value.trim().toUpperCase();
+
+  return documentCategoryFilters.includes(
+    normalizedValue as (typeof documentCategoryFilters)[number],
+  )
+    ? (normalizedValue as DocumentCategoryFilter)
+    : null;
+}
+
 export async function GET(request: Request) {
   const session = await auth();
 
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+    return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
   }
 
   if (!canViewOperationalData(session.user)) {
@@ -40,15 +60,26 @@ export async function GET(request: Request) {
     parsePositiveInteger(searchParams.get("pageSize"), DEFAULT_PAGE_SIZE),
     MAX_PAGE_SIZE,
   );
+  const category = parseCategoryFilter(searchParams.get("category"));
+
+  if (category === null) {
+    return NextResponse.json({ error: "Categoria invalida." }, { status: 400 });
+  }
+
   const dataLayer = createDataLayer();
-  const [total, requiringAttention, attention] = await Promise.all([
-    dataLayer.documents.countAll(),
-    dataLayer.documents.countPending(),
-    dataLayer.documents.countAttention(),
-  ]);
+  const total = await dataLayer.documents.countAll({
+    category,
+  });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(page, totalPages);
-  const documents = await dataLayer.documents.listPage(currentPage, pageSize);
+  const [documents, summary] = await Promise.all([
+    dataLayer.documents.listPage(currentPage, pageSize, {
+      category,
+    }),
+    dataLayer.documents.summarizeByDueDate({
+      category,
+    }),
+  ]);
 
   return NextResponse.json({
     documents,
@@ -58,11 +89,7 @@ export async function GET(request: Request) {
       total,
       totalPages,
     },
-    summary: {
-      total,
-      requiringAttention,
-      attention,
-    },
+    summary,
   });
 }
 
@@ -70,7 +97,7 @@ export async function POST(request: Request) {
   const session = await auth();
 
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+    return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
   }
 
   if (!canManageOperationalData(session.user)) {
@@ -78,40 +105,63 @@ export async function POST(request: Request) {
   }
 
   const bodyResult = await parseJsonBody<{
-    name?: string;
-    type?: string;
+    associateId?: string;
+    documentType?: string;
     dueDate?: string;
+    notes?: string;
   }>(request);
 
   if (!bodyResult.success) {
-    return NextResponse.json(
-      { error: "Corpo JSON inválido." },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Corpo JSON invalido." }, { status: 400 });
   }
 
   const body = bodyResult.data;
-
   const validation = validateDocumentInput({
-    name: body.name ?? "",
-    type: body.type ?? "",
     dueDate: body.dueDate ?? "",
+    notes: body.notes ?? "",
   });
+  const associateId = body.associateId?.trim() ?? "";
+  const documentType = parseDocumentType(body.documentType);
 
-  if (!validation.success) {
+  if (!associateId) {
     return NextResponse.json(
-      { error: "Dados inválidos.", fieldErrors: validation.errors },
+      { error: "Dados invalidos.", fieldErrors: { associateId: "Informe o associado." } },
       { status: 400 },
     );
   }
 
+  if (!documentType) {
+    return NextResponse.json(
+      { error: "Dados invalidos.", fieldErrors: { documentType: "Informe um tipo valido." } },
+      { status: 400 },
+    );
+  }
+
+  if (!validation.success) {
+    return NextResponse.json(
+      { error: "Dados invalidos.", fieldErrors: validation.errors },
+      { status: 400 },
+    );
+  }
+
+  const associateRepository = new SqliteAssociateRepository();
+  const associate = await associateRepository.findById(associateId);
+
+  if (!associate) {
+    return NextResponse.json({ error: "Associado nao encontrado." }, { status: 404 });
+  }
+
   const document = await createDocumentWithAlerts({
-    ...validation.data,
-    owner: session.user.name ?? session.user.email ?? "Usuário DocFleet",
+    associateId,
+    documentType,
+    dueDate: validation.data.dueDate,
+    notes: validation.data.notes,
+    owner: session.user.name ?? session.user.email ?? "Usuario DocFleet",
   });
 
   logger.info("api.documents.create.success", {
     documentId: document.id,
+    associateId,
     userId: session.user.id,
   });
 

@@ -1,3 +1,6 @@
+import type { AssociateProfileCategory } from "@/features/associates/types";
+import type { DocumentType } from "@/features/documents/constants";
+
 export type DocumentStatus = "Valido" | "Atencao" | "Vencido";
 
 export const documentStatuses: DocumentStatus[] = [
@@ -10,22 +13,27 @@ export type FleetDocument = {
   id: string;
   name: string;
   owner: string;
-  type: string;
+  documentType: DocumentType;
   status: DocumentStatus;
   dueDate: string;
+  associateId: string | null;
+  associateName: string | null;
+  associateRegistrationNumber: string | null;
+  associateCategory: AssociateProfileCategory | null;
+  notes: string | null;
 };
 
 export type CreateDocumentInput = {
-  name: string;
-  type: string;
+  associateId: string;
+  documentType: DocumentType;
   dueDate: string;
   owner: string;
+  notes?: string | null;
 };
 
 export type UpdateDocumentInput = {
-  name: string;
-  type: string;
   dueDate: string;
+  notes?: string | null;
 };
 
 export type OperationalAlert = {

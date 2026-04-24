@@ -1,26 +1,38 @@
 "use client";
 
-import type { FleetDocument } from "@/features/data/types";
+import Link from "next/link";
+import { Select } from "@/components/ui/select";
+import type {
+  DocumentListFilters,
+  DocumentsApiResponse,
+} from "@/features/documents/types";
 import { DocumentStatusBadge } from "@/features/documents/components/document-status-badge";
+import {
+  documentCategoryFilters,
+  getDocumentTypeLabel,
+} from "@/features/documents/constants";
 
 type DocumentsListPanelProps = {
-  documents: FleetDocument[];
-  totalDocuments: number;
+  documents: DocumentsApiResponse["documents"];
+  summary: DocumentsApiResponse["summary"];
+  filters: DocumentListFilters;
   page: number;
   totalPages: number;
   isLoading: boolean;
   canViewDocuments: boolean;
   canManageDocuments: boolean;
   accessMessage?: string | null;
-  onEditDocument: (document: FleetDocument) => void;
+  onEditDocument: (document: DocumentsApiResponse["documents"][number]) => void;
   onDeleteDocument: (documentId: string) => void;
+  onFilterChange: (category: DocumentListFilters["category"]) => void;
   onPreviousPage: () => void;
   onNextPage: () => void;
 };
 
 export function DocumentsListPanel({
   documents,
-  totalDocuments,
+  summary,
+  filters,
   page,
   totalPages,
   isLoading,
@@ -29,31 +41,49 @@ export function DocumentsListPanel({
   accessMessage = null,
   onEditDocument,
   onDeleteDocument,
+  onFilterChange,
   onPreviousPage,
   onNextPage,
 }: DocumentsListPanelProps) {
   return (
     <article className="df-section-card p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="df-eyebrow">Documentos cadastrados</p>
+          <p className="df-eyebrow">Documentos estruturados</p>
           <h2 className="mt-2 text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
-            Lista completa
+            Base documental
           </h2>
           <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-            Acompanhe os registros atuais, revise vencimentos e acione edições ou
-            exclusões quando o perfil permitir.
+            Leia a base documental vinculada aos associados e acompanhe vencidos, alta prioridade e janela de 30 dias.
           </p>
         </div>
-        <span className="df-badge-pill bg-slate-100 text-slate-600">
-          {documents.length} de {totalDocuments} itens
-        </span>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <span className="df-badge-pill bg-[#FFF1F2] text-[#BE123C]">
+            {summary.expired} vencidos
+          </span>
+          <div className="min-w-[220px]">
+            <Select
+              id="documents-category-filter"
+              label="Categoria"
+              value={filters.category}
+              onChange={(event) =>
+                onFilterChange(event.target.value as DocumentListFilters["category"])
+              }
+              placeholder="Todas as categorias"
+              options={documentCategoryFilters.map((category) => ({
+                value: category,
+                label: category,
+              }))}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-4">
         {!canViewDocuments ? (
           <div className="rounded-[24px] border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-            {accessMessage ?? "Seu perfil não pode acessar os documentos."}
+            {accessMessage ?? "Seu perfil nao pode acessar os documentos."}
           </div>
         ) : isLoading ? (
           <div className="rounded-[24px] border border-[var(--color-border)] bg-[linear-gradient(180deg,#FCFDFE_0%,#FFFFFF_100%)] p-6 text-sm text-[var(--color-muted)]">
@@ -61,8 +91,7 @@ export function DocumentsListPanel({
           </div>
         ) : documents.length === 0 ? (
           <div className="rounded-[24px] border border-dashed border-[var(--color-border)] bg-[linear-gradient(180deg,#F8FAFC_0%,#FFFFFF_100%)] p-6 text-sm text-[var(--color-muted)]">
-            Nenhum documento cadastrado ainda. Use o formulário ao lado para criar
-            o primeiro registro.
+            Nenhum documento encontrado para os filtros atuais.
           </div>
         ) : (
           documents.map((document) => (
@@ -74,22 +103,40 @@ export function DocumentsListPanel({
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-3">
                     <p className="text-base font-semibold text-[var(--color-foreground)]">
-                      {document.name}
+                      {getDocumentTypeLabel(document.documentType)}
                     </p>
                     <DocumentStatusBadge status={document.status} />
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => onEditDocument(document)}
+                    className="text-left text-sm font-medium text-[#1D4ED8] transition-colors hover:text-[#1E40AF]"
+                  >
+                    {document.associateName ?? "Associado nao informado"}
+                  </button>
                   <p className="text-sm text-[var(--color-muted)]">
-                    Tipo: {document.type}
+                    Matricula: {document.associateRegistrationNumber ?? "Nao informada"}
                   </p>
                   <p className="text-sm text-[var(--color-muted)]">
-                    Responsável: {document.owner}
+                    Modalidade: {document.associateCategory ?? "Nao vinculada"}
                   </p>
                   <p className="text-sm text-[var(--color-muted)]">
                     Vencimento: {formatDate(document.dueDate)}
                   </p>
+                  {document.notes ? (
+                    <p className="text-sm text-[var(--color-muted)]">Obs.: {document.notes}</p>
+                  ) : null}
                 </div>
 
                 <div className="flex flex-wrap gap-3">
+                  {document.associateId ? (
+                    <Link
+                      href={`/associados/${document.associateId}/documentos`}
+                      className="df-button-secondary"
+                    >
+                      Abrir associado
+                    </Link>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => onEditDocument(document)}
@@ -117,7 +164,7 @@ export function DocumentsListPanel({
 
       <div className="mt-6 flex flex-col gap-3 border-t border-[var(--color-border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-[var(--color-muted)]">
-          Página {page} de {totalPages}
+          Pagina {page} de {totalPages}
         </p>
         <div className="flex gap-3">
           <button
@@ -134,7 +181,7 @@ export function DocumentsListPanel({
             disabled={page >= totalPages || isLoading}
             className="df-button-secondary disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Próxima
+            Proxima
           </button>
         </div>
       </div>

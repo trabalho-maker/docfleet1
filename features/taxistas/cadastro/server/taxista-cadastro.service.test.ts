@@ -18,6 +18,7 @@ const baseRecord: TaxistaCadastroRecord = {
   ponto: "Rodoviaria Central",
   placa: "FKD-3241",
   modeloVeiculo: "Chevrolet Spin",
+  pressaoKgfM2: "32",
   numeroTaximetro: "TX-98124",
   modeloTaximetro: "Fiphot 7000",
   constante: "K-824",
@@ -32,6 +33,7 @@ const baseRecord: TaxistaCadastroRecord = {
   cinta: "CI-19",
   colocado: "2026-02-12",
   retirado: null,
+  observacao: "Ultima alteracao em 06/04/2026 as 08:58 - alterados: selo",
 };
 
 function createRepositoryMock(): jest.Mocked<TaxistaCadastroRepository> {
@@ -46,6 +48,7 @@ function createRepositoryMock(): jest.Mocked<TaxistaCadastroRepository> {
       ponto: baseRecord.ponto,
       placa: baseRecord.placa,
       modeloVeiculo: baseRecord.modeloVeiculo,
+      pressaoKgfM2: baseRecord.pressaoKgfM2,
       numeroTaximetro: baseRecord.numeroTaximetro,
       modeloTaximetro: baseRecord.modeloTaximetro,
       constante: baseRecord.constante,
@@ -60,6 +63,7 @@ function createRepositoryMock(): jest.Mocked<TaxistaCadastroRepository> {
       cinta: baseRecord.cinta,
       colocado: baseRecord.colocado,
       retirado: baseRecord.retirado,
+      observacao: baseRecord.observacao,
       createdAt: "2026-04-06T08:58:00.000Z",
       updatedAt: "2026-04-06T08:58:00.000Z",
     }),
@@ -91,6 +95,7 @@ describe("taxista cadastro service", () => {
       ponto: "",
       placa: "",
       modeloVeiculo: "",
+      pressaoKgfM2: "",
       numeroTaximetro: "",
       modeloTaximetro: "",
       constante: "",
@@ -129,6 +134,7 @@ describe("taxista cadastro service", () => {
       ponto: " Rodoviaria Central ",
       placa: " fkd-3241 ",
       modeloVeiculo: " Chevrolet Spin ",
+      pressaoKgfM2: " 33 ",
       numeroTaximetro: " TX-98124 ",
       modeloTaximetro: " Fiphot 7000 ",
       constante: " K-824 ",
@@ -156,6 +162,7 @@ describe("taxista cadastro service", () => {
         ponto: "Rodoviaria Central",
         placa: "FKD-3241",
         modeloVeiculo: "Chevrolet Spin",
+        pressaoKgfM2: "33",
         numeroTaximetro: "TX-98124",
         modeloTaximetro: "Fiphot 7000",
         constante: "K-824",
@@ -182,6 +189,7 @@ describe("taxista cadastro service", () => {
       ponto: "Rodoviaria Central",
       placa: "FKD-3241",
       modeloVeiculo: "Chevrolet Spin",
+      pressaoKgfM2: "33",
       numeroTaximetro: "TX-98124",
       modeloTaximetro: "Fiphot 7000",
       constante: "K-824",
@@ -196,6 +204,7 @@ describe("taxista cadastro service", () => {
       cinta: "CI-19",
       colocado: "2026-02-12",
       retirado: null,
+      observacao: expect.stringContaining("alterados: pressao kgf/m2"),
     });
   });
 
@@ -216,6 +225,7 @@ describe("taxista cadastro service", () => {
         ponto: "",
         placa: "",
         modeloVeiculo: "",
+        pressaoKgfM2: "",
         numeroTaximetro: "",
         modeloTaximetro: "",
         constante: "",

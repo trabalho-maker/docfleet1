@@ -57,7 +57,7 @@ export function CreateAssociateSection({
       const targetUrl =
         intent === "saveAndPrint"
           ? `/associados/${result.associateId}/impressao?autoPrint=1`
-          : "/associados?success=created";
+          : `/associados/${result.associateId}/documentos?success=created`;
 
       router.push(targetUrl);
     } finally {

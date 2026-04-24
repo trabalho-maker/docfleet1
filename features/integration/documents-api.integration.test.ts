@@ -33,7 +33,7 @@ describe("documents api integration", () => {
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({
-      error: "Não autenticado.",
+      error: "Nao autenticado.",
     });
   });
 
@@ -52,8 +52,8 @@ describe("documents api integration", () => {
       createJsonRequest("http://localhost/api/documents", {
         method: "POST",
         body: {
-          name: "Seguro operacional",
-          type: "Seguros",
+          associateId: "asc_01",
+          documentType: "CNH",
           dueDate: "2099-01-03",
         },
       }),
@@ -78,7 +78,7 @@ describe("documents api integration", () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
-      error: "Corpo JSON inválido.",
+      error: "Corpo JSON invalido.",
     });
   });
 
@@ -98,39 +98,91 @@ describe("documents api integration", () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
-      error: "Corpo JSON inválido.",
+      error: "Corpo JSON invalido.",
     });
   });
 
-  it("executes the full document CRUD flow and keeps alerts in sync", async () => {
-    const listBeforeResponse = await GET(new Request("http://localhost/api/documents"));
+  it("rejects invalid documentType values instead of coercing them to OUTRO", async () => {
+    const response = await POST(
+      createJsonRequest("http://localhost/api/documents", {
+        method: "POST",
+        body: {
+          associateId: "asc_01",
+          documentType: "documento_inexistente",
+          dueDate: "2099-01-03",
+        },
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Dados invalidos.",
+      fieldErrors: {
+        documentType: "Informe um tipo valido.",
+      },
+    });
+  });
+
+  it("accepts OUTRO only when it is sent explicitly", async () => {
+    const response = await POST(
+      createJsonRequest("http://localhost/api/documents", {
+        method: "POST",
+        body: {
+          associateId: "asc_01",
+          documentType: "OUTRO",
+          dueDate: "2099-01-03",
+          notes: "Tipo intencionalmente generico.",
+        },
+      }),
+    );
+    const payload = (await response.json()) as {
+      document: { id: string; documentType: string; associateId: string };
+    };
+
+    expect(response.status).toBe(201);
+    expect(payload.document).toMatchObject({
+      documentType: "OUTRO",
+      associateId: "asc_01",
+    });
+  });
+
+  it("executes the structured document flow with category filtering and keeps alerts in sync", async () => {
+    const listBeforeResponse = await GET(
+      new Request("http://localhost/api/documents?category=TAXI"),
+    );
     const listBeforePayload = (await listBeforeResponse.json()) as {
-      documents: Array<{ id: string }>;
+      documents: Array<{ id: string; documentType: string; associateCategory: string }>;
       pagination: { total: number; page: number; totalPages: number };
-      summary: { total: number };
+      summary: { total: number; expired: number; dueIn15Days: number; dueIn30Days: number };
     };
 
     expect(listBeforeResponse.status).toBe(200);
-    expect(listBeforePayload.documents).toHaveLength(3);
-    expect(listBeforePayload.pagination.total).toBe(3);
-    expect(listBeforePayload.summary.total).toBe(3);
+    expect(listBeforePayload.documents).toHaveLength(1);
+    expect(listBeforePayload.documents[0]).toMatchObject({
+      id: "doc_01",
+      documentType: "CNH",
+      associateCategory: "TAXI",
+    });
+    expect(listBeforePayload.pagination.total).toBe(1);
 
     const createResponse = await POST(
       createJsonRequest("http://localhost/api/documents", {
         method: "POST",
         body: {
-          name: "Seguro da frota leve",
-          type: "Seguros",
+          associateId: "asc_01",
+          documentType: "TACOGRAFO",
           dueDate: "2099-01-03",
+          notes: "Criado pela integracao.",
         },
       }),
     );
     const createdPayload = (await createResponse.json()) as {
-      document: { id: string; name: string; status: string };
+      document: { id: string; documentType: string; status: string; associateId: string };
     };
 
     expect(createResponse.status).toBe(201);
-    expect(createdPayload.document.name).toBe("Seguro da frota leve");
+    expect(createdPayload.document.documentType).toBe("TACOGRAFO");
+    expect(createdPayload.document.associateId).toBe("asc_01");
     expect(createdPayload.document.status).toBe("Valido");
 
     const createdDocumentId = createdPayload.document.id;
@@ -144,9 +196,8 @@ describe("documents api integration", () => {
       createJsonRequest(`http://localhost/api/documents/${createdDocumentId}`, {
         method: "PUT",
         body: {
-          name: "Seguro da frota leve",
-          type: "Seguros",
           dueDate: "2000-01-03",
+          notes: "Documento vencido.",
         },
       }),
       {
@@ -154,29 +205,31 @@ describe("documents api integration", () => {
       },
     );
     const updatedPayload = (await updateResponse.json()) as {
-      document: { id: string; name: string; status: string };
+      document: { id: string; status: string; notes: string };
     };
 
     expect(updateResponse.status).toBe(200);
     expect(updatedPayload.document.status).toBe("Vencido");
+    expect(updatedPayload.document.notes).toBe("Documento vencido.");
 
     const generatedAlert = await dataLayer.alerts.findGeneratedBySourceDocumentId(
       createdDocumentId,
     );
 
     expect(generatedAlert).not.toBeNull();
-    expect(generatedAlert?.title).toContain("Seguro da frota leve");
+    expect(generatedAlert?.title).toContain("Maria de Souza");
 
     const getByIdResponse = await GET_BY_ID(new Request("http://localhost"), {
       params: Promise.resolve({ documentId: createdDocumentId }),
     });
     const getByIdPayload = (await getByIdResponse.json()) as {
-      document: { id: string; name: string; status: string };
+      document: { id: string; status: string; associateId: string };
     };
 
     expect(getByIdResponse.status).toBe(200);
     expect(getByIdPayload.document.id).toBe(createdDocumentId);
     expect(getByIdPayload.document.status).toBe("Vencido");
+    expect(getByIdPayload.document.associateId).toBe("asc_01");
 
     const deleteResponse = await DELETE(new Request("http://localhost"), {
       params: Promise.resolve({ documentId: createdDocumentId }),

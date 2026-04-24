@@ -9,6 +9,7 @@ import {
   resetSqliteStorageState,
   withSqliteWriteLock,
 } from "@/lib/storage/sqlite-storage";
+import { createSqliteSchema } from "@/lib/storage/sqlite-schema";
 
 describe("repositories", () => {
   const userRepository = new SqliteUserRepository();
@@ -51,7 +52,7 @@ describe("repositories", () => {
     ).rejects.toThrow("USER_ALREADY_EXISTS");
   });
 
-  it("returns documents ordered by due date", async () => {
+  it("returns structured documents ordered by due date", async () => {
     const documents = await documentRepository.listRecent();
     const allDocuments = await documentRepository.listAll();
     const totalDocuments = await documentRepository.countAll();
@@ -64,45 +65,159 @@ describe("repositories", () => {
       "doc_01",
       "doc_02",
     ]);
+    expect(documents[0]).toMatchObject({
+      documentType: "AUTORIZACAO_CONDUTOR",
+      associateId: "asc_03",
+      associateCategory: "CAMINHAO",
+    });
     expect(totalDocuments).toBe(3);
     expect(pendingDocuments).toBe(2);
   });
 
-  it("creates, updates and deletes a document", async () => {
-    const created = await documentRepository.create({
-      name: "Seguro da frota pesada",
-      type: "Seguros",
-      dueDate: "2099-05-10",
-      owner: "Equipe Financeira",
+  it("filters structured documents by associate category", async () => {
+    const taxistaDocuments = await documentRepository.listAll({
+      category: "TAXI",
     });
 
-    expect(created.name).toBe("Seguro da frota pesada");
-    expect(created.type).toBe("Seguros");
+    expect(taxistaDocuments).toHaveLength(1);
+    expect(taxistaDocuments[0]).toMatchObject({
+      id: "doc_01",
+      associateId: "asc_01",
+      documentType: "CNH",
+      associateCategory: "TAXI",
+    });
+  });
+
+  it("consolidates legacy duplicates before enforcing associate/type uniqueness", async () => {
+    await withSqliteWriteLock(async (db) => {
+      db.run("DROP TABLE IF EXISTS documents");
+      db.run(`
+        CREATE TABLE documents (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          owner TEXT NOT NULL,
+          type TEXT NOT NULL,
+          status TEXT NOT NULL,
+          due_date TEXT NOT NULL,
+          associate_id TEXT,
+          notes TEXT
+        )
+      `);
+      db.run(
+        `INSERT INTO documents (
+          id,
+          name,
+          owner,
+          type,
+          status,
+          due_date,
+          associate_id,
+          notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          "legacy_doc_old",
+          "CNH",
+          "Equipe A",
+          "CNH",
+          "Atencao",
+          "2026-05-01",
+          "asc_01",
+          "",
+        ],
+      );
+      db.run(
+        `INSERT INTO documents (
+          id,
+          name,
+          owner,
+          type,
+          status,
+          due_date,
+          associate_id,
+          notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          "legacy_doc_new",
+          "CNH",
+          "Equipe B",
+          "CNH",
+          "Valido",
+          "2026-06-01",
+          "asc_01",
+          "Registro mais completo.",
+        ],
+      );
+
+      createSqliteSchema(db);
+    });
+
+    const deduplicated = await documentRepository.findByAssociateAndType("asc_01", "CNH");
+    const rows = await documentRepository.findByAssociateId("asc_01", {
+      documentTypes: ["CNH"],
+    });
+
+    expect(rows).toHaveLength(1);
+    expect(deduplicated).toMatchObject({
+      id: "legacy_doc_new",
+      owner: "Equipe B",
+      dueDate: "2026-06-01",
+      notes: "Registro mais completo.",
+    });
+  });
+
+  it("creates, updates and deletes a structured document linked to an associate", async () => {
+    const created = await documentRepository.create({
+      associateId: "asc_01",
+      documentType: "TACOGRAFO",
+      dueDate: "2099-05-10",
+      owner: "Equipe Financeira",
+      notes: "Primeiro cadastro estruturado.",
+    });
+
+    expect(created.documentType).toBe("TACOGRAFO");
+    expect(created.associateId).toBe("asc_01");
     expect(created.status).toBe("Valido");
 
-    const found = await documentRepository.findById(created.id);
+    const found = await documentRepository.findByAssociateAndType("asc_01", "TACOGRAFO");
 
     expect(found).not.toBeNull();
     expect(found?.owner).toBe("Equipe Financeira");
+    expect(found?.associateName).toBe("Maria de Souza");
 
     const updated = await documentRepository.update(created.id, {
-      name: "Seguro da frota pesada - renovado",
-      type: "Seguros",
       dueDate: "2000-06-10",
+      notes: "Documento vencido para teste.",
     });
 
-    expect(updated.name).toBe("Seguro da frota pesada - renovado");
     expect(updated.status).toBe("Vencido");
-
-    const afterUpdate = await documentRepository.findById(created.id);
-
-    expect(afterUpdate?.dueDate).toBe("2000-06-10");
+    expect(updated.notes).toBe("Documento vencido para teste.");
 
     await documentRepository.delete(created.id);
 
     const afterDelete = await documentRepository.findById(created.id);
 
     expect(afterDelete).toBeNull();
+  });
+
+  it("upserts an existing associate document instead of creating duplicates", async () => {
+    const upserted = await documentRepository.create({
+      associateId: "asc_01",
+      documentType: "CNH",
+      dueDate: "2099-08-15",
+      owner: "Equipe de Cadastro",
+      notes: "Atualizacao via upsert.",
+    });
+    const rows = await documentRepository.findByAssociateId("asc_01", {
+      documentTypes: ["CNH"],
+    });
+
+    expect(rows).toHaveLength(1);
+    expect(upserted).toMatchObject({
+      id: "doc_01",
+      owner: "Equipe de Cadastro",
+      dueDate: "2099-08-15",
+      notes: "Atualizacao via upsert.",
+    });
   });
 
   it("returns alerts ordered by most recent timestamp", async () => {

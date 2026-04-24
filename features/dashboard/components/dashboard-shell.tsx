@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { FleetDocument } from "@/features/data/types";
+import { getDocumentTypeLabel } from "@/features/documents/constants";
 import { getDaysUntilDocumentDueDate } from "@/features/documents/lib/expiration";
 import { AppShell } from "@/features/dashboard/components/app-shell";
 import { DashboardHeader } from "@/features/dashboard/components/dashboard-header";
@@ -97,7 +98,7 @@ export function DashboardShell({ overview }: DashboardShellProps) {
                         {document.name}
                       </td>
                       <td className="px-6 py-4 text-[#475569] lg:px-7">
-                        {document.type}
+                        {getDocumentTypeLabel(document.documentType)}
                       </td>
                       <td className="px-6 py-4 text-[#475569] lg:px-7">
                         {formatDate(document.dueDate)}

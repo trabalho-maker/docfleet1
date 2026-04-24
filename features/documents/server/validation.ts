@@ -5,8 +5,7 @@ import {
   normalizePlainTextInput,
 } from "@/lib/security/input";
 
-const MAX_DOCUMENT_NAME_LENGTH = 160;
-const MAX_DOCUMENT_TYPE_LENGTH = 80;
+const MAX_DOCUMENT_NOTES_LENGTH = 500;
 
 export type DocumentValidationResult =
   | {
@@ -37,25 +36,16 @@ function isValidDueDate(value: string) {
 export function validateDocumentInput(
   input: DocumentFormValues,
 ): DocumentValidationResult {
-  const name = normalizePlainTextInput(input.name);
-  const type = normalizePlainTextInput(input.type);
   const dueDate = input.dueDate.trim();
+  const notes = normalizePlainTextInput(input.notes);
   const errors: Partial<Record<keyof DocumentFormValues, string>> = {};
 
-  if (name.length < 3) {
-    errors.name = "Informe um nome com pelo menos 3 caracteres.";
-  } else if (hasExceededMaxLength(name, MAX_DOCUMENT_NAME_LENGTH)) {
-    errors.name = `Informe um nome com no máximo ${MAX_DOCUMENT_NAME_LENGTH} caracteres.`;
-  }
-
-  if (type.length < 2) {
-    errors.type = "Informe um tipo com pelo menos 2 caracteres.";
-  } else if (hasExceededMaxLength(type, MAX_DOCUMENT_TYPE_LENGTH)) {
-    errors.type = `Informe um tipo com no máximo ${MAX_DOCUMENT_TYPE_LENGTH} caracteres.`;
+  if (notes && hasExceededMaxLength(notes, MAX_DOCUMENT_NOTES_LENGTH)) {
+    errors.notes = `Informe uma observacao com no maximo ${MAX_DOCUMENT_NOTES_LENGTH} caracteres.`;
   }
 
   if (!isValidDueDate(dueDate) || !parseDocumentDueDate(dueDate)) {
-    errors.dueDate = "Informe uma data de vencimento válida.";
+    errors.dueDate = "Informe uma data de vencimento valida.";
   }
 
   if (Object.keys(errors).length > 0) {
@@ -68,9 +58,8 @@ export function validateDocumentInput(
   return {
     success: true,
     data: {
-      name,
-      type,
       dueDate,
+      notes,
     },
   };
 }

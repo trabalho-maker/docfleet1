@@ -87,6 +87,12 @@ export function EditAssociateSection({
         action={
           <div className="flex flex-wrap gap-3">
             <Link
+              href={`/associados/${associateId}/documentos`}
+              className="df-button-secondary"
+            >
+              Documentos
+            </Link>
+            <Link
               href={`/associados/${associateId}/impressao`}
               className="df-button-secondary"
             >

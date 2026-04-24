@@ -1,9 +1,12 @@
 import type { FleetDocument } from "@/features/data/types";
+import type {
+  AssociateDocumentType,
+  DocumentCategoryFilter,
+} from "@/features/documents/constants";
 
 export type DocumentFormValues = {
-  name: string;
-  type: string;
   dueDate: string;
+  notes: string;
 };
 
 export type DocumentFormErrors = Partial<Record<keyof DocumentFormValues, string>>;
@@ -23,11 +26,21 @@ export type DocumentsApiResponse = {
   };
   summary: {
     total: number;
-    requiringAttention: number;
-    attention: number;
+    expired: number;
+    dueIn15Days: number;
+    dueIn30Days: number;
   };
 };
 
 export type DocumentApiResponse = {
   document: FleetDocument;
 };
+
+export type DocumentListFilters = {
+  category: DocumentCategoryFilter | "";
+};
+
+export type AssociateDocumentFormValues = Record<AssociateDocumentType, string>;
+export type AssociateDocumentFieldErrors = Partial<
+  Record<AssociateDocumentType, string>
+>;

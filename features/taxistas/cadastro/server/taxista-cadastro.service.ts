@@ -14,6 +14,7 @@ import type {
   TaxistaAlvaraStatus,
   TaxistaCadastroFieldErrors,
   TaxistaCadastroFormValues,
+  TaxistaCadastroRecord,
 } from "@/features/taxistas/cadastro/types";
 
 type TaxistaCadastroServiceOptions = {
@@ -76,6 +77,12 @@ export function createTaxistaCadastroService(
       }
 
       try {
+        const observacao = buildLastUpdateSummary(
+          currentRecord,
+          validation.data,
+          new Date(),
+        );
+
         await repository.saveCadastro(associateId, {
           name: validation.data.name,
           cpf: validation.data.cpf,
@@ -86,6 +93,7 @@ export function createTaxistaCadastroService(
           ponto: validation.data.ponto,
           placa: validation.data.placa,
           modeloVeiculo: validation.data.modeloVeiculo,
+          pressaoKgfM2: validation.data.pressaoKgfM2,
           numeroTaximetro: validation.data.numeroTaximetro,
           modeloTaximetro: validation.data.modeloTaximetro,
           constante: validation.data.constante,
@@ -100,6 +108,7 @@ export function createTaxistaCadastroService(
           cinta: validation.data.cinta,
           colocado: validation.data.colocado,
           retirado: validation.data.retirado,
+          observacao,
         });
       } catch (error) {
         if (error instanceof Error && error.message === "ASSOCIATE_NOT_FOUND") {
@@ -170,6 +179,7 @@ function normalizeTaxistaCadastroInput(input: TaxistaCadastroFormValues) {
     ponto: normalizeOptionalText(input.ponto),
     placa: normalizeOptionalText(input.placa)?.toUpperCase() ?? null,
     modeloVeiculo: normalizeOptionalText(input.modeloVeiculo),
+    pressaoKgfM2: normalizeOptionalText(input.pressaoKgfM2),
     numeroTaximetro: normalizeOptionalText(input.numeroTaximetro),
     modeloTaximetro: normalizeOptionalText(input.modeloTaximetro),
     constante: normalizeOptionalText(input.constante),
@@ -194,6 +204,113 @@ function normalizeRequiredText(value: string) {
 function normalizeOptionalText(value: string) {
   const normalized = value.trim();
   return normalized ? normalized : null;
+}
+
+const fieldLabels: Array<{
+  key: keyof ReturnType<typeof normalizeTaxistaCadastroInput>;
+  label: string;
+}> = [
+  { key: "name", label: "nome" },
+  { key: "cpf", label: "cpf" },
+  { key: "telefone", label: "telefone" },
+  { key: "endereco", label: "endereco" },
+  { key: "selo", label: "selo" },
+  { key: "ponto", label: "ponto" },
+  { key: "deca", label: "deca" },
+  { key: "placa", label: "placa" },
+  { key: "modeloVeiculo", label: "modelo veiculo" },
+  { key: "pneu", label: "pneu" },
+  { key: "pressaoKgfM2", label: "pressao kgf/m2" },
+  { key: "numeroTaximetro", label: "numero taximetro" },
+  { key: "modeloTaximetro", label: "modelo taximetro" },
+  { key: "constante", label: "constante" },
+  { key: "inmetro", label: "inmetro" },
+  { key: "trocaTaximetro", label: "troca de taximetro" },
+  { key: "instalacao", label: "instalacao" },
+  { key: "lacreModulo", label: "lacre modulo" },
+  { key: "lacreTaxi", label: "lacre taxi" },
+  { key: "modulo", label: "modulo" },
+  { key: "cinta", label: "cinta" },
+  { key: "colocado", label: "colocado" },
+  { key: "retirado", label: "retirado" },
+];
+
+function buildLastUpdateSummary(
+  currentRecord: TaxistaCadastroRecord,
+  nextData: ReturnType<typeof normalizeTaxistaCadastroInput>,
+  now: Date,
+) {
+  const changedFields = fieldLabels
+    .filter(({ key }) => getComparableValue(currentRecord, key) !== nextData[key])
+    .map(({ label }) => label);
+
+  const timestamp = new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "America/Sao_Paulo",
+  })
+    .format(now)
+    .replace(",", " as");
+
+  if (changedFields.length === 0) {
+    return `Ultima alteracao em ${timestamp} - sem mudancas nos campos do cadastro`;
+  }
+
+  return `Ultima alteracao em ${timestamp} - alterados: ${changedFields.join(", ")}`;
+}
+
+function getComparableValue(
+  currentRecord: TaxistaCadastroRecord,
+  key: keyof ReturnType<typeof normalizeTaxistaCadastroInput>,
+) {
+  switch (key) {
+    case "name":
+      return currentRecord.name;
+    case "cpf":
+      return currentRecord.cpf;
+    case "telefone":
+      return currentRecord.telefone;
+    case "endereco":
+      return currentRecord.endereco;
+    case "selo":
+      return currentRecord.selo;
+    case "ponto":
+      return currentRecord.ponto;
+    case "placa":
+      return currentRecord.placa;
+    case "modeloVeiculo":
+      return currentRecord.modeloVeiculo;
+    case "pressaoKgfM2":
+      return currentRecord.pressaoKgfM2;
+    case "numeroTaximetro":
+      return currentRecord.numeroTaximetro;
+    case "modeloTaximetro":
+      return currentRecord.modeloTaximetro;
+    case "constante":
+      return currentRecord.constante;
+    case "inmetro":
+      return currentRecord.inmetro;
+    case "instalacao":
+      return currentRecord.instalacao;
+    case "trocaTaximetro":
+      return currentRecord.trocaTaximetro;
+    case "pneu":
+      return currentRecord.pneu;
+    case "deca":
+      return currentRecord.deca;
+    case "lacreModulo":
+      return currentRecord.lacreModulo;
+    case "lacreTaxi":
+      return currentRecord.lacreTaxi;
+    case "modulo":
+      return currentRecord.modulo;
+    case "cinta":
+      return currentRecord.cinta;
+    case "colocado":
+      return currentRecord.colocado;
+    case "retirado":
+      return currentRecord.retirado;
+  }
 }
 
 export type TaxistaCadastroService = ReturnType<

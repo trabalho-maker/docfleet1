@@ -1,6 +1,7 @@
 ﻿import bcrypt from "bcryptjs";
 import type { Database } from "sql.js";
 import type { FleetDocument, OperationalAlert } from "@/features/data/types";
+import { getDocumentTypeLabel } from "@/features/documents/constants";
 import {
   addUtcDays,
   calculateDocumentStatus,
@@ -24,27 +25,42 @@ function buildSeedDocuments(now = new Date()): FleetDocument[] {
   return [
     {
       id: "doc_01",
-      name: "Licenciamento da frota leve",
+      name: getDocumentTypeLabel("CNH"),
       owner: "Equipe Operacional",
-      type: "Veículos",
+      documentType: "CNH",
       status: calculateDocumentStatus(dueDates.doc01, { now }),
       dueDate: dueDates.doc01,
+      associateId: "asc_01",
+      associateName: "Maria de Souza",
+      associateRegistrationNumber: "MAT-2026-0001",
+      associateCategory: "TAXI",
+      notes: "CNH vinculada ao cadastro da taxista.",
     },
     {
       id: "doc_02",
-      name: "Contratos de manutenção",
+      name: getDocumentTypeLabel("TOXICOLOGICO"),
       owner: "Suprimentos",
-      type: "Contratos",
+      documentType: "TOXICOLOGICO",
       status: calculateDocumentStatus(dueDates.doc02, { now }),
       dueDate: dueDates.doc02,
+      associateId: "asc_02",
+      associateName: "João Pereira",
+      associateRegistrationNumber: "MAT-2026-0002",
+      associateCategory: "ESCOLAR",
+      notes: "Acompanhamento periodico do exame toxicologico.",
     },
     {
       id: "doc_03",
-      name: "ASO dos motoristas",
+      name: getDocumentTypeLabel("AUTORIZACAO_CONDUTOR"),
       owner: "RH",
-      type: "Pessoas",
+      documentType: "AUTORIZACAO_CONDUTOR",
       status: calculateDocumentStatus(dueDates.doc03, { now }),
       dueDate: dueDates.doc03,
+      associateId: "asc_03",
+      associateName: "Ana Beatriz Lima",
+      associateRegistrationNumber: "MAT-2026-0003",
+      associateCategory: "CAMINHAO",
+      notes: "Autorizacao operacional em revisao.",
     },
   ];
 }
@@ -304,6 +320,7 @@ const seedTaxistaProfiles: TaxistaCadastroProfile[] = [
     ponto: "Rodoviaria Central",
     placa: "FKD-3241",
     modeloVeiculo: "Chevrolet Spin",
+    pressaoKgfM2: "32",
     numeroTaximetro: "TX-98124",
     modeloTaximetro: "Fiphot 7000",
     constante: "K-824",
@@ -318,6 +335,7 @@ const seedTaxistaProfiles: TaxistaCadastroProfile[] = [
     cinta: "CI-19",
     colocado: "2026-02-12",
     retirado: null,
+    observacao: "Ultima alteracao em 06/04/2026 as 08:58 - alterados: selo, placa, taximetro",
     createdAt: "2026-04-06T08:58:00.000Z",
     updatedAt: "2026-04-06T08:58:00.000Z",
   },
@@ -367,14 +385,25 @@ export async function seedSqliteDatabase(db: Database) {
 
     for (const document of seedDocuments) {
       db.run(
-        "INSERT INTO documents (id, name, owner, type, status, due_date) VALUES (?, ?, ?, ?, ?, ?)",
+        `INSERT INTO documents (
+          id,
+          name,
+          owner,
+          type,
+          status,
+          due_date,
+          associate_id,
+          notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           document.id,
           document.name,
           document.owner,
-          document.type,
+          document.documentType,
           document.status,
           document.dueDate,
+          document.associateId,
+          document.notes,
         ],
       );
     }
@@ -447,6 +476,7 @@ export async function seedSqliteDatabase(db: Database) {
           ponto,
           placa,
           modelo_veiculo,
+          pressao_kgf_m2,
           numero_taximetro,
           modelo_taximetro,
           constante,
@@ -461,9 +491,10 @@ export async function seedSqliteDatabase(db: Database) {
           cinta,
           colocado,
           retirado,
+          observacao,
           created_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           profile.associateId,
           profile.statusAlvara,
@@ -471,6 +502,7 @@ export async function seedSqliteDatabase(db: Database) {
           profile.ponto,
           profile.placa,
           profile.modeloVeiculo,
+          profile.pressaoKgfM2,
           profile.numeroTaximetro,
           profile.modeloTaximetro,
           profile.constante,
@@ -485,6 +517,7 @@ export async function seedSqliteDatabase(db: Database) {
           profile.cinta,
           profile.colocado,
           profile.retirado,
+          profile.observacao,
           profile.createdAt,
           profile.updatedAt,
         ],

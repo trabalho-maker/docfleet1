@@ -43,9 +43,8 @@ describe("document expiration alert service", () => {
     const dataLayer = createDataLayer();
     await reconcileDocumentExpirationAlerts();
     const updatedDocument = await dataLayer.documents.update("doc_01", {
-      name: "Licenciamento da frota leve",
-      type: "Veiculos",
       dueDate: "2099-12-31",
+      notes: "Regularizado.",
     });
 
     const result = await syncDocumentExpirationAlertForDocument(updatedDocument);
@@ -80,6 +79,27 @@ describe("document expiration alert service", () => {
     expect(
       remainingGeneratedAlerts.every((alert) => alert.sourceDocumentId !== "doc_03"),
     ).toBe(true);
+  });
+
+  it("uses a neutral origin label instead of treating document owner as team", async () => {
+    const dataLayer = createDataLayer();
+    const createdDocument = await dataLayer.documents.create({
+      associateId: "asc_01",
+      documentType: "TACOGRAFO",
+      dueDate: "2000-01-03",
+      owner: "Seguranca Operacional",
+      notes: "Documento vencido para alerta.",
+    });
+
+    await syncDocumentExpirationAlertForDocument(createdDocument);
+
+    const generatedAlert = await dataLayer.alerts.findGeneratedBySourceDocumentId(
+      createdDocument.id,
+    );
+
+    expect(generatedAlert).not.toBeNull();
+    expect(generatedAlert?.team).toBe("Origem documental");
+    expect(generatedAlert?.team).not.toBe(createdDocument.owner);
   });
 
   it("preserves manual alerts while reconciling only generated expiration alerts", async () => {

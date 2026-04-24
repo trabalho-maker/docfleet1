@@ -39,6 +39,30 @@ function migrateLegacyDocumentColumns(db: Database) {
   }
 }
 
+function deduplicateAssociateDocuments(db: Database) {
+  db.run(`
+    WITH ranked_documents AS (
+      SELECT
+        rowid,
+        ROW_NUMBER() OVER (
+          PARTITION BY associate_id, type
+          ORDER BY
+            CASE WHEN TRIM(COALESCE(notes, '')) <> '' THEN 1 ELSE 0 END DESC,
+            due_date DESC,
+            rowid DESC
+        ) AS duplicate_rank
+      FROM documents
+      WHERE associate_id IS NOT NULL
+    )
+    DELETE FROM documents
+    WHERE rowid IN (
+      SELECT rowid
+      FROM ranked_documents
+      WHERE duplicate_rank > 1
+    )
+  `);
+}
+
 export function createSqliteSchema(db: Database) {
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
@@ -55,7 +79,10 @@ export function createSqliteSchema(db: Database) {
       owner TEXT NOT NULL,
       type TEXT NOT NULL,
       status TEXT NOT NULL,
-      due_date TEXT NOT NULL
+      due_date TEXT NOT NULL,
+      associate_id TEXT,
+      notes TEXT,
+      FOREIGN KEY (associate_id) REFERENCES associates(id)
     );
 
     CREATE TABLE IF NOT EXISTS alerts (
@@ -155,6 +182,7 @@ export function createSqliteSchema(db: Database) {
       ponto TEXT,
       placa TEXT,
       modelo_veiculo TEXT,
+      pressao_kgf_m2 TEXT,
       numero_taximetro TEXT,
       modelo_taximetro TEXT,
       constante TEXT,
@@ -169,6 +197,7 @@ export function createSqliteSchema(db: Database) {
       cinta TEXT,
       colocado TEXT,
       retirado TEXT,
+      observacao TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       FOREIGN KEY (associate_id) REFERENCES associates(id)
@@ -179,6 +208,12 @@ export function createSqliteSchema(db: Database) {
 
     CREATE INDEX IF NOT EXISTS idx_documents_status
     ON documents(status);
+
+    CREATE INDEX IF NOT EXISTS idx_documents_associate_id
+    ON documents(associate_id);
+
+    CREATE INDEX IF NOT EXISTS idx_documents_type_due_date
+    ON documents(type, due_date);
 
     CREATE INDEX IF NOT EXISTS idx_alerts_created_at
     ON alerts(created_at DESC);
@@ -221,6 +256,14 @@ export function createSqliteSchema(db: Database) {
   `);
 
   migrateLegacyDocumentColumns(db);
+  ensureColumnExists(db, "documents", "associate_id", "TEXT");
+  ensureColumnExists(db, "documents", "notes", "TEXT");
+  deduplicateAssociateDocuments(db);
+  db.run(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_associate_type_unique
+    ON documents(associate_id, type)
+    WHERE associate_id IS NOT NULL
+  `);
   ensureColumnExists(db, "alerts", "kind", "TEXT");
   ensureColumnExists(db, "alerts", "source_document_id", "TEXT");
   ensureColumnExists(db, "associate_profiles", "modalidade_associado", "TEXT");
@@ -232,6 +275,8 @@ export function createSqliteSchema(db: Database) {
     "status_alvara",
     "TEXT NOT NULL DEFAULT 'CADASTRO'",
   );
+  ensureColumnExists(db, "taxista_profiles", "pressao_kgf_m2", "TEXT");
+  ensureColumnExists(db, "taxista_profiles", "observacao", "TEXT");
   ensureColumnExists(
     db,
     "auth_rate_limits",

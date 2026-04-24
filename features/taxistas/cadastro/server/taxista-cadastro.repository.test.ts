@@ -64,6 +64,7 @@ describe("taxista cadastro repository", () => {
       ponto: "Praca Central",
       placa: "ABC-1234",
       modeloVeiculo: "Toyota Corolla",
+      pressaoKgfM2: "34",
       numeroTaximetro: "TX-00001",
       modeloTaximetro: "Modelo X",
       constante: "K-900",
@@ -78,6 +79,7 @@ describe("taxista cadastro repository", () => {
       cinta: "CI-99",
       colocado: "2026-02-01",
       retirado: null,
+      observacao: "Ultima alteracao em 23/04/2026 as 10:15 - alterados: placa, ponto",
     });
 
     const record = await repository.findByAssociateId("asc_01");
@@ -92,7 +94,9 @@ describe("taxista cadastro repository", () => {
       selo: "SL-9999",
       ponto: "Praca Central",
       placa: "ABC-1234",
+      pressaoKgfM2: "34",
       numeroTaximetro: "TX-00001",
+      observacao: "Ultima alteracao em 23/04/2026 as 10:15 - alterados: placa, ponto",
     });
   });
 
