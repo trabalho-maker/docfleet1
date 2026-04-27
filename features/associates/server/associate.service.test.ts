@@ -40,6 +40,28 @@ describe("associate service", () => {
     expect(created.enderecoCompleto).toBeNull();
   });
 
+  it("keeps a created associate after the storage layer is restarted", async () => {
+    const created = await service.createAssociate({
+      name: "Renata Campos",
+      cpf: "111.444.777-35",
+      category: "Titular",
+      registrationNumber: "MAT-2026-0101",
+      status: "Ativo",
+      admissionDate: "2025-04-01",
+    });
+
+    await resetSqliteStorageState();
+
+    const reloaded = await service.getAssociateById(created.id);
+
+    expect(reloaded).toMatchObject({
+      id: created.id,
+      name: "Renata Campos",
+      cpf: "11144477735",
+      registrationNumber: "MAT-2026-0101",
+    });
+  });
+
   it("rejects duplicate CPF on create", async () => {
     await expect(
       service.createAssociate({
@@ -104,21 +126,21 @@ describe("associate service", () => {
           db.exec(
             "SELECT COUNT(*) FROM associate_profiles WHERE associate_id = ?",
             ["asc_01"],
-          )[0]?.values[0]?.[0],
+          )[0]?.values?.[0]?.[0],
         ) || 0;
       const operationProfiles =
         Number(
           db.exec(
             "SELECT COUNT(*) FROM associate_operation_profiles WHERE associate_id = ?",
             ["asc_01"],
-          )[0]?.values[0]?.[0],
+          )[0]?.values?.[0]?.[0],
         ) || 0;
       const taxistaProfiles =
         Number(
           db.exec(
             "SELECT COUNT(*) FROM taxista_profiles WHERE associate_id = ?",
             ["asc_01"],
-          )[0]?.values[0]?.[0],
+          )[0]?.values?.[0]?.[0],
         ) || 0;
 
       expect({

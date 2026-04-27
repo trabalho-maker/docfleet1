@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import bcrypt from "bcryptjs";
 import { SqliteUserRepository } from "@/features/data/repositories/user-repository";
 import { SqliteDocumentRepository } from "@/features/data/repositories/document-repository";
@@ -10,6 +11,7 @@ import {
   withSqliteWriteLock,
 } from "@/lib/storage/sqlite-storage";
 import { createSqliteSchema } from "@/lib/storage/sqlite-schema";
+import { getSqliteDatabasePath } from "@/lib/server/runtime-paths";
 
 describe("repositories", () => {
   const userRepository = new SqliteUserRepository();
@@ -45,11 +47,15 @@ describe("repositories", () => {
   it("keeps SQLite foreign keys enabled in the runtime connection", async () => {
     await withSqliteWriteLock((db) => {
       const foreignKeysEnabled = Number(
-        db.exec("PRAGMA foreign_keys")[0]?.values[0]?.[0] ?? 0,
+        db.exec("PRAGMA foreign_keys")[0]?.values?.[0]?.[0] ?? 0,
       );
 
       expect(foreignKeysEnabled).toBe(1);
     });
+  });
+
+  it("persists data in a physical SQLite file for the active runtime", async () => {
+    expect(existsSync(getSqliteDatabasePath())).toBe(true);
   });
 
   it("rejects duplicate users by email", async () => {
@@ -284,7 +290,7 @@ describe("repositories", () => {
         db.exec(
           "SELECT COUNT(*) FROM alerts WHERE source_document_id = ?",
           ["doc_01"],
-        )[0]?.values[0]?.[0] ?? 0,
+        )[0]?.values?.[0]?.[0] ?? 0,
       );
 
       expect(duplicateCount).toBe(1);

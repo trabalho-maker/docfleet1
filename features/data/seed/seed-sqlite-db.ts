@@ -1,5 +1,5 @@
 ﻿import bcrypt from "bcryptjs";
-import type { Database } from "sql.js";
+import type { SqliteDatabaseConnection as Database } from "@/lib/storage/sqlite-connection";
 import type { FleetDocument, OperationalAlert } from "@/features/data/types";
 import { getDocumentTypeLabel } from "@/features/documents/constants";
 import {

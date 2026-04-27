@@ -23,7 +23,3 @@ export function getEmailOutboxPath() {
 
   return path.join(getProjectRoot(), "data", "email-outbox.json");
 }
-
-export function getSqlJsWasmDirectory() {
-  return path.join(getProjectRoot(), "node_modules", "sql.js", "dist");
-}

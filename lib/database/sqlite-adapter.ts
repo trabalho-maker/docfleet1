@@ -1,28 +1,24 @@
-import type { BindParams, Database } from "sql.js";
 import type { DatabaseAdapter, DatabaseRow, DatabaseWriteOptions, DatabaseWriteSession } from "@/lib/database/adapter";
 import { withSqliteDatabase, withSqliteWriteLock } from "@/lib/storage/sqlite-storage";
+import type { SqliteDatabaseConnection as Database } from "@/lib/storage/sqlite-connection";
 
 function normalizeRows(result: { values?: unknown[][] }[] | undefined): DatabaseRow[] {
   return result?.[0]?.values ?? [];
 }
 
-function toBindParams(params: unknown[] = []): BindParams {
-  return params as BindParams;
-}
-
 function createSqliteWriteSession(db: Database): DatabaseWriteSession {
   return {
     async query(sql, params = []) {
-      return normalizeRows(db.exec(sql, toBindParams(params)));
+      return normalizeRows(db.exec(sql, params));
     },
     async queryOne(sql, params = []) {
-      return normalizeRows(db.exec(sql, toBindParams(params)))[0] ?? null;
+      return normalizeRows(db.exec(sql, params))[0] ?? null;
     },
     async queryValue(sql, params = []) {
-      return normalizeRows(db.exec(sql, toBindParams(params)))[0]?.[0] ?? null;
+      return normalizeRows(db.exec(sql, params))[0]?.[0] ?? null;
     },
     async execute(sql, params = []) {
-      db.run(sql, toBindParams(params));
+      db.run(sql, params);
     },
   };
 }
@@ -31,7 +27,7 @@ export class SqliteDatabaseAdapter implements DatabaseAdapter {
   readonly provider = "sqlite" as const;
 
   async query(sql: string, params: unknown[] = []): Promise<DatabaseRow[]> {
-    return withSqliteDatabase(async (db) => normalizeRows(db.exec(sql, toBindParams(params))));
+    return withSqliteDatabase(async (db) => normalizeRows(db.exec(sql, params)));
   }
 
   async queryOne(sql: string, params: unknown[] = []): Promise<DatabaseRow | null> {

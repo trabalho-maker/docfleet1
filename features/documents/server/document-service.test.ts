@@ -1,5 +1,8 @@
 import { createDataLayer } from "@/features/data/repositories";
-import { syncAssociateDocumentsWithAlerts } from "@/features/documents/server/document-service";
+import {
+  createDocumentWithAlerts,
+  syncAssociateDocumentsWithAlerts,
+} from "@/features/documents/server/document-service";
 import {
   resetSqliteDatabase,
   resetSqliteStorageState,
@@ -79,5 +82,34 @@ describe("document service", () => {
     expect(cnhDocument?.associateId).toBe("asc_01");
     expect(cnhDocuments).toHaveLength(1);
     expect(toxDocument).toBeNull();
+  });
+
+  it("keeps structured documents and generated alerts after the storage layer is restarted", async () => {
+    const createdDocument = await createDocumentWithAlerts({
+      associateId: "asc_01",
+      documentType: "TACOGRAFO",
+      dueDate: "2000-01-03",
+      owner: "Equipe Operacional",
+      notes: "Documento persistido em disco.",
+    });
+
+    await resetSqliteStorageState();
+
+    const reloadedDataLayer = createDataLayer();
+    const persistedDocument = await reloadedDataLayer.documents.findById(createdDocument.id);
+    const persistedAlert = await reloadedDataLayer.alerts.findGeneratedBySourceDocumentId(
+      createdDocument.id,
+    );
+
+    expect(persistedDocument).toMatchObject({
+      id: createdDocument.id,
+      associateId: "asc_01",
+      documentType: "TACOGRAFO",
+      notes: "Documento persistido em disco.",
+    });
+    expect(persistedAlert).toMatchObject({
+      sourceDocumentId: createdDocument.id,
+      kind: "document_expiration",
+    });
   });
 });

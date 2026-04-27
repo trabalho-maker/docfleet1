@@ -1,4 +1,4 @@
-import type { Database } from "sql.js";
+import type { SqliteDatabaseConnection } from "@/lib/storage/sqlite-connection";
 
 type SqliteStorageRuntime = typeof import("./sqlite-storage-runtime");
 
@@ -23,14 +23,14 @@ export async function persistSqliteDatabase(reason = "manual") {
 }
 
 export async function withSqliteDatabase<T>(
-  operation: (db: Database) => Promise<T> | T,
+  operation: (db: SqliteDatabaseConnection) => Promise<T> | T,
 ): Promise<T> {
   const runtime = await getSqliteStorageRuntime();
   return runtime.withSqliteDatabase(operation);
 }
 
 export async function withSqliteWriteLock<T>(
-  operation: (db: Database) => Promise<T> | T,
+  operation: (db: SqliteDatabaseConnection) => Promise<T> | T,
   options?: {
     persist?: "deferred" | "immediate";
     reason?: string;

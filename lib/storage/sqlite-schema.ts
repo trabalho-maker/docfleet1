@@ -1,4 +1,4 @@
-import type { Database } from "sql.js";
+import type { SqliteDatabaseConnection as Database } from "@/lib/storage/sqlite-connection";
 
 function tableExists(db: Database, tableName: string) {
   const result = db.exec(
