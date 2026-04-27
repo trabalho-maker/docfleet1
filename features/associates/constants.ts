@@ -19,6 +19,11 @@ export const associateStatuses: AssociateStatus[] = [
   "Bloqueado",
 ];
 
+export const associateEditableStatuses = [
+  "Ativo",
+  "Inativo",
+] as const satisfies ReadonlyArray<AssociateStatus>;
+
 export const associateSexOptions: AssociateSex[] = ["M", "F"];
 
 export const associateProfileCategories: AssociateProfileCategory[] = [

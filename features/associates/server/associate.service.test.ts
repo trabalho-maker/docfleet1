@@ -2,6 +2,7 @@ import {
   resetSqliteDatabase,
   resetSqliteStorageState,
   withSqliteDatabase,
+  withSqliteWriteLock,
 } from "@/lib/storage/sqlite-storage";
 import { SqliteAssociateRepository } from "@/features/associates/server/associate.repository";
 import {
@@ -185,7 +186,7 @@ describe("associate service", () => {
     const byCpf = await service.listAssociates({ search: "390.533.447-05" });
     const byCategoryAndStatus = await service.listAssociates({
       category: "Contribuinte",
-      status: "Suspenso",
+      status: "Inativo",
     });
 
     expect(byName).toHaveLength(1);
@@ -206,8 +207,8 @@ describe("associate service", () => {
     expect(total).toBe(4);
     expect(byStatus).toMatchObject({
       Ativo: 3,
-      Inativo: 0,
-      Suspenso: 1,
+      Inativo: 1,
+      Suspenso: 0,
       Bloqueado: 0,
     });
     expect(byCategory).toMatchObject({
@@ -216,5 +217,44 @@ describe("associate service", () => {
       Pensionista: 0,
       Contribuinte: 1,
     });
+  });
+
+  it("keeps legacy suspended associates readable in listings and aggregates", async () => {
+    await withSqliteWriteLock((db) => {
+      db.run(
+        `INSERT INTO associates (
+          id,
+          name,
+          cpf,
+          category,
+          registration_number,
+          status,
+          admission_date,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          "asc_legacy_suspenso",
+          "Associado Legado",
+          "12345678909",
+          "Titular",
+          "MAT-LEG-0001",
+          "Suspenso",
+          "2020-01-15",
+          "2026-04-06T09:00:00.000Z",
+          "2026-04-06T09:00:00.000Z",
+        ],
+      );
+    });
+
+    const legacyResults = await service.listAssociates({ status: "Suspenso" });
+    const counts = await service.countByStatus();
+
+    expect(legacyResults).toHaveLength(1);
+    expect(legacyResults[0]).toMatchObject({
+      id: "asc_legacy_suspenso",
+      status: "Suspenso",
+    });
+    expect(counts.Suspenso).toBe(1);
   });
 });

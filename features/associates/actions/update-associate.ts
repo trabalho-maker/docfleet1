@@ -48,7 +48,12 @@ export async function updateAssociateAction(
     throw error;
   }
 
-  const validation = validateUpdateAssociateInput(input);
+  const normalizedInput: AssociateFormValues = {
+    ...input,
+    category: "Titular",
+  };
+
+  const validation = validateUpdateAssociateInput(normalizedInput);
 
   if (!validation.success) {
     return {

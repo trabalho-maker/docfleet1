@@ -7,9 +7,41 @@ Base inicial do projeto `DocFleet` com `Next.js` App Router, organizada para cre
 ```bash
 Copy-Item .env.example .env
 npm install
-npm run db:setup
 npm run dev
 ```
+
+O runtime cria o schema do SQLite automaticamente quando `data/app.db` nao existe, mas agora inicia com banco vazio por padrao.
+
+## Banco limpo para dados reais
+
+Para iniciar testes com dados reais:
+
+```text
+1. garanta backup do banco atual antes de qualquer limpeza manual
+2. remova ou substitua manualmente data/app.db apenas se voce realmente quiser reiniciar a base
+3. mantenha junto do banco os arquivos data/app.db-wal e data/app.db-shm quando eles existirem
+4. inicie o app normalmente com npm run dev
+```
+
+Com isso, o DocFleet recria somente o schema. Nenhum associado, documento, alerta ou usuario demonstrativo e criado automaticamente em runtime.
+
+## Seed de desenvolvimento
+
+O seed demonstrativo agora e apenas manual e explicito:
+
+```bash
+npm run db:seed
+```
+
+Esse comando:
+
+```text
+- apaga a base local atual
+- recria o schema
+- replanta dados demonstrativos
+```
+
+Nao use esse comando em producao nem sobre uma base com dados reais.
 
 Credenciais iniciais da seed:
 
@@ -24,7 +56,17 @@ NEXT_PUBLIC_DEV_SEED_USER_EMAIL
 NEXT_PUBLIC_DEV_SEED_USER_PASSWORD
 ```
 
-Fluxos de autenticacao disponiveis:
+## Alerta importante sobre limpeza e backup
+
+Antes de apagar, substituir ou mover o banco local:
+
+```text
+- faca backup de data/app.db
+- preserve tambem data/app.db-wal e data/app.db-shm se eles existirem
+- nunca execute limpeza sem confirmar que a base nao contem dados reais
+```
+
+## Fluxos de autenticacao disponiveis
 
 ```text
 /login     acesso com credenciais
@@ -43,6 +85,7 @@ npm run build
 npm run check
 npm run test
 npm run test:e2e
+npm run db:seed
 ```
 
 ## Email e recuperacao de senha
@@ -91,6 +134,8 @@ public/             assets estaticos
 - Auth.js com credenciais reais e sessao ativa
 - persistencia local em SQLite em arquivo real para ambiente inicial
 - runtime SQLite atual usa banco local em `data/app.db`, com foreign keys ativas e journal WAL quando suportado
+- banco vazio nao recebe seed automatica em runtime
+- seed demonstrativo exige comando manual explicito
 - cadastro de usuario com validacao server-side
 - recuperacao de senha com token seguro e entrega via SMTP
 - CRUD de documentos, logica de vencimento e alertas incrementais

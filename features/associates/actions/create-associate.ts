@@ -45,7 +45,12 @@ export async function createAssociateAction(
     throw error;
   }
 
-  const validation = validateCreateAssociateInput(input);
+  const normalizedInput: AssociateFormValues = {
+    ...input,
+    category: "Titular",
+  };
+
+  const validation = validateCreateAssociateInput(normalizedInput);
 
   if (!validation.success) {
     return {

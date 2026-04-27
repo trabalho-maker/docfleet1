@@ -45,9 +45,9 @@ export async function flushSqliteDatabase(reason = "flush") {
   return runtime.flushSqliteDatabase(reason);
 }
 
-export async function resetSqliteDatabase() {
+export async function resetSqliteDatabase(options?: { seed?: boolean }) {
   const runtime = await getSqliteStorageRuntime();
-  return runtime.resetSqliteDatabase();
+  return runtime.resetSqliteDatabase(options);
 }
 
 export async function resetSqliteStorageState() {

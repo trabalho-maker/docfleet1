@@ -108,7 +108,7 @@ const seedAssociates: Associate[] = [
     cpf: "16899535009",
     category: "Contribuinte",
     registrationNumber: "MAT-2026-0002",
-    status: "Suspenso",
+    status: "Inativo",
     admissionDate: "2022-09-01",
     createdAt: "2026-04-06T08:20:00.000Z",
     updatedAt: "2026-04-06T08:20:00.000Z",

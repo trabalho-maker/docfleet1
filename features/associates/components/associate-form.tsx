@@ -6,11 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
-  associateCategories,
   associateCivilStates,
+  associateEditableStatuses,
   associateProfileCategories,
   associateSexOptions,
-  associateStatuses,
   brazilianStates,
 } from "@/features/associates/constants";
 import { validateCreateAssociateInput } from "@/features/associates/lib/associate.validators";
@@ -19,7 +18,6 @@ import type {
   AssociateFormValues,
   AssociateProfileCategory,
   AssociateSex,
-  AssociateStatus,
 } from "@/features/associates/types";
 
 type AssociateFormSubmitIntent = "save" | "saveAndPrint";
@@ -149,7 +147,7 @@ export function AssociateForm({
 
     const valuesForSubmit: AssociateFormValues = {
       ...values,
-      category: values.category || "Titular",
+      category: "Titular",
       cnpjEmpresa: values.cnpjEmpresa ? unmaskDigits(values.cnpjEmpresa) : "",
       dependentes: joinDependentValues(
         dependentDraft.firstName,
@@ -193,7 +191,7 @@ export function AssociateForm({
             : "Cadastre um novo associado conforme a ficha institucional"}
         </h2>
         <p className="text-sm leading-6 text-[var(--color-muted)]">
-          Separe a categoria sindical da modalidade operacional para manter a base consistente e a ficha institucional fiel ao cadastro.
+          Preencha os dados principais da ficha institucional mantendo a modalidade operacional alinhada ao cadastro do associado.
         </p>
       </div>
 
@@ -217,7 +215,7 @@ export function AssociateForm({
       >
         <FormSection
           title="Identificacao"
-          description="Campos principais para localizar, classificar e emitir a ficha do associado."
+          description="Campos principais para localizar o associado e manter a ficha institucional consistente."
         >
           <div className="grid gap-5 md:grid-cols-2">
             <Input
@@ -245,24 +243,7 @@ export function AssociateForm({
             />
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
-            <Select
-              id="associate-category"
-              label="Categoria sindical"
-              value={values.category}
-              error={errors.category}
-              options={associateCategories.map((category) => ({
-                value: category,
-                label: category,
-              }))}
-              onChange={(event) =>
-                updateField(
-                  "category",
-                  event.target.value as AssociateFormValues["category"],
-                )
-              }
-            />
-
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             <Select
               id="associate-profile-category"
               label="Modalidade da ficha"
@@ -286,12 +267,15 @@ export function AssociateForm({
               label="Situacao"
               value={values.status}
               error={errors.status}
-              options={associateStatuses.map((status) => ({
+              options={associateEditableStatuses.map((status) => ({
                 value: status,
                 label: status,
               }))}
               onChange={(event) =>
-                updateField("status", event.target.value as AssociateStatus)
+                updateField(
+                  "status",
+                  event.target.value as AssociateFormValues["status"],
+                )
               }
             />
 
@@ -639,12 +623,24 @@ function mergeInitialValues(
   return {
     ...defaultValues,
     ...initialValues,
+    category: defaultValues.category,
+    status: normalizeEditableStatus(initialValues?.status),
     cpf: initialValues?.cpf ? formatCpfInput(initialValues.cpf) : defaultValues.cpf,
     cnpjEmpresa: initialValues?.cnpjEmpresa
       ? formatCnpjInput(initialValues.cnpjEmpresa)
       : defaultValues.cnpjEmpresa,
     cep: initialValues?.cep ? formatCepInput(initialValues.cep) : defaultValues.cep,
   };
+}
+
+function normalizeEditableStatus(
+  value: AssociateFormValues["status"] | undefined,
+): AssociateFormValues["status"] {
+  if (value === "Ativo" || value === "Inativo") {
+    return value;
+  }
+
+  return defaultValues.status;
 }
 
 function extractDependentDraft(initialValues?: Partial<AssociateFormValues>): DependentDraft {

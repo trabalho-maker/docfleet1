@@ -13,6 +13,10 @@ let writeQueue = Promise.resolve();
 let databasePromise: Promise<SqliteDatabaseConnection> | null = null;
 let databaseInstance: SqliteDatabaseConnection | null = null;
 
+type ResetSqliteDatabaseOptions = {
+  seed?: boolean;
+};
+
 async function pathExists(path: string) {
   try {
     await access(path);
@@ -54,17 +58,17 @@ async function loadSqliteDatabase(): Promise<SqliteDatabaseConnection> {
   initializeSqliteJournalMode(db);
   createSqliteSchema(db);
 
-  if (!isExistingDatabase) {
-    await seedSqliteDatabase(db);
-  }
-
   logger.info("storage.sqlite.loaded", {
     databasePath,
-    source: isExistingDatabase ? "disk" : "seed",
+    source: isExistingDatabase ? "disk" : "empty",
     mode: "file",
   });
 
   return db;
+}
+
+function shouldSeedAfterReset() {
+  return process.env.NODE_ENV === "test" || process.env.E2E_TEST_MODE === "true";
 }
 
 export async function getSqliteDatabase(): Promise<SqliteDatabaseConnection> {
@@ -124,7 +128,7 @@ export async function flushSqliteDatabase(reason = "flush") {
   await writeQueue;
 }
 
-export async function resetSqliteDatabase() {
+export async function resetSqliteDatabase(options?: ResetSqliteDatabaseOptions) {
   return withSqliteWriteLock(async (db) => {
     db.run("DROP TABLE IF EXISTS alerts");
     db.run("DROP TABLE IF EXISTS password_reset_tokens");
@@ -137,8 +141,15 @@ export async function resetSqliteDatabase() {
     db.run("DROP TABLE IF EXISTS users");
     ensureSqlitePragmas(db);
     createSqliteSchema(db);
-    await seedSqliteDatabase(db);
-    logger.warn("storage.sqlite.reset");
+    const shouldSeed = options?.seed ?? shouldSeedAfterReset();
+
+    if (shouldSeed) {
+      await seedSqliteDatabase(db);
+    }
+
+    logger.warn("storage.sqlite.reset", {
+      seeded: shouldSeed,
+    });
   });
 }
 

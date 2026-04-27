@@ -1,5 +1,6 @@
-﻿import {
+import {
   normalizeAssociateCpf,
+  validateAssociateFilters,
   validateAssociateCpf,
   validateCreateAssociateInput,
 } from "@/features/associates/lib/associate.validators";
@@ -61,5 +62,34 @@ describe("associate validators", () => {
       expect(result.data.email).toBe("contato@exemplo.com");
     }
   });
-});
 
+  it("rejects legacy statuses for new submissions", () => {
+    const result = validateCreateAssociateInput({
+      name: "Maria de Souza",
+      cpf: "390.533.447-05",
+      category: "Titular",
+      registrationNumber: "MAT-2026-3000",
+      status: "Suspenso",
+      admissionDate: "2025-01-10",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result).toMatchObject({
+      errors: {
+        status: "Informe um status válido.",
+      },
+    });
+  });
+
+  it("keeps legacy statuses valid for filters", () => {
+    const result = validateAssociateFilters({
+      status: "Bloqueado",
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.status).toBe("Bloqueado");
+    }
+  });
+});

@@ -7,6 +7,7 @@ import {
   associateCategories,
   associatesDefaults,
   associateCivilStates,
+  associateEditableStatuses,
   associateProfileCategories,
   associateSexOptions,
   associateStatuses,
@@ -79,6 +80,14 @@ export function isAssociateCategory(value: string): value is AssociateCategory {
 
 export function isAssociateStatus(value: string): value is AssociateStatus {
   return associateStatuses.includes(value as AssociateStatus);
+}
+
+function isEditableAssociateStatus(
+  value: string,
+): value is (typeof associateEditableStatuses)[number] {
+  return associateEditableStatuses.includes(
+    value as (typeof associateEditableStatuses)[number],
+  );
 }
 
 export function validateAssociateCpf(value: string) {
@@ -480,7 +489,7 @@ function validateCategory(value: string, errors: AssociateFieldErrors) {
 }
 
 function validateStatus(value: string, errors: AssociateFieldErrors) {
-  if (!value || !isAssociateStatus(value)) {
+  if (!value || !isEditableAssociateStatus(value)) {
     errors.status = "Informe um status válido.";
   }
 

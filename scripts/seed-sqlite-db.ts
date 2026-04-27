@@ -3,8 +3,10 @@ import { resetSqliteDatabase } from "@/lib/storage/sqlite-storage";
 
 async function main() {
   loadEnvConfig(process.cwd());
-  await resetSqliteDatabase();
-  console.log("SQLite database seeded at data/app.db");
+  await resetSqliteDatabase({ seed: true });
+  console.log(
+    "SQLite demo seed recreated at data/app.db. This command resets the local database and should not be used in production.",
+  );
 }
 
 main().catch((error) => {
