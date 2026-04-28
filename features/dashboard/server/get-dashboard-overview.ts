@@ -24,8 +24,8 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
     expirationTimelineSummary,
     totalAssociates,
   ] = await Promise.all([
-    dataLayer.alerts.listOpen(5),
-    dataLayer.alerts.countOpen(),
+    dataLayer.alerts.listRelevant(5),
+    dataLayer.alerts.countRelevant(),
     dataLayer.documents.summarizeByDueDate(),
     dataLayer.documents.listRecent(8),
     dataLayer.documents.groupByType(),
@@ -44,7 +44,7 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
     user,
     title: "Dashboard",
     description:
-      "Visao geral do sistema com foco nas pendencias documentais e alertas atuais.",
+      "Visao geral com foco nas pendencias documentais e nos alertas relevantes da operacao.",
     alertCount: totalAlerts,
     recentDocuments,
     alerts,

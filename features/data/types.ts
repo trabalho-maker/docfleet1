@@ -42,7 +42,7 @@ export type OperationalAlert = {
   severity: "Alta" | "Media" | "Baixa";
   team: string;
   createdAt: string;
-  kind?: "manual" | "document_expiration";
+  kind?: "manual" | "operational" | "document_expiration";
   sourceDocumentId?: string | null;
 };
 

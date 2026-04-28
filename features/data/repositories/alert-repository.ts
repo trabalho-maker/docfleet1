@@ -9,6 +9,8 @@ import type {
 export interface AlertRepository {
   listOpen(limit?: number): Promise<OperationalAlert[]>;
   countOpen(): Promise<number>;
+  listRelevant(limit?: number): Promise<OperationalAlert[]>;
+  countRelevant(): Promise<number>;
   listGenerated(): Promise<OperationalAlert[]>;
   findGeneratedBySourceDocumentId(documentId: string): Promise<OperationalAlert | null>;
   upsertGeneratedForDocument(alert: GeneratedOperationalAlertInput): Promise<void>;
@@ -66,6 +68,41 @@ export class SqliteAlertRepository implements AlertRepository {
 
   async countOpen(): Promise<number> {
     return Number(await this.database.queryValue("SELECT COUNT(*) FROM alerts"));
+  }
+
+  async listRelevant(limit = 6): Promise<OperationalAlert[]> {
+    const rows = await this.database.query(
+      `
+        SELECT id, title, severity, team, created_at, kind, source_document_id
+        FROM alerts
+        WHERE COALESCE(kind, 'manual') IN (?, ?)
+        ORDER BY
+          CASE WHEN kind = ? THEN 0 ELSE 1 END,
+          CASE severity
+            WHEN 'Alta' THEN 0
+            WHEN 'Media' THEN 1
+            ELSE 2
+          END,
+          created_at DESC
+        LIMIT ?
+      `,
+      ["document_expiration", "operational", "document_expiration", limit],
+    );
+
+    return rows.map(mapAlert);
+  }
+
+  async countRelevant(): Promise<number> {
+    return Number(
+      await this.database.queryValue(
+        `
+          SELECT COUNT(*)
+          FROM alerts
+          WHERE COALESCE(kind, 'manual') IN (?, ?)
+        `,
+        ["document_expiration", "operational"],
+      ),
+    );
   }
 
   async listGenerated(): Promise<OperationalAlert[]> {

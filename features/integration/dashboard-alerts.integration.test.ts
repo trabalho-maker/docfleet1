@@ -51,6 +51,10 @@ describe("dashboard alerts integration", () => {
     expect(generatedAlert?.title).toContain("Maria de Souza");
     expect(generatedAlert?.team).toBe("Origem documental");
     expect(overview.alertCount).toBeGreaterThan(0);
+    expect(overview.alerts.every((alert) => alert.kind === "document_expiration")).toBe(
+      true,
+    );
+    expect(overview.alertCount).toBe(overview.alerts.length);
     expect(overview.kpis).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

@@ -734,6 +734,59 @@ describe("repositories", () => {
     expect(totalAlerts).toBe(3);
   });
 
+  it("counts and lists only relevant dashboard alerts", async () => {
+    await alertRepository.upsertGeneratedForDocument({
+      title: "CNH de Maria vence hoje",
+      severity: "Alta",
+      team: "Origem documental",
+      createdAt: "2026-04-09 10:00",
+      sourceDocumentId: "doc_01",
+      kind: "document_expiration",
+    });
+
+    await withSqliteWriteLock((db) => {
+      db.run(
+        `
+          INSERT INTO alerts (
+            id,
+            title,
+            severity,
+            team,
+            created_at,
+            kind,
+            source_document_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          "alt_operational",
+          "Operacao aguardando ajuste de escala",
+          "Media",
+          "Operacao",
+          "2026-04-10 08:15",
+          "operational",
+          null,
+        ],
+      );
+    });
+
+    const alerts = await alertRepository.listRelevant();
+    const totalAlerts = await alertRepository.countRelevant();
+
+    expect(alerts).toEqual([
+      expect.objectContaining({
+        title: "CNH de Maria vence hoje",
+        kind: "document_expiration",
+        sourceDocumentId: "doc_01",
+      }),
+      expect.objectContaining({
+        id: "alt_operational",
+        kind: "operational",
+      }),
+    ]);
+    expect(alerts.every((item) => item.kind !== "manual")).toBe(true);
+    expect(totalAlerts).toBe(2);
+  });
+
   it("upserts generated alerts without duplicating the same source document", async () => {
     await alertRepository.upsertGeneratedForDocument({
       title: "CNH de Maria vence em 2 dias",

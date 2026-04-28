@@ -24,6 +24,7 @@ export function DashboardShell({ overview }: DashboardShellProps) {
           title={overview.title}
           description={overview.description}
           alertCount={overview.alertCount}
+          alerts={overview.alerts}
         />
 
         <section className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-4">
@@ -143,7 +144,7 @@ export function DashboardShell({ overview }: DashboardShellProps) {
                   Alertas Criticos
                 </p>
                 <p className="mt-1 text-sm text-[#64748B]">
-                  Prioridades abertas da operacao atual.
+                  Amostra dos alertas documentais e operacionais mais relevantes no momento.
                 </p>
               </div>
               <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-[#F87171] px-2 text-sm font-semibold text-white">
@@ -154,15 +155,16 @@ export function DashboardShell({ overview }: DashboardShellProps) {
             <div className="mt-5 flex flex-1 flex-col gap-4">
               {overview.alerts.length === 0 ? (
                 <div className="rounded-[24px] border border-dashed border-[#D7DEE7] bg-[#F8FAFC] px-5 py-6 text-sm text-[#64748B]">
-                  Nao ha alertas abertos no momento.
+                  Nao ha alertas documentais ou operacionais relevantes no momento.
                 </div>
               ) : (
                 overview.alerts.map((alert) => (
-                  <article
+                  <Link
                     key={alert.id}
+                    href={getAlertHref(alert)}
                     className={`rounded-[24px] border px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)] ${getAlertCardTone(
                       alert.severity,
-                    )}`}
+                    )} block transition-colors hover:border-[#BFDBFE] hover:bg-[#F8FBFF]`}
                   >
                     <div className="flex items-start gap-3">
                       <span
@@ -176,14 +178,16 @@ export function DashboardShell({ overview }: DashboardShellProps) {
                         <p className="text-base font-semibold text-[#163559]">
                           {alert.title}
                         </p>
-                        <p className="mt-1 text-sm text-[#64748B]">{alert.team}</p>
+                        <p className="mt-1 text-sm text-[#64748B]">
+                          {getAlertSubtitle(alert)}
+                        </p>
                         <p className="mt-2 text-sm font-medium text-[#C2410C]">
                           {formatDateTime(alert.createdAt)}
                         </p>
                       </div>
                       <ChevronIcon />
                     </div>
-                  </article>
+                  </Link>
                 ))
               )}
             </div>
@@ -584,6 +588,22 @@ function getAlertCardTone(severity: DashboardOverview["alerts"][number]["severit
   }
 
   return "border-[#BFDBFE] bg-[#F5F9FF]";
+}
+
+function getAlertHref(alert: DashboardOverview["alerts"][number]) {
+  if (alert.kind === "document_expiration") {
+    return "/documentos";
+  }
+
+  return "/dashboard#alertas-criticos";
+}
+
+function getAlertSubtitle(alert: DashboardOverview["alerts"][number]) {
+  if (alert.kind === "document_expiration") {
+    return `${alert.team} - acompanhamento documental`;
+  }
+
+  return `${alert.team} - acompanhamento operacional`;
 }
 
 function getAlertIconTone(severity: DashboardOverview["alerts"][number]["severity"]) {
