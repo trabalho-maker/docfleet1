@@ -106,6 +106,104 @@ describe("repositories", () => {
     });
   });
 
+  it("lists only documents linked to the requested associates and types", async () => {
+    const documents = await documentRepository.listByAssociateIds(
+      ["asc_01", "asc_03"],
+      {
+        documentTypes: ["CNH"],
+      },
+    );
+
+    expect(documents).toHaveLength(1);
+    expect(documents[0]).toMatchObject({
+      id: "doc_01",
+      associateId: "asc_01",
+      documentType: "CNH",
+    });
+  });
+
+  it("groups documents by calculated status in SQL for dashboard usage", async () => {
+    const allDocuments = await documentRepository.listAll();
+    const grouped = await documentRepository.groupByType(new Date(), 5);
+
+    const expected = allDocuments
+      .reduce<
+        Array<{
+          documentType: string;
+          valid: number;
+          attention: number;
+          expired: number;
+          total: number;
+        }>
+      >((accumulator, document) => {
+        const existing = accumulator.find((item) => item.documentType === document.documentType);
+
+        if (existing) {
+          existing.total += 1;
+
+          if (document.status === "Valido") {
+            existing.valid += 1;
+          } else if (document.status === "Atencao") {
+            existing.attention += 1;
+          } else {
+            existing.expired += 1;
+          }
+
+          return accumulator;
+        }
+
+        accumulator.push({
+          documentType: document.documentType,
+          valid: document.status === "Valido" ? 1 : 0,
+          attention: document.status === "Atencao" ? 1 : 0,
+          expired: document.status === "Vencido" ? 1 : 0,
+          total: 1,
+        });
+
+        return accumulator;
+      }, [])
+      .sort(
+        (left, right) =>
+          right.total - left.total ||
+          left.documentType.localeCompare(right.documentType),
+      )
+      .slice(0, 5);
+
+    expect(grouped).toEqual(expected);
+  });
+
+  it("summarizes the expiration timeline in SQL for dashboard usage", async () => {
+    const allDocuments = await documentRepository.listAll();
+    const now = new Date();
+    const timeline = await documentRepository.summarizeExpirationTimeline(now);
+    const expected = new Map<string, number>();
+
+    for (let index = -2; index <= 4; index += 1) {
+      const date = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + index, 1),
+      );
+      const bucket = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+      expected.set(bucket, 0);
+    }
+
+    for (const document of allDocuments) {
+      const bucket = document.dueDate.slice(0, 7);
+
+      if (expected.has(bucket)) {
+        expected.set(bucket, (expected.get(bucket) ?? 0) + 1);
+      }
+    }
+
+    expect(timeline).toEqual(
+      Array.from(expected.entries())
+        .filter(([, total]) => total > 0)
+        .map(([bucket, total]) => ({
+          bucket,
+          total,
+        })),
+    );
+  });
+
   it("consolidates legacy duplicates before enforcing associate/type uniqueness", async () => {
     await withSqliteWriteLock(async (db) => {
       db.run("DROP TABLE IF EXISTS documents");

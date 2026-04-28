@@ -1,36 +1,47 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import type { AuthUser } from "@/features/auth/types";
 import { canEditAssociate } from "@/features/associates/lib/associate-authorization";
 import { clearTaxistaProntosAction } from "@/features/taxistas/cadastro/actions/clear-taxista-prontos";
 import { updateTaxistaAlvaraStatusAction } from "@/features/taxistas/cadastro/actions/update-taxista-alvara-status";
 import { TaxistaCadastroModal } from "@/features/taxistas/cadastro/components/taxista-cadastro-modal";
 import {
-  countTaxistaCadastroRecords,
-  filterTaxistaCadastroRecords,
-  sortTaxistaCadastroRecords,
-  type TaxistaCadastroFilterMode,
-} from "@/features/taxistas/cadastro/lib/taxista-cadastro-filters";
-import type {
   TaxistaAlvaraStatus,
+  TaxistaCadastroCounts,
+  TaxistaCadastroFilterMode,
   TaxistaCadastroRecord,
 } from "@/features/taxistas/cadastro/types";
 
 type TaxistaCadastroSectionProps = {
   user: AuthUser;
   records: TaxistaCadastroRecord[];
+  counts: TaxistaCadastroCounts;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  initialSearch?: string;
+  initialMode: TaxistaCadastroFilterMode;
   initialSelectedAssociateId?: string;
+  selectedRecord: TaxistaCadastroRecord | null;
 };
 
 export function TaxistaCadastroSection({
   user,
   records,
+  counts,
+  total,
+  page,
+  pageSize,
+  totalPages,
+  initialSearch = "",
+  initialMode,
   initialSelectedAssociateId,
+  selectedRecord,
 }: TaxistaCadastroSectionProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterMode, setFilterMode] = useState<TaxistaCadastroFilterMode>("ALL");
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [isClearingReady, setIsClearingReady] = useState(false);
   const [pendingStatusById, setPendingStatusById] = useState<
     Partial<Record<string, TaxistaAlvaraStatus>>
@@ -43,28 +54,32 @@ export function TaxistaCadastroSection({
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const selectedAssociateId =
     searchParams.get("taxista") ?? initialSelectedAssociateId ?? null;
+  const normalizedSearch = deferredSearchQuery.trim();
 
-  const selectedRecord = useMemo(
-    () =>
-      records.find((record) => record.associateId === selectedAssociateId) ?? null,
-    [records, selectedAssociateId],
-  );
+  useEffect(() => {
+    setSearchQuery(initialSearch);
+  }, [initialSearch]);
 
-  const sortedRecords = useMemo(() => sortTaxistaCadastroRecords(records), [records]);
+  useEffect(() => {
+    const currentQuery = searchParams.get("q") ?? "";
 
-  const counts = useMemo(
-    () => countTaxistaCadastroRecords(sortedRecords),
-    [sortedRecords],
-  );
+    if (currentQuery === normalizedSearch) {
+      return;
+    }
 
-  const filteredRecords = useMemo(
-    () =>
-      filterTaxistaCadastroRecords(sortedRecords, {
-        query: deferredSearchQuery,
-        mode: filterMode,
-      }),
-    [deferredSearchQuery, filterMode, sortedRecords],
-  );
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (normalizedSearch) {
+      params.set("q", normalizedSearch);
+    } else {
+      params.delete("q");
+    }
+
+    params.delete("page");
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [normalizedSearch, pathname, router, searchParams]);
 
   function openModal(associateId: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -119,11 +134,51 @@ export function TaxistaCadastroSection({
         return;
       }
 
-      setFilterMode("ALL");
+      updateFilters({ mode: "ALL", page: 1 });
       router.refresh();
     } finally {
       setIsClearingReady(false);
     }
+  }
+
+  function updateFilters({
+    search,
+    mode,
+    page: nextPage,
+  }: {
+    search?: string;
+    mode?: TaxistaCadastroFilterMode;
+    page?: number;
+  }) {
+    const params = new URLSearchParams(searchParams.toString());
+    const resolvedSearch = search ?? searchQuery.trim();
+    const resolvedMode = mode ?? initialMode;
+    const resolvedPage = nextPage ?? page;
+
+    if (resolvedSearch) {
+      params.set("q", resolvedSearch);
+    } else {
+      params.delete("q");
+    }
+
+    if (resolvedMode !== "ALL") {
+      params.set("mode", resolvedMode);
+    } else {
+      params.delete("mode");
+    }
+
+    if (resolvedPage > 1) {
+      params.set("page", String(resolvedPage));
+    } else {
+      params.delete("page");
+    }
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }
+
+  function handleModeChange(mode: TaxistaCadastroFilterMode) {
+    updateFilters({ mode, page: 1 });
   }
 
   return (
@@ -133,22 +188,22 @@ export function TaxistaCadastroSection({
           <AlvaraMetricCard
             title="TAXISTAS CADASTRADOS"
             value={counts.all}
-            active={filterMode === "ALL"}
-            onClick={() => setFilterMode("ALL")}
+            active={initialMode === "ALL"}
+            onClick={() => handleModeChange("ALL")}
             tone="neutral"
           />
           <AlvaraMetricCard
             title="PROTOCOLADO"
             value={counts.protocolado}
-            active={filterMode === "PROTOCOLADO"}
-            onClick={() => setFilterMode("PROTOCOLADO")}
+            active={initialMode === "PROTOCOLADO"}
+            onClick={() => handleModeChange("PROTOCOLADO")}
             tone="warning"
           />
           <AlvaraMetricCard
             title="PRONTO"
             value={counts.pronto}
-            active={filterMode === "PRONTO"}
-            onClick={() => setFilterMode("PRONTO")}
+            active={initialMode === "PRONTO"}
+            onClick={() => handleModeChange("PRONTO")}
             tone="success"
           />
         </div>
@@ -162,7 +217,7 @@ export function TaxistaCadastroSection({
                     Controle de alvaras
                   </h2>
                   <span className="inline-flex items-center rounded-full bg-[#EEF4FB] px-3 py-1 text-xs font-semibold text-[#35577E]">
-                    {filteredRecords.length} de {counts.all}
+                    {total} de {counts.all}
                   </span>
                 </div>
               </div>
@@ -180,7 +235,7 @@ export function TaxistaCadastroSection({
             </div>
           </div>
 
-          {sortedRecords.length === 0 ? (
+          {counts.all === 0 ? (
             <div className="flex min-h-[280px] items-center justify-center px-6 py-10 lg:px-7">
               <div className="max-w-md text-center">
                 <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF4FB] text-[#35577E]">
@@ -213,7 +268,7 @@ export function TaxistaCadastroSection({
                     type="button"
                     onClick={() => {
                       setSearchQuery("");
-                      setFilterMode("ALL");
+                      updateFilters({ search: "", mode: "ALL", page: 1 });
                     }}
                     className="df-button-secondary min-h-11 rounded-[16px]"
                   >
@@ -228,7 +283,7 @@ export function TaxistaCadastroSection({
                 </div>
               ) : null}
 
-              {filteredRecords.length === 0 ? (
+              {records.length === 0 ? (
                 <div className="flex min-h-[240px] items-center justify-center px-6 py-10 lg:px-7">
                   <div className="max-w-md text-center">
                     <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF4FB] text-[#35577E]">
@@ -259,7 +314,7 @@ export function TaxistaCadastroSection({
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredRecords.map((record) => {
+                      {records.map((record) => {
                         const pendingStatus = pendingStatusById[record.associateId];
                         const isUpdating = Boolean(pendingStatus);
                         const canMoveToReady = record.statusAlvara === "PROTOCOLADO";
@@ -340,15 +395,39 @@ export function TaxistaCadastroSection({
                   </table>
                 </div>
               )}
+
+              <div className="flex flex-col gap-3 border-t border-[var(--color-border)] px-6 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-7">
+                <p className="text-sm text-[var(--color-muted)]">
+                  Pagina {page} de {totalPages} · {pageSize} por pagina
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => updateFilters({ page: page - 1 })}
+                    disabled={page <= 1}
+                    className="df-button-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateFilters({ page: page + 1 })}
+                    disabled={page >= totalPages}
+                    className="df-button-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Proxima
+                  </button>
+                </div>
+              </div>
             </>
           )}
         </section>
       </section>
 
       <TaxistaCadastroModal
-        record={selectedRecord}
+        record={selectedRecord && selectedRecord.associateId === selectedAssociateId ? selectedRecord : null}
         canEdit={canEdit}
-        open={Boolean(selectedRecord)}
+        open={Boolean(selectedRecord && selectedRecord.associateId === selectedAssociateId)}
         onClose={closeModal}
       />
     </>

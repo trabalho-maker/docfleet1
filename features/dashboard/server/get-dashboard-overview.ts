@@ -2,7 +2,10 @@ import { reconcileDocumentExpirationAlerts } from "@/features/alerts/server/docu
 import { SqliteAssociateRepository } from "@/features/associates/server/associate.repository";
 import { getCurrentUser } from "@/features/auth/server/session";
 import { createDataLayer } from "@/features/data/repositories";
-import type { FleetDocument } from "@/features/data/types";
+import type {
+  DocumentTimelineBucket,
+  DocumentTypeStatusSummary,
+} from "@/features/data/repositories/document-repository";
 import type { DashboardOverview } from "@/features/dashboard/types";
 import { getDocumentTypeLabel } from "@/features/documents/constants";
 
@@ -13,25 +16,29 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
   const dataLayer = createDataLayer();
   const associateRepository = new SqliteAssociateRepository();
   const [
-    allDocuments,
     alerts,
-    totalDocuments,
     totalAlerts,
-    pendingDocuments,
-    attentionDocuments,
+    documentSummary,
+    recentDocuments,
+    documentsByTypeSummary,
+    expirationTimelineSummary,
     totalAssociates,
   ] = await Promise.all([
-    dataLayer.documents.listAll(),
     dataLayer.alerts.listOpen(5),
-    dataLayer.documents.countAll(),
     dataLayer.alerts.countOpen(),
-    dataLayer.documents.countPending(),
-    dataLayer.documents.countAttention(),
+    dataLayer.documents.summarizeByDueDate(),
+    dataLayer.documents.listRecent(8),
+    dataLayer.documents.groupByType(),
+    dataLayer.documents.summarizeExpirationTimeline(),
     associateRepository.countAll(),
   ]);
-  const expiredDocuments = allDocuments.filter(
-    (document) => document.status === "Vencido",
-  ).length;
+  const pendingDocuments =
+    documentSummary.expired +
+    documentSummary.dueIn15Days +
+    documentSummary.dueIn30Days;
+  const attentionDocuments =
+    documentSummary.dueIn15Days + documentSummary.dueIn30Days;
+  const expiredDocuments = documentSummary.expired;
 
   return {
     user,
@@ -39,12 +46,12 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
     description:
       "Visao geral do sistema com foco nas pendencias documentais e alertas atuais.",
     alertCount: totalAlerts,
-    recentDocuments: allDocuments.slice(0, 8),
+    recentDocuments,
     alerts,
     kpis: [
       {
         label: "Total de Documentos",
-        value: totalDocuments,
+        value: documentSummary.total,
         helper: "Base documental disponivel no sistema.",
         tone: "neutral",
         icon: "documents",
@@ -77,75 +84,43 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
         icon: "associates",
       },
     ],
-    documentsByType: buildDocumentsByType(allDocuments),
-    expirationTimeline: buildExpirationTimeline(allDocuments),
+    documentsByType: buildDocumentsByType(documentsByTypeSummary),
+    expirationTimeline: buildExpirationTimeline(expirationTimelineSummary),
   };
 }
 
-function buildDocumentsByType(documents: FleetDocument[]) {
-  const items = new Map<
-    string,
-    DashboardOverview["documentsByType"][number]
-  >();
-
-  for (const document of documents) {
-    const typeLabel = getDocumentTypeLabel(document.documentType);
-    const current = items.get(typeLabel) ?? {
-      type: typeLabel,
-      valid: 0,
-      attention: 0,
-      expired: 0,
-    };
-
-    if (document.status === "Valido") {
-      current.valid += 1;
-    } else if (document.status === "Atencao") {
-      current.attention += 1;
-    } else {
-      current.expired += 1;
-    }
-
-    items.set(typeLabel, current);
-  }
-
-  return Array.from(items.values())
-    .sort(
-      (left, right) =>
-        right.valid +
-        right.attention +
-        right.expired -
-        (left.valid + left.attention + left.expired),
-    )
-    .slice(0, 5);
+function buildDocumentsByType(documents: DocumentTypeStatusSummary[]) {
+  return documents.map((document) => ({
+    type: getDocumentTypeLabel(document.documentType),
+    valid: document.valid,
+    attention: document.attention,
+    expired: document.expired,
+  }));
 }
 
-function buildExpirationTimeline(documents: FleetDocument[]) {
+function buildExpirationTimeline(buckets: DocumentTimelineBucket[]) {
   const now = new Date();
   const formatter = new Intl.DateTimeFormat("pt-BR", {
     month: "short",
     timeZone: "UTC",
   });
   const points: DashboardOverview["expirationTimeline"] = [];
+  const totalsByBucket = new Map(
+    buckets.map((bucket) => [bucket.bucket, bucket.total]),
+  );
 
   for (let index = -2; index <= 4; index += 1) {
     const date = new Date(
       Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + index, 1),
     );
-    const year = date.getUTCFullYear();
-    const month = date.getUTCMonth();
-    const total = documents.filter((document) => {
-      const dueDate = new Date(`${document.dueDate}T00:00:00Z`);
-      return (
-        dueDate.getUTCFullYear() === year && dueDate.getUTCMonth() === month
-      );
-    }).length;
+    const bucket = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 
     points.push({
       label: formatter
         .format(date)
         .replace(".", "")
         .replace(/^./, (value) => value.toUpperCase()),
-      total,
+      total: totalsByBucket.get(bucket) ?? 0,
     });
   }
 

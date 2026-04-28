@@ -11,6 +11,10 @@ import type { Associate } from "@/features/associates/types";
 
 type AssociatesListSectionProps = {
   initialAssociates: Associate[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
   hasActiveFilters: boolean;
   canCreate: boolean;
   canEdit: boolean;
@@ -25,6 +29,10 @@ type AssociatesListSectionProps = {
 
 export function AssociatesListSection({
   initialAssociates,
+  total,
+  page,
+  pageSize,
+  totalPages,
   hasActiveFilters,
   canCreate,
   canEdit,
@@ -37,11 +45,20 @@ export function AssociatesListSection({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [associates, setAssociates] = useState(initialAssociates);
+  const [currentTotal, setCurrentTotal] = useState(total);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error" | "info";
     message: string;
   } | null>(initialFeedback);
+
+  useEffect(() => {
+    setAssociates(initialAssociates);
+  }, [initialAssociates]);
+
+  useEffect(() => {
+    setCurrentTotal(total);
+  }, [total]);
 
   useEffect(() => {
     if (!initialFeedback || !searchParams.has("success")) {
@@ -61,7 +78,7 @@ export function AssociatesListSection({
     if (!canDelete) {
       setFeedback({
         type: "info",
-        message: accessMessage ?? "Seu perfil não pode excluir associados.",
+        message: accessMessage ?? "Seu perfil nao pode excluir associados.",
       });
       return;
     }
@@ -74,9 +91,8 @@ export function AssociatesListSection({
 
       if (!result.success) {
         if (result.notFound) {
-          setAssociates((current) =>
-            current.filter((item) => item.id !== associate.id),
-          );
+          setAssociates((current) => current.filter((item) => item.id !== associate.id));
+          setCurrentTotal((current) => Math.max(0, current - 1));
         }
 
         setFeedback({
@@ -88,9 +104,10 @@ export function AssociatesListSection({
       }
 
       setAssociates((current) => current.filter((item) => item.id !== associate.id));
+      setCurrentTotal((current) => Math.max(0, current - 1));
       setFeedback({
         type: "success",
-        message: "Associado excluído com sucesso.",
+        message: "Associado excluido com sucesso.",
       });
       router.refresh();
     } finally {
@@ -103,7 +120,7 @@ export function AssociatesListSection({
         eyebrow: "Sem resultados",
         title: "Nenhum associado corresponde aos filtros atuais",
         description:
-          "Revise a busca por nome, CPF, categoria ou situação. Limpar os filtros pode ajudar a reencontrar os registros da base.",
+          "Revise a busca por nome, CPF, categoria, modalidade ou situacao. Limpar os filtros pode ajudar a reencontrar os registros da base.",
         action: (
           <Link href="/associados" className="df-button-secondary">
             Limpar filtros
@@ -112,9 +129,9 @@ export function AssociatesListSection({
       }
     : {
         eyebrow: "Primeiros passos",
-        title: "Sua base de associados ainda está vazia",
+        title: "Sua base de associados ainda esta vazia",
         description:
-          "Comece cadastrando o primeiro associado para liberar a operação do módulo com histórico, filtros e ações administrativas.",
+          "Comece cadastrando o primeiro associado para liberar a operacao do modulo com historico, filtros e acoes administrativas.",
         action: canCreate ? (
           <Link href="/associados/novo" className="df-button-primary">
             Criar primeiro associado
@@ -132,17 +149,17 @@ export function AssociatesListSection({
           </h2>
           {hasActiveFilters ? (
             <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-              Exibindo resultados filtrados por busca e critérios selecionados.
+              Exibindo resultados filtrados por busca e criterios selecionados.
             </p>
           ) : (
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
-              Acompanhe a base operacional de associados com ações administrativas e
+              Acompanhe a base operacional de associados com acoes administrativas e
               feedbacks consistentes.
             </p>
           )}
         </div>
         <span className="df-badge-pill w-fit bg-[#FFF7ED] text-[#C2410C]">
-          {associates.length} registro(s)
+          {associates.length} de {currentTotal} registro(s)
         </span>
       </div>
 
@@ -150,7 +167,7 @@ export function AssociatesListSection({
         <div className="mt-6">
           <FeedbackAlert
             type="error"
-            title="Não foi possível carregar a listagem"
+            title="Nao foi possivel carregar a listagem"
             message={loadError}
             action={
               <Link href="/associados" className="df-button-secondary">
@@ -175,7 +192,7 @@ export function AssociatesListSection({
         <div className="mt-6">
           <FeedbackAlert
             type={feedback.type}
-            title={feedback.type === "success" ? "Operação concluída" : undefined}
+            title={feedback.type === "success" ? "Operacao concluida" : undefined}
             message={feedback.message}
           />
         </div>
@@ -200,6 +217,47 @@ export function AssociatesListSection({
           />
         )}
       </div>
+
+      {associates.length > 0 ? (
+        <div className="mt-6 flex flex-col gap-3 border-t border-[var(--color-border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-[var(--color-muted)]">
+            Pagina {page} de {totalPages} · {pageSize} por pagina
+          </p>
+          <div className="flex gap-3">
+            <Link
+              href={buildPaginationHref(pathname, searchParams, page - 1)}
+              aria-disabled={page <= 1}
+              className={`df-button-secondary ${page <= 1 ? "pointer-events-none opacity-50" : ""}`}
+            >
+              Anterior
+            </Link>
+            <Link
+              href={buildPaginationHref(pathname, searchParams, page + 1)}
+              aria-disabled={page >= totalPages}
+              className={`df-button-secondary ${page >= totalPages ? "pointer-events-none opacity-50" : ""}`}
+            >
+              Proxima
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
+}
+
+function buildPaginationHref(
+  pathname: string,
+  searchParams: URLSearchParams,
+  targetPage: number,
+) {
+  const params = new URLSearchParams(searchParams.toString());
+
+  if (targetPage <= 1) {
+    params.delete("page");
+  } else {
+    params.set("page", String(targetPage));
+  }
+
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
 }

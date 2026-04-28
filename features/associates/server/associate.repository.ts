@@ -35,6 +35,7 @@ export interface AssociateRepository {
   findByCpf(cpf: string): Promise<Associate | null>;
   findByRegistrationNumber(registrationNumber: string): Promise<Associate | null>;
   countAll(): Promise<number>;
+  countMany(filters?: AssociateFilters): Promise<number>;
   countByStatus(): Promise<AssociateStatusCounts>;
   countByCategory(): Promise<AssociateCategoryCounts>;
   create(data: CreateAssociateInput): Promise<Associate>;
@@ -80,66 +81,75 @@ function mapAssociate(row: DatabaseRow): Associate {
 function buildFiltersWhereClause(filters?: AssociateFilters) {
   const clauses: string[] = [];
   const params: unknown[] = [];
+  let requiresProfileJoin = false;
 
   if (!filters) {
-    return { whereClause: "", params };
+    return { whereClause: "", params, requiresProfileJoin };
   }
 
   if (filters.search?.trim()) {
     const normalizedSearch = `%${filters.search.trim()}%`;
-    clauses.push("(name LIKE ? OR registration_number LIKE ?)");
+    clauses.push("(associates.name LIKE ? OR associates.registration_number LIKE ?)");
     params.push(normalizedSearch, normalizedSearch);
   }
 
   if (filters.cpf?.trim()) {
-    clauses.push("cpf = ?");
+    clauses.push("associates.cpf = ?");
     params.push(normalizeCpf(filters.cpf));
   }
 
   if (filters.category) {
-    clauses.push("category = ?");
+    clauses.push("associates.category = ?");
     params.push(filters.category);
   }
 
+  if (filters.modalidadeAssociado) {
+    clauses.push("UPPER(COALESCE(ap.modalidade_associado, '')) = ?");
+    params.push(filters.modalidadeAssociado);
+    requiresProfileJoin = true;
+  }
+
   if (filters.status) {
-    clauses.push("status = ?");
+    clauses.push("associates.status = ?");
     params.push(filters.status);
   }
 
   if (filters.registrationNumber?.trim()) {
-    clauses.push("registration_number = ?");
+    clauses.push("associates.registration_number = ?");
     params.push(normalizeText(filters.registrationNumber));
   }
 
   if (filters.admissionDateFrom?.trim()) {
-    clauses.push("admission_date >= ?");
+    clauses.push("associates.admission_date >= ?");
     params.push(filters.admissionDateFrom.trim());
   }
 
   if (filters.admissionDateTo?.trim()) {
-    clauses.push("admission_date <= ?");
+    clauses.push("associates.admission_date <= ?");
     params.push(filters.admissionDateTo.trim());
   }
 
   return {
     whereClause: clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "",
     params,
+    requiresProfileJoin,
   };
 }
 
-function buildSelectQuery(whereClause: string) {
+function buildSelectQuery(whereClause: string, includeProfileJoin = false) {
   return `
     SELECT
-      id,
-      name,
-      cpf,
-      category,
-      registration_number,
-      status,
-      admission_date,
-      created_at,
-      updated_at
+      associates.id,
+      associates.name,
+      associates.cpf,
+      associates.category,
+      associates.registration_number,
+      associates.status,
+      associates.admission_date,
+      associates.created_at,
+      associates.updated_at
     FROM associates
+    ${includeProfileJoin ? "LEFT JOIN associate_profiles ap ON ap.associate_id = associates.id" : ""}
     ${whereClause}
   `;
 }
@@ -160,14 +170,14 @@ export class SqliteAssociateRepository implements AssociateRepository {
   constructor(private readonly database: DatabaseAdapter = getDatabaseAdapter()) {}
 
   async findMany(filters?: AssociateFilters): Promise<Associate[]> {
-    const { whereClause, params } = buildFiltersWhereClause(filters);
+    const { whereClause, params, requiresProfileJoin } = buildFiltersWhereClause(filters);
     const page = Math.max(1, filters?.page ?? 1);
     const pageSize = Math.max(1, Math.min(100, filters?.pageSize ?? 20));
     const offset = (page - 1) * pageSize;
 
     const rows = await this.database.query(
       `
-        ${buildSelectQuery(whereClause)}
+        ${buildSelectQuery(whereClause, requiresProfileJoin)}
         ORDER BY name ASC
         LIMIT ? OFFSET ?
       `,
@@ -215,6 +225,21 @@ export class SqliteAssociateRepository implements AssociateRepository {
 
   async countAll(): Promise<number> {
     const total = await this.database.queryValue("SELECT COUNT(*) FROM associates");
+
+    return Number(total ?? 0);
+  }
+
+  async countMany(filters?: AssociateFilters): Promise<number> {
+    const { whereClause, params, requiresProfileJoin } = buildFiltersWhereClause(filters);
+    const total = await this.database.queryValue(
+      `
+        SELECT COUNT(*)
+        FROM associates
+        ${requiresProfileJoin ? "LEFT JOIN associate_profiles ap ON ap.associate_id = associates.id" : ""}
+        ${whereClause}
+      `,
+      params,
+    );
 
     return Number(total ?? 0);
   }

@@ -13,6 +13,7 @@ import {
 import type {
   TaxistaAlvaraStatus,
   TaxistaCadastroFieldErrors,
+  TaxistaCadastroListFilters,
   TaxistaCadastroFormValues,
   TaxistaCadastroRecord,
 } from "@/features/taxistas/cadastro/types";
@@ -28,8 +29,8 @@ export function createTaxistaCadastroService(
     options.repository ?? new SqliteTaxistaCadastroRepository();
 
   return {
-    listTaxistas() {
-      return repository.findMany();
+    listTaxistas(filters?: TaxistaCadastroListFilters) {
+      return repository.findMany(filters);
     },
 
     getTaxistaByAssociateId(associateId: string) {

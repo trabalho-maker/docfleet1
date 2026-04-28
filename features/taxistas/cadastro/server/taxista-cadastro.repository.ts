@@ -3,12 +3,16 @@ import { getDatabaseAdapter } from "@/lib/database/provider";
 import {
   createEmptyTaxistaCadastroProfile,
   type TaxistaAlvaraStatus,
+  type TaxistaCadastroCounts,
+  type TaxistaCadastroFilterMode,
+  type TaxistaCadastroListFilters,
+  type TaxistaCadastroListResult,
   type TaxistaCadastroProfile,
   type TaxistaCadastroRecord,
 } from "@/features/taxistas/cadastro/types";
 
 export interface TaxistaCadastroRepository {
-  findMany(): Promise<TaxistaCadastroRecord[]>;
+  findMany(filters?: TaxistaCadastroListFilters): Promise<TaxistaCadastroListResult>;
   findByAssociateId(associateId: string): Promise<TaxistaCadastroRecord | null>;
   saveCadastro(
     associateId: string,
@@ -56,17 +60,61 @@ export class SqliteTaxistaCadastroRepository
 {
   constructor(private readonly database: DatabaseAdapter = getDatabaseAdapter()) {}
 
-  async findMany(): Promise<TaxistaCadastroRecord[]> {
+  async findMany(
+    filters: TaxistaCadastroListFilters = {},
+  ): Promise<TaxistaCadastroListResult> {
+    const pageSize = normalizePageSize(filters.pageSize);
+    const requestedPage = normalizePage(filters.page);
+    const search = normalizeSearchTerm(filters.search);
+    const mode = normalizeMode(filters.mode);
+    const counts = await this.fetchCounts();
+    const where = buildSearchWhereClause({ search, mode });
+    const total =
+      Number(
+        await this.database.queryValue(
+          `
+            SELECT COUNT(*)
+            FROM associates a
+            INNER JOIN associate_profiles ap
+              ON ap.associate_id = a.id
+            LEFT JOIN taxista_profiles tp
+              ON tp.associate_id = a.id
+            WHERE ${where.sql}
+          `,
+          where.params,
+        ),
+      ) || 0;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(requestedPage, totalPages);
+    const offset = (page - 1) * pageSize;
     const rows = await this.database.query(
-      `${buildSelectSql()} ORDER BY a.name ASC`,
-      ["TAXI"],
+      `
+        ${buildSelectSql()}
+        WHERE ${where.sql}
+        ORDER BY a.name ASC
+        LIMIT ? OFFSET ?
+      `,
+      [...where.params, pageSize, offset],
     );
-    return rows.map(mapTaxistaCadastroRecord);
+
+    return {
+      records: rows.map(mapTaxistaCadastroRecord),
+      counts,
+      total,
+      page,
+      pageSize,
+      totalPages,
+    };
   }
 
   async findByAssociateId(associateId: string): Promise<TaxistaCadastroRecord | null> {
     const row = await this.database.queryOne(
-      `${buildSelectSql()} AND a.id = ? ORDER BY a.name ASC`,
+      `
+        ${buildSelectSql()}
+        WHERE UPPER(COALESCE(ap.modalidade_associado, '')) = ?
+          AND a.id = ?
+        ORDER BY a.name ASC
+      `,
       ["TAXI", associateId],
     );
 
@@ -411,6 +459,206 @@ export class SqliteTaxistaCadastroRepository
       );
     });
   }
+
+  private async fetchCounts(): Promise<TaxistaCadastroCounts> {
+    const baseSql = `
+      FROM associates a
+      INNER JOIN associate_profiles ap
+        ON ap.associate_id = a.id
+      LEFT JOIN taxista_profiles tp
+        ON tp.associate_id = a.id
+      WHERE UPPER(COALESCE(ap.modalidade_associado, '')) = ?
+    `;
+
+    const [all, protocolado, pronto] = await Promise.all([
+      fetchCountValue(
+        this.database,
+        `SELECT COUNT(*) ${baseSql}`,
+        ["TAXI"],
+      ),
+      fetchCountValue(
+        this.database,
+        `SELECT COUNT(*) ${baseSql} AND COALESCE(tp.status_alvara, 'CADASTRO') = ?`,
+        ["TAXI", "PROTOCOLADO"],
+      ),
+      fetchCountValue(
+        this.database,
+        `SELECT COUNT(*) ${baseSql} AND COALESCE(tp.status_alvara, 'CADASTRO') = ?`,
+        ["TAXI", "PRONTO"],
+      ),
+    ]);
+
+    return {
+      all,
+      protocolado,
+      pronto,
+    };
+  }
+}
+
+type SearchWhereClause = {
+  sql: string;
+  params: unknown[];
+};
+
+async function fetchCountValue(
+  database: DatabaseAdapter,
+  sql: string,
+  params: unknown[],
+) {
+  return Number(await database.queryValue(sql, params)) || 0;
+}
+
+function buildSearchWhereClause({
+  search,
+  mode,
+}: {
+  search: string | null;
+  mode: TaxistaCadastroFilterMode;
+}): SearchWhereClause {
+  const params: unknown[] = ["TAXI"];
+  const conditions = ["UPPER(COALESCE(ap.modalidade_associado, '')) = ?"];
+
+  if (mode !== "ALL") {
+    conditions.push("COALESCE(tp.status_alvara, 'CADASTRO') = ?");
+    params.push(mode);
+  }
+
+  if (search) {
+    const normalizedSearch = normalizeComparableText(search);
+    const searchDigits = normalizeDigits(search);
+    const normalizedCode = normalizeCode(search);
+    const searchConditions: string[] = [];
+
+    if (normalizedSearch) {
+      searchConditions.push(`${buildNormalizedNameExpression("a.name")} LIKE ?`);
+      params.push(`%${normalizedSearch}%`);
+    }
+
+    if (searchDigits) {
+      searchConditions.push(`${buildDigitsExpression("a.cpf")} LIKE ?`);
+      params.push(`%${searchDigits}%`);
+    }
+
+    if (normalizedCode) {
+      searchConditions.push(`${buildCodeExpression("tp.selo")} LIKE ?`);
+      params.push(`%${normalizedCode}%`);
+      searchConditions.push(`${buildCodeExpression("tp.placa")} LIKE ?`);
+      params.push(`%${normalizedCode}%`);
+    }
+
+    if (searchConditions.length > 0) {
+      conditions.push(`(${searchConditions.join(" OR ")})`);
+    }
+  }
+
+  return {
+    sql: conditions.join(" AND "),
+    params,
+  };
+}
+
+function buildNormalizedNameExpression(column: string) {
+  let expression = `LOWER(COALESCE(${column}, ''))`;
+  const replacements: Array<[string, string]> = [
+    ["\u00E1", "a"],
+    ["\u00E0", "a"],
+    ["\u00E3", "a"],
+    ["\u00E2", "a"],
+    ["\u00E4", "a"],
+    ["\u00E9", "e"],
+    ["\u00E8", "e"],
+    ["\u00EA", "e"],
+    ["\u00EB", "e"],
+    ["\u00ED", "i"],
+    ["\u00EC", "i"],
+    ["\u00EE", "i"],
+    ["\u00EF", "i"],
+    ["\u00F3", "o"],
+    ["\u00F2", "o"],
+    ["\u00F5", "o"],
+    ["\u00F4", "o"],
+    ["\u00F6", "o"],
+    ["\u00FA", "u"],
+    ["\u00F9", "u"],
+    ["\u00FB", "u"],
+    ["\u00FC", "u"],
+    ["\u00E7", "c"],
+  ];
+
+  for (const [target, replacement] of replacements) {
+    expression = `REPLACE(${expression}, '${target}', '${replacement}')`;
+  }
+
+  return expression;
+}
+
+function buildDigitsExpression(column: string) {
+  let expression = `COALESCE(${column}, '')`;
+
+  for (const token of [".", "-", "/", " ", "(", ")"]) {
+    expression = `REPLACE(${expression}, '${token}', '')`;
+  }
+
+  return expression;
+}
+
+function buildCodeExpression(column: string) {
+  let expression = `UPPER(COALESCE(${column}, ''))`;
+
+  for (const token of ["-", ".", "/", " ", "_"]) {
+    expression = `REPLACE(${expression}, '${token}', '')`;
+  }
+
+  return expression;
+}
+
+function normalizeSearchTerm(value: string | undefined) {
+  const normalized = value?.trim() ?? "";
+  return normalized ? normalized : null;
+}
+
+function normalizeComparableText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^\p{L}\p{N}]+/gu, "")
+    .toLowerCase()
+    .trim();
+}
+
+function normalizeDigits(value: string) {
+  const digits = value.replace(/\D/g, "");
+  return digits ? digits : null;
+}
+
+function normalizeCode(value: string) {
+  const normalized = value.replace(/[^\p{L}\p{N}]+/gu, "").toUpperCase().trim();
+  return normalized ? normalized : null;
+}
+
+function normalizeMode(value: TaxistaCadastroFilterMode | undefined): TaxistaCadastroFilterMode {
+  if (value === "PROTOCOLADO" || value === "PRONTO") {
+    return value;
+  }
+
+  return "ALL";
+}
+
+function normalizePage(value: number | undefined) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return 1;
+  }
+
+  return Math.max(1, Math.floor(value));
+}
+
+function normalizePageSize(value: number | undefined) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return 25;
+  }
+
+  return Math.max(1, Math.min(100, Math.floor(value)));
 }
 
 function buildSelectSql() {
@@ -449,7 +697,6 @@ function buildSelectSql() {
       ON ap.associate_id = a.id
     LEFT JOIN taxista_profiles tp
       ON tp.associate_id = a.id
-    WHERE UPPER(COALESCE(ap.modalidade_associado, '')) = ?
   `;
 }
 

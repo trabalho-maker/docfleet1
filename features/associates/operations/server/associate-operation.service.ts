@@ -22,10 +22,11 @@ import {
 } from "@/features/data/repositories/document-repository";
 import { resolveDocumentRequirement } from "@/features/documents/lib/document-status-source";
 import type { FleetDocument } from "@/features/data/types";
+import type { DocumentType } from "@/features/documents/constants";
 
 type AssociateOperationServiceOptions = {
   repository?: AssociateOperationRepository;
-  documentRepository?: Pick<DocumentRepository, "listAll">;
+  documentRepository?: Pick<DocumentRepository, "listByAssociateIds">;
 };
 
 export function createAssociateOperationService(
@@ -44,6 +45,7 @@ export function createAssociateOperationService(
       const records = await repository.findByOperationType(operationType);
       const documentsByAssociateId = await loadOperationDocumentsByAssociateId(
         records,
+        config,
         documentRepository,
       );
       return records.reduce<AssociateOperationOverview>(
@@ -124,15 +126,28 @@ function getOverallStatus(
 
 async function loadOperationDocumentsByAssociateId(
   records: AssociateOperationRecord[],
-  documentRepository: Pick<DocumentRepository, "listAll">,
+  config: AssociateOperationConfig,
+  documentRepository: Pick<DocumentRepository, "listByAssociateIds">,
 ) {
   const associateIds = new Set(records.map((record) => record.associate.id));
+  const documentTypes = Array.from(
+    new Set(
+      config.requirements
+        .map((requirement) => requirement.documentType)
+        .filter((documentType): documentType is DocumentType => Boolean(documentType)),
+    ),
+  );
 
-  if (associateIds.size === 0) {
+  if (associateIds.size === 0 || documentTypes.length === 0) {
     return new Map<string, FleetDocument[]>();
   }
 
-  const documents = await documentRepository.listAll();
+  const documents = await documentRepository.listByAssociateIds(
+    Array.from(associateIds),
+    {
+      documentTypes,
+    },
+  );
   const documentsByAssociateId = new Map<string, FleetDocument[]>();
 
   for (const document of documents) {

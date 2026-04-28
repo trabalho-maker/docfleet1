@@ -2,14 +2,26 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { associateCategories, associateStatuses } from "@/features/associates/constants";
-import type { AssociateCategory, AssociateStatus } from "@/features/associates/types";
+import {
+  associateCategories,
+  associateProfileCategories,
+  associatesDefaults,
+  associateStatuses,
+} from "@/features/associates/constants";
+import type {
+  AssociateCategory,
+  AssociateProfileCategory,
+  AssociateStatus,
+} from "@/features/associates/types";
 
 export type AssociatesFilterValues = {
   search: string;
   cpf: string;
   category: AssociateCategory | "";
+  modalidadeAssociado: AssociateProfileCategory | "";
   status: AssociateStatus | "";
+  page: number;
+  pageSize: number;
 };
 
 type AssociatesFiltersProps = {
@@ -18,7 +30,11 @@ type AssociatesFiltersProps = {
 
 export function AssociatesFilters({ values }: AssociatesFiltersProps) {
   const hasActiveFilters = Boolean(
-    values.search || values.cpf || values.category || values.status,
+    values.search ||
+      values.cpf ||
+      values.category ||
+      values.modalidadeAssociado ||
+      values.status,
   );
 
   return (
@@ -30,8 +46,8 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
             Refine a listagem
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
-            Combine nome, CPF, categoria e situação para localizar associados com
-            rapidez e manter a operação mais previsível.
+            Combine nome, CPF, categoria, modalidade e situacao para localizar
+            associados com rapidez e manter a operacao mais previsivel.
           </p>
         </div>
         {hasActiveFilters ? (
@@ -44,7 +60,7 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
       <form
         action="/associados"
         method="get"
-        className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_1fr_0.8fr_0.8fr_auto]"
+        className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_1fr_0.85fr_0.85fr_0.85fr_0.75fr_auto]"
       >
         <Input
           id="associate-search"
@@ -78,8 +94,22 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
         />
 
         <Select
+          id="associate-modality"
+          label="Modalidade"
+          name="modalidadeAssociado"
+          defaultValue={values.modalidadeAssociado}
+          options={[
+            { value: "", label: "Todas" },
+            ...associateProfileCategories.map((category) => ({
+              value: category,
+              label: category,
+            })),
+          ]}
+        />
+
+        <Select
           id="associate-status"
-          label="Situação"
+          label="Situacao"
           name="status"
           defaultValue={values.status}
           options={[
@@ -91,7 +121,21 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
           ]}
         />
 
+        <Select
+          id="associate-page-size"
+          label="Itens por pagina"
+          name="pageSize"
+          defaultValue={String(values.pageSize || associatesDefaults.pageSize)}
+          options={[
+            { value: "10", label: "10" },
+            { value: "20", label: "20" },
+            { value: "50", label: "50" },
+            { value: "100", label: "100" },
+          ]}
+        />
+
         <div className="flex items-end">
+          <input type="hidden" name="page" value="1" />
           <Button type="submit" className="xl:min-w-[168px]">
             Aplicar filtros
           </Button>

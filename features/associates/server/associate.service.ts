@@ -109,6 +109,20 @@ export function createAssociateService(options: AssociateServiceOptions = {}) {
       return repository.countAll();
     },
 
+    countAssociates(filters?: AssociateFilters) {
+      if (!filters) {
+        return repository.countAll();
+      }
+
+      const validation = validateAssociateFilters(filters);
+
+      if (!validation.success) {
+        throw new AssociateValidationError(getFirstErrorMessage(validation.errors));
+      }
+
+      return repository.countMany(validation.data);
+    },
+
     countByStatus(): Promise<AssociateStatusCounts> {
       return repository.countByStatus();
     },

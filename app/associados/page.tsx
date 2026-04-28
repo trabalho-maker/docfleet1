@@ -9,7 +9,12 @@ import {
 import { AssociatesListSection } from "@/features/associates/components/associates-list-section";
 import { AssociatesPageHeader } from "@/features/associates/components/associates-page-header";
 import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
-import { associateCategories, associateStatuses } from "@/features/associates/constants";
+import {
+  associateCategories,
+  associateProfileCategories,
+  associatesDefaults,
+  associateStatuses,
+} from "@/features/associates/constants";
 import {
   canCreateAssociate,
   canDeleteAssociate,
@@ -23,6 +28,7 @@ import type {
   AssociateCategory,
   AssociateCategoryCounts,
   AssociateFilters,
+  AssociateProfileCategory,
   AssociateStatus,
   AssociateStatusCounts,
 } from "@/features/associates/types";
@@ -50,15 +56,19 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
   const filterValues = parseAssociatesFilterValues(resolvedSearchParams);
   const feedback = parseFeedback(resolvedSearchParams);
   const filters: AssociateFilters = {
-    page: 1,
-    pageSize: 50,
+    page: filterValues.page,
+    pageSize: filterValues.pageSize,
     ...(filterValues.search ? { search: filterValues.search } : {}),
     ...(filterValues.cpf ? { cpf: filterValues.cpf } : {}),
     ...(filterValues.category ? { category: filterValues.category } : {}),
+    ...(filterValues.modalidadeAssociado
+      ? { modalidadeAssociado: filterValues.modalidadeAssociado }
+      : {}),
     ...(filterValues.status ? { status: filterValues.status } : {}),
   };
 
   let associates: Associate[] = [];
+  let filteredTotal = 0;
   let totalAssociates = 0;
   let associatesByStatus = createEmptyStatusCounts();
   let associatesByCategory = createEmptyCategoryCounts();
@@ -66,9 +76,10 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
 
   if (canView) {
     try {
-      [associates, totalAssociates, associatesByStatus, associatesByCategory] =
+      [associates, filteredTotal, totalAssociates, associatesByStatus, associatesByCategory] =
         await Promise.all([
           associateService.listAssociates(filters),
+          associateService.countAssociates(filters),
           associateService.countAllAssociates(),
           associateService.countByStatus(),
           associateService.countByCategory(),
@@ -87,11 +98,13 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
     filterValues.search ||
       filterValues.cpf ||
       filterValues.category ||
+      filterValues.modalidadeAssociado ||
       filterValues.status,
   );
   const activeCategories = Object.values(associatesByCategory).filter(
     (count) => count > 0,
   ).length;
+  const totalPages = Math.max(1, Math.ceil(filteredTotal / filterValues.pageSize));
 
   return (
     <AppShell user={user}>
@@ -159,6 +172,10 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
 
             <AssociatesListSection
               initialAssociates={associates}
+              total={filteredTotal}
+              page={filterValues.page}
+              pageSize={filterValues.pageSize}
+              totalPages={totalPages}
               hasActiveFilters={hasActiveFilters}
               canCreate={canCreate}
               canEdit={canEdit}
@@ -180,13 +197,29 @@ function parseAssociatesFilterValues(
   const search = getSingleSearchParam(searchParams?.search).trim();
   const cpf = getSingleSearchParam(searchParams?.cpf).trim();
   const categoryValue = getSingleSearchParam(searchParams?.category);
+  const modalidadeAssociadoValue = getSingleSearchParam(searchParams?.modalidadeAssociado);
   const statusValue = getSingleSearchParam(searchParams?.status);
+  const page = parsePositiveInteger(
+    getSingleSearchParam(searchParams?.page),
+    associatesDefaults.page,
+  );
+  const pageSize = normalizePageSize(
+    parsePositiveInteger(
+      getSingleSearchParam(searchParams?.pageSize),
+      associatesDefaults.pageSize,
+    ),
+  );
 
   return {
     search,
     cpf,
     category: isAssociateCategory(categoryValue) ? categoryValue : "",
+    modalidadeAssociado: isAssociateProfileCategory(modalidadeAssociadoValue)
+      ? modalidadeAssociadoValue
+      : "",
     status: isAssociateStatus(statusValue) ? statusValue : "",
+    page,
+    pageSize,
   };
 }
 
@@ -236,6 +269,24 @@ function isAssociateCategory(value: string): value is AssociateCategory {
 
 function isAssociateStatus(value: string): value is AssociateStatus {
   return associateStatuses.includes(value as AssociateStatus);
+}
+
+function isAssociateProfileCategory(value: string): value is AssociateProfileCategory {
+  return associateProfileCategories.includes(value as AssociateProfileCategory);
+}
+
+function parsePositiveInteger(value: string, fallback: number) {
+  const parsed = Number.parseInt(value, 10);
+
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+function normalizePageSize(value: number) {
+  return Math.min(Math.max(1, value), 100);
 }
 
 function createEmptyStatusCounts(): AssociateStatusCounts {

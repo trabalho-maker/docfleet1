@@ -285,9 +285,12 @@ describe("associate service", () => {
     expect(await repository.findByRegistrationNumber("MAT-2026-0100")).toBeNull();
   });
 
-  it("filters associates by search, CPF, category and status", async () => {
+  it("filters associates by search, CPF, category, modalidade and status", async () => {
     const byName = await service.listAssociates({ search: "Maria" });
     const byCpf = await service.listAssociates({ search: "390.533.447-05" });
+    const byModalidade = await service.listAssociates({
+      modalidadeAssociado: "TAXI",
+    });
     const byCategoryAndStatus = await service.listAssociates({
       category: "Contribuinte",
       status: "Inativo",
@@ -297,8 +300,22 @@ describe("associate service", () => {
     expect(byName[0]?.id).toBe("asc_01");
     expect(byCpf).toHaveLength(1);
     expect(byCpf[0]?.id).toBe("asc_01");
+    expect(byModalidade).toHaveLength(1);
+    expect(byModalidade[0]?.id).toBe("asc_01");
     expect(byCategoryAndStatus).toHaveLength(1);
     expect(byCategoryAndStatus[0]?.id).toBe("asc_02");
+  });
+
+  it("supports paginated associate listings and filtered totals", async () => {
+    const firstPage = await service.listAssociates({ page: 1, pageSize: 2 });
+    const secondPage = await service.listAssociates({ page: 2, pageSize: 2 });
+    const totalTaxi = await service.countAssociates({
+      modalidadeAssociado: "TAXI",
+    });
+
+    expect(firstPage).toHaveLength(2);
+    expect(secondPage).toHaveLength(2);
+    expect(totalTaxi).toBe(1);
   });
 
   it("returns aggregate metrics from the full base", async () => {

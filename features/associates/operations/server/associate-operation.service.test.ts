@@ -1,6 +1,7 @@
 import { createAssociateOperationService } from "@/features/associates/operations/server/associate-operation.service";
 import type { AssociateOperationRepository } from "@/features/associates/operations/server/associate-operation.repository";
 import type { DocumentRepository } from "@/features/data/repositories/document-repository";
+import type { DocumentType } from "@/features/documents/constants";
 
 describe("associate operation service", () => {
   it("builds category-specific requirements and aggregates metrics in one overview", async () => {
@@ -29,36 +30,50 @@ describe("associate operation service", () => {
         ];
       },
     };
-    const documentRepository: Pick<DocumentRepository, "listAll"> = {
-      async listAll() {
-        return [
-          {
-            id: "doc_school_vehicle",
-            name: "Autorizacao veiculo",
-            owner: "Operacao",
-            documentType: "AUTORIZACAO_VEICULO",
-            status: "Atencao",
-            dueDate: "2099-06-01",
-            associateId: "asc_school_01",
-            associateName: "Escola Modelo",
-            associateRegistrationNumber: "MAT-2026-0101",
-            associateCategory: "ESCOLAR",
-            notes: null,
-          },
-          {
-            id: "doc_school_driver",
-            name: "Autorizacao condutor",
-            owner: "Operacao",
-            documentType: "AUTORIZACAO_CONDUTOR",
-            status: "Valido",
-            dueDate: "2099-08-15",
-            associateId: "asc_school_01",
-            associateName: "Escola Modelo",
-            associateRegistrationNumber: "MAT-2026-0101",
-            associateCategory: "ESCOLAR",
-            notes: null,
-          },
-        ];
+    const listByAssociateIds = jest.fn<
+      ReturnType<Pick<DocumentRepository, "listByAssociateIds">["listByAssociateIds"]>,
+      Parameters<Pick<DocumentRepository, "listByAssociateIds">["listByAssociateIds"]>
+    >(async (associateIds, filters) => {
+      expect(associateIds).toEqual(["asc_school_01"]);
+      expect(filters).toEqual({
+        documentTypes: [
+          "AUTORIZACAO_VEICULO",
+          "AUTORIZACAO_CONDUTOR",
+        ] satisfies DocumentType[],
+      });
+
+      return [
+        {
+          id: "doc_school_vehicle",
+          name: "Autorizacao veiculo",
+          owner: "Operacao",
+          documentType: "AUTORIZACAO_VEICULO",
+          status: "Atencao",
+          dueDate: "2099-06-01",
+          associateId: "asc_school_01",
+          associateName: "Escola Modelo",
+          associateRegistrationNumber: "MAT-2026-0101",
+          associateCategory: "ESCOLAR",
+          notes: null,
+        },
+        {
+          id: "doc_school_driver",
+          name: "Autorizacao condutor",
+          owner: "Operacao",
+          documentType: "AUTORIZACAO_CONDUTOR",
+          status: "Valido",
+          dueDate: "2099-08-15",
+          associateId: "asc_school_01",
+          associateName: "Escola Modelo",
+          associateRegistrationNumber: "MAT-2026-0101",
+          associateCategory: "ESCOLAR",
+          notes: null,
+        },
+      ];
+    });
+    const documentRepository: Pick<DocumentRepository, "listByAssociateIds"> = {
+      async listByAssociateIds(associateIds, filters) {
+        return listByAssociateIds(associateIds, filters);
       },
     };
 
@@ -68,6 +83,7 @@ describe("associate operation service", () => {
     });
     const overview = await service.getOperationOverview("TransporteEscolar");
 
+    expect(listByAssociateIds).toHaveBeenCalledTimes(1);
     expect(overview.operationType).toBe("TransporteEscolar");
     expect(overview.metrics).toEqual({
       totalAssociates: 1,
@@ -93,7 +109,7 @@ describe("associate operation service", () => {
     expect(overview.entries[0].overallStatus).toBe("Atencao");
   });
 
-  it("builds the company overview from CNPJ-linked associates", async () => {
+  it("keeps operational fallback without querying documents when the operation has no official type mapping", async () => {
     const repository: AssociateOperationRepository = {
       async findByOperationType() {
         return [
@@ -119,9 +135,13 @@ describe("associate operation service", () => {
         ];
       },
     };
-    const documentRepository: Pick<DocumentRepository, "listAll"> = {
-      async listAll() {
-        return [];
+    const listByAssociateIds = jest.fn<
+      ReturnType<Pick<DocumentRepository, "listByAssociateIds">["listByAssociateIds"]>,
+      Parameters<Pick<DocumentRepository, "listByAssociateIds">["listByAssociateIds"]>
+    >();
+    const documentRepository: Pick<DocumentRepository, "listByAssociateIds"> = {
+      async listByAssociateIds(associateIds, filters) {
+        return listByAssociateIds(associateIds, filters);
       },
     };
 
@@ -132,6 +152,7 @@ describe("associate operation service", () => {
     const overview = await service.getOperationOverview("Empresa");
 
     expect(overview.operationType).toBe("Empresa");
+    expect(listByAssociateIds).not.toHaveBeenCalled();
     expect(overview.metrics).toEqual({
       totalAssociates: 1,
       valid: 1,

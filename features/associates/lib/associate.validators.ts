@@ -83,6 +83,12 @@ export function isAssociateCategory(value: string): value is AssociateCategory {
   return associateCategories.includes(value as AssociateCategory);
 }
 
+export function isAssociateProfileCategory(
+  value: string,
+): value is AssociateProfileCategory {
+  return associateProfileCategories.includes(value as AssociateProfileCategory);
+}
+
 export function isAssociateStatus(value: string): value is AssociateStatus {
   return associateStatuses.includes(value as AssociateStatus);
 }
@@ -244,6 +250,14 @@ export function validateAssociateFilters(
       errors.category = "Informe uma categoria válida.";
     } else {
       normalizedFilters.category = filters.category;
+    }
+  }
+
+  if (filters.modalidadeAssociado !== undefined) {
+    if (!isAssociateProfileCategory(filters.modalidadeAssociado)) {
+      errors.modalidadeAssociado = "Informe uma modalidade válida.";
+    } else {
+      normalizedFilters.modalidadeAssociado = filters.modalidadeAssociado;
     }
   }
 

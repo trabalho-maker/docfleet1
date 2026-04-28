@@ -33,8 +33,25 @@ export type DocumentRepositoryFilters = {
   documentTypes?: DocumentType[];
 };
 
+export type DocumentTypeStatusSummary = {
+  documentType: DocumentType;
+  valid: number;
+  attention: number;
+  expired: number;
+  total: number;
+};
+
+export type DocumentTimelineBucket = {
+  bucket: string;
+  total: number;
+};
+
 export interface DocumentRepository {
   listAll(filters?: DocumentRepositoryFilters): Promise<FleetDocument[]>;
+  listByAssociateIds(
+    associateIds: string[],
+    filters?: Omit<DocumentRepositoryFilters, "associateId">,
+  ): Promise<FleetDocument[]>;
   listPage(
     page: number,
     pageSize: number,
@@ -64,6 +81,17 @@ export interface DocumentRepository {
   countAll(filters?: DocumentRepositoryFilters): Promise<number>;
   countPending(now?: Date, filters?: DocumentRepositoryFilters): Promise<number>;
   countAttention(now?: Date, filters?: DocumentRepositoryFilters): Promise<number>;
+  groupByType(
+    now?: Date,
+    limit?: number,
+    filters?: DocumentRepositoryFilters,
+  ): Promise<DocumentTypeStatusSummary[]>;
+  summarizeExpirationTimeline(
+    now?: Date,
+    filters?: DocumentRepositoryFilters,
+    monthsBack?: number,
+    monthsForward?: number,
+  ): Promise<DocumentTimelineBucket[]>;
 }
 
 function buildDocumentSelect(whereClause = "", limitClause = "") {
@@ -150,6 +178,20 @@ function readSingleNumber(value: unknown) {
   return Number(value ?? 0);
 }
 
+function buildFilteredDocumentFromClause(filters?: DocumentRepositoryFilters) {
+  const { whereClause, params } = buildFiltersWhereClause(filters);
+
+  return {
+    fromClause: `
+      FROM documents d
+      LEFT JOIN associate_profiles ap
+        ON ap.associate_id = d.associate_id
+      ${whereClause}
+    `,
+    params,
+  };
+}
+
 async function queryUniqueAssociateDocument(
   database: DatabaseReadSession,
   associateId: string,
@@ -173,6 +215,40 @@ export class SqliteDocumentRepository implements DocumentRepository {
   async listAll(filters?: DocumentRepositoryFilters): Promise<FleetDocument[]> {
     const { whereClause, params } = buildFiltersWhereClause(filters);
     const rows = await this.database.query(buildDocumentSelect(whereClause), params);
+
+    return rows.map(mapDocument);
+  }
+
+  async listByAssociateIds(
+    associateIds: string[],
+    filters?: Omit<DocumentRepositoryFilters, "associateId">,
+  ): Promise<FleetDocument[]> {
+    const normalizedAssociateIds = Array.from(
+      new Set(
+        associateIds
+          .map((associateId) => associateId.trim())
+          .filter(Boolean),
+      ),
+    );
+
+    if (normalizedAssociateIds.length === 0) {
+      return [];
+    }
+
+    const { whereClause, params } = buildFiltersWhereClause(filters);
+    const associateIdsClause = `d.associate_id IN (${normalizedAssociateIds
+      .map(() => "?")
+      .join(", ")})`;
+    const clauses = [
+      whereClause ? whereClause.replace(/^WHERE\s+/i, "") : "",
+      associateIdsClause,
+    ]
+      .filter(Boolean)
+      .join(" AND ");
+    const rows = await this.database.query(
+      buildDocumentSelect(`WHERE ${clauses}`),
+      [...params, ...normalizedAssociateIds],
+    );
 
     return rows.map(mapDocument);
   }
@@ -523,5 +599,84 @@ export class SqliteDocumentRepository implements DocumentRepository {
         [...params, today, attentionThresholdDate],
       ),
     );
+  }
+
+  async groupByType(
+    now = new Date(),
+    limit = 5,
+    filters?: DocumentRepositoryFilters,
+  ): Promise<DocumentTypeStatusSummary[]> {
+    const today = formatUtcDateOnly(now);
+    const attentionThresholdDate = getDocumentAttentionThresholdDate(now);
+    const { fromClause, params } = buildFilteredDocumentFromClause(filters);
+    const rows = await this.database.query(
+      `
+        SELECT
+          d.type,
+          COALESCE(SUM(CASE WHEN d.due_date > ? THEN 1 ELSE 0 END), 0),
+          COALESCE(
+            SUM(CASE WHEN d.due_date >= ? AND d.due_date <= ? THEN 1 ELSE 0 END),
+            0
+          ),
+          COALESCE(SUM(CASE WHEN d.due_date < ? THEN 1 ELSE 0 END), 0),
+          COUNT(*)
+        ${fromClause}
+        GROUP BY d.type
+        ORDER BY COUNT(*) DESC, d.type ASC
+        LIMIT ?
+      `,
+      [
+        attentionThresholdDate,
+        today,
+        attentionThresholdDate,
+        today,
+        ...params,
+        Math.max(1, Math.floor(limit)),
+      ],
+    );
+
+    return rows.map((row) => ({
+      documentType: normalizeDocumentType(String(row[0])),
+      valid: readSingleNumber(row[1]),
+      attention: readSingleNumber(row[2]),
+      expired: readSingleNumber(row[3]),
+      total: readSingleNumber(row[4]),
+    }));
+  }
+
+  async summarizeExpirationTimeline(
+    now = new Date(),
+    filters?: DocumentRepositoryFilters,
+    monthsBack = 2,
+    monthsForward = 4,
+  ): Promise<DocumentTimelineBucket[]> {
+    const normalizedMonthsBack = Math.max(0, Math.floor(monthsBack));
+    const normalizedMonthsForward = Math.max(0, Math.floor(monthsForward));
+    const startDate = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - normalizedMonthsBack, 1),
+    );
+    const endDate = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + normalizedMonthsForward + 1, 0),
+    );
+    const start = formatUtcDateOnly(startDate);
+    const end = formatUtcDateOnly(endDate);
+    const { fromClause, params } = buildFilteredDocumentFromClause(filters);
+    const rows = await this.database.query(
+      `
+        SELECT
+          SUBSTR(d.due_date, 1, 7) AS bucket,
+          COUNT(*)
+        ${fromClause}
+        ${fromClause.includes("WHERE") ? "AND" : "WHERE"} d.due_date >= ? AND d.due_date <= ?
+        GROUP BY SUBSTR(d.due_date, 1, 7)
+        ORDER BY bucket ASC
+      `,
+      [...params, start, end],
+    );
+
+    return rows.map((row) => ({
+      bucket: String(row[0]),
+      total: readSingleNumber(row[1]),
+    }));
   }
 }

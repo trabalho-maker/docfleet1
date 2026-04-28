@@ -11,6 +11,9 @@ import { AppShell } from "@/features/dashboard/components/app-shell";
 import { ModuleHeader } from "@/features/dashboard/components/module-header";
 import { TaxistaCadastroSection } from "@/features/taxistas/cadastro/components/taxista-cadastro-section";
 import { createTaxistaCadastroService } from "@/features/taxistas/cadastro/server/taxista-cadastro.service";
+import type { TaxistaCadastroFilterMode } from "@/features/taxistas/cadastro/types";
+
+const DEFAULT_PAGE_SIZE = 25;
 
 export const metadata: Metadata = {
   title: "Cadastro de taxistas",
@@ -26,18 +29,36 @@ export default async function TaxistasCadastroPage({
   const accessMessage = getAssociateAccessMessage(user);
   const resolvedSearchParams = await searchParams;
   const selectedAssociateId = getSingleSearchParam(resolvedSearchParams?.taxista);
-  const records = canView
-    ? await createTaxistaCadastroService().listTaxistas()
-    : [];
+  const filters = {
+    search: getSingleSearchParam(resolvedSearchParams?.q),
+    mode: getFilterMode(getSingleSearchParam(resolvedSearchParams?.mode)),
+    page: parsePositiveInteger(getSingleSearchParam(resolvedSearchParams?.page), 1),
+    pageSize: DEFAULT_PAGE_SIZE,
+  } as const;
+  const service = createTaxistaCadastroService();
+  const listResult = canView
+    ? await service.listTaxistas(filters)
+    : {
+        records: [],
+        counts: { all: 0, protocolado: 0, pronto: 0 },
+        total: 0,
+        page: 1,
+        pageSize: DEFAULT_PAGE_SIZE,
+        totalPages: 1,
+      };
+  const selectedRecord =
+    canView && selectedAssociateId
+      ? await service.getTaxistaByAssociateId(selectedAssociateId)
+      : null;
   const headerMetrics = [
-    { label: "Cadastrados", value: records.length },
+    { label: "Cadastrados", value: listResult.counts.all },
     {
       label: "Protocolado",
-      value: records.filter((record) => record.statusAlvara === "PROTOCOLADO").length,
+      value: listResult.counts.protocolado,
     },
     {
       label: "Pronto",
-      value: records.filter((record) => record.statusAlvara === "PRONTO").length,
+      value: listResult.counts.pronto,
     },
   ];
 
@@ -78,8 +99,16 @@ export default async function TaxistasCadastroPage({
         {canView ? (
           <TaxistaCadastroSection
             user={user}
-            records={records}
+            records={listResult.records}
+            counts={listResult.counts}
+            total={listResult.total}
+            page={listResult.page}
+            pageSize={listResult.pageSize}
+            totalPages={listResult.totalPages}
+            initialSearch={filters.search}
+            initialMode={filters.mode}
             initialSelectedAssociateId={selectedAssociateId}
+            selectedRecord={selectedRecord}
           />
         ) : null}
       </div>
@@ -93,4 +122,22 @@ function getSingleSearchParam(value: string | string[] | undefined) {
   }
 
   return value ?? "";
+}
+
+function getFilterMode(value: string): TaxistaCadastroFilterMode {
+  if (value === "PROTOCOLADO" || value === "PRONTO") {
+    return value;
+  }
+
+  return "ALL";
+}
+
+function parsePositiveInteger(value: string, fallback: number) {
+  const parsed = Number.parseInt(value, 10);
+
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
+
+  return parsed;
 }

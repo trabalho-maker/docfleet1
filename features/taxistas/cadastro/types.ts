@@ -1,5 +1,7 @@
 export type TaxistaAlvaraStatus = "CADASTRO" | "PROTOCOLADO" | "PRONTO";
 
+export type TaxistaCadastroFilterMode = "ALL" | "PROTOCOLADO" | "PRONTO";
+
 export type TaxistaCadastroProfile = {
   associateId: string;
   statusAlvara: TaxistaAlvaraStatus;
@@ -87,6 +89,28 @@ export type TaxistaCadastroFormValues = {
 export type TaxistaCadastroFieldErrors = Partial<
   Record<keyof TaxistaCadastroFormValues, string>
 >;
+
+export type TaxistaCadastroListFilters = {
+  search?: string;
+  mode?: TaxistaCadastroFilterMode;
+  page?: number;
+  pageSize?: number;
+};
+
+export type TaxistaCadastroCounts = {
+  all: number;
+  protocolado: number;
+  pronto: number;
+};
+
+export type TaxistaCadastroListResult = {
+  records: TaxistaCadastroRecord[];
+  counts: TaxistaCadastroCounts;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
 
 export function createEmptyTaxistaCadastroProfile(
   associateId = "",

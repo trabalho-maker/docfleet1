@@ -107,6 +107,7 @@ export type AssociateFilters = {
   search?: string;
   cpf?: string;
   category?: AssociateCategory;
+  modalidadeAssociado?: AssociateProfileCategory;
   status?: AssociateStatus;
   registrationNumber?: string;
   admissionDateFrom?: string;

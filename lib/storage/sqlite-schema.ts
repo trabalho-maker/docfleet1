@@ -207,6 +207,9 @@ function createIndexes(db: Database) {
     CREATE INDEX IF NOT EXISTS idx_alerts_kind
     ON alerts(kind);
 
+    CREATE INDEX IF NOT EXISTS idx_alerts_kind_created_at
+    ON alerts(kind, created_at DESC);
+
     CREATE INDEX IF NOT EXISTS idx_alerts_source_document_id
     ON alerts(source_document_id);
 
@@ -355,6 +358,7 @@ function rebuildAlertsTable(db: Database) {
 
   dropIndexIfExists(db, "idx_alerts_created_at");
   dropIndexIfExists(db, "idx_alerts_kind");
+  dropIndexIfExists(db, "idx_alerts_kind_created_at");
   dropIndexIfExists(db, "idx_alerts_source_document_id");
 
   const kindExpression = trimmedColumnOrNull(db, "alerts", "kind");

@@ -47,12 +47,123 @@ describe("taxista cadastro repository", () => {
       );
     });
 
-    const records = await repository.findMany();
+    const result = await repository.findMany();
 
-    expect(records.map((record) => record.name)).toEqual([
+    expect(result.records.map((record) => record.name)).toEqual([
       "Aline Prado",
       "Maria de Souza",
     ]);
+    expect(result.counts).toEqual({
+      all: 2,
+      protocolado: 0,
+      pronto: 0,
+    });
+  });
+
+  it("filters and paginates taxistas directly in SQL", async () => {
+    await withSqliteWriteLock((db) => {
+      db.run(
+        "INSERT INTO associates (id, name, cpf, category, registration_number, status, admission_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          "asc_10",
+          "Alvaro Mendes",
+          "11122233344",
+          "Titular",
+          "MAT-2026-0010",
+          "Ativo",
+          "2026-01-02",
+          "2026-04-06T09:10:00.000Z",
+          "2026-04-06T09:10:00.000Z",
+        ],
+      );
+      db.run(
+        "INSERT INTO associate_profiles (associate_id, modalidade_associado, telefone, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+        [
+          "asc_10",
+          "TAXI",
+          "(19) 99999-0010",
+          "2026-04-06T09:10:00.000Z",
+          "2026-04-06T09:10:00.000Z",
+        ],
+      );
+      db.run(
+        "INSERT INTO taxista_profiles (associate_id, status_alvara, selo, placa, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+        [
+          "asc_10",
+          "PROTOCOLADO",
+          "SL-100",
+          "ABC-1234",
+          "2026-04-06T09:10:00.000Z",
+          "2026-04-06T09:10:00.000Z",
+        ],
+      );
+      db.run(
+        "INSERT INTO associates (id, name, cpf, category, registration_number, status, admission_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          "asc_11",
+          "Beatriz Costa",
+          "55566677788",
+          "Titular",
+          "MAT-2026-0011",
+          "Ativo",
+          "2026-01-03",
+          "2026-04-06T09:10:00.000Z",
+          "2026-04-06T09:10:00.000Z",
+        ],
+      );
+      db.run(
+        "INSERT INTO associate_profiles (associate_id, modalidade_associado, telefone, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+        [
+          "asc_11",
+          "TAXI",
+          "(19) 99999-0011",
+          "2026-04-06T09:10:00.000Z",
+          "2026-04-06T09:10:00.000Z",
+        ],
+      );
+      db.run(
+        "INSERT INTO taxista_profiles (associate_id, status_alvara, selo, placa, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+        [
+          "asc_11",
+          "PRONTO",
+          "SL-200",
+          "XYZ-9876",
+          "2026-04-06T09:10:00.000Z",
+          "2026-04-06T09:10:00.000Z",
+        ],
+      );
+    });
+
+    const nameSearch = await repository.findMany({ search: "alvaro" });
+    expect(nameSearch.records.map((record) => record.associateId)).toEqual(["asc_10"]);
+
+    const cpfSearch = await repository.findMany({ search: "390.533.447-05" });
+    expect(cpfSearch.records.map((record) => record.associateId)).toEqual(["asc_01"]);
+
+    const seloSearch = await repository.findMany({ search: "sl100" });
+    expect(seloSearch.records.map((record) => record.associateId)).toEqual(["asc_10"]);
+
+    const placaSearch = await repository.findMany({ search: "xyz9876" });
+    expect(placaSearch.records.map((record) => record.associateId)).toEqual(["asc_11"]);
+
+    const protocoladoPage = await repository.findMany({
+      mode: "PROTOCOLADO",
+      page: 1,
+      pageSize: 1,
+    });
+    expect(protocoladoPage.total).toBe(1);
+    expect(protocoladoPage.totalPages).toBe(1);
+    expect(protocoladoPage.records.map((record) => record.associateId)).toEqual([
+      "asc_10",
+    ]);
+
+    const pagedResult = await repository.findMany({
+      page: 2,
+      pageSize: 1,
+    });
+    expect(pagedResult.total).toBe(3);
+    expect(pagedResult.totalPages).toBe(3);
+    expect(pagedResult.records).toHaveLength(1);
   });
 
   it("saves associate, profile and taxista fields together in one cadastro update", async () => {
