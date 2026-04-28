@@ -13,6 +13,8 @@ import {
 import { createSqliteSchema } from "@/lib/storage/sqlite-schema";
 import { getSqliteDatabasePath } from "@/lib/server/runtime-paths";
 
+jest.setTimeout(15000);
+
 describe("repositories", () => {
   const userRepository = new SqliteUserRepository();
   const documentRepository = new SqliteDocumentRepository();
@@ -181,6 +183,120 @@ describe("repositories", () => {
     });
   });
 
+  it("normalizes legacy RG, CNH and company CNPJ values during schema bootstrap", async () => {
+    await withSqliteWriteLock((db) => {
+      db.run(
+        `
+          UPDATE associate_profiles
+          SET
+            rg = ?,
+            cnh = ?,
+            cnpj_empresa = ?
+          WHERE associate_id = ?
+        `,
+        [" 28.456.789-x ", " 0123 4567-890 ", null, "asc_01"],
+      );
+      db.run(
+        `
+          UPDATE associate_profiles
+          SET cnh = ?
+          WHERE associate_id = ?
+        `,
+        [" 0099 8877-665 ", "asc_02"],
+      );
+      db.run(
+        `
+          UPDATE associate_profiles
+          SET cnpj_empresa = ?
+          WHERE associate_id = ?
+        `,
+        ["27.865.757/0001-02", "asc_04"],
+      );
+
+      createSqliteSchema(db);
+
+      const rows = db.exec(
+        `
+          SELECT associate_id, rg, cnh, cnpj_empresa
+          FROM associate_profiles
+          WHERE associate_id IN (?, ?, ?)
+          ORDER BY associate_id ASC
+        `,
+        ["asc_01", "asc_02", "asc_04"],
+      )[0]?.values;
+
+      expect(rows).toEqual([
+        ["asc_01", "28456789X", "01234567890", null],
+        ["asc_02", "192234561", "00998877665", null],
+        ["asc_04", null, null, "27865757000102"],
+      ]);
+    });
+  });
+
+  it("fails schema bootstrap with a clear error when RG duplicates remain after normalization", async () => {
+    await withSqliteWriteLock((db) => {
+      db.run("DROP INDEX IF EXISTS idx_associate_profiles_rg_unique_non_empty");
+      db.run("DROP INDEX IF EXISTS idx_associate_profiles_cnh_unique_non_empty");
+      db.run("DROP INDEX IF EXISTS idx_associate_profiles_cnpj_empresa_unique_non_empty");
+      db.run(
+        `
+          INSERT INTO associates (
+            id,
+            name,
+            cpf,
+            category,
+            registration_number,
+            status,
+            admission_date,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          "asc_dup_rg",
+          "Associado Duplicado RG",
+          "52998224725",
+          "Titular",
+          "MAT-2026-0999",
+          "Ativo",
+          "2025-01-10",
+          "2026-04-06T08:15:00.000Z",
+          "2026-04-06T08:15:00.000Z",
+        ],
+      );
+      db.run(
+        `
+          INSERT INTO associate_profiles (
+            associate_id,
+            rg,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?)
+        `,
+        [
+          "asc_dup_rg",
+          "28.456.789-0",
+          "2026-04-06T08:15:00.000Z",
+          "2026-04-06T08:15:00.000Z",
+        ],
+      );
+
+      try {
+        createSqliteSchema(db);
+        throw new Error("EXPECTED_SCHEMA_DUPLICATE_FAILURE");
+      } catch (error) {
+        expect(error).toBeInstanceOf(Error);
+        expect((error as Error).message).toContain(
+          "SQLITE_ASSOCIATE_PROFILE_RG_DUPLICATE",
+        );
+      } finally {
+        db.run("DELETE FROM associate_profiles WHERE associate_id = ?", ["asc_dup_rg"]);
+        db.run("DELETE FROM associates WHERE id = ?", ["asc_dup_rg"]);
+        createSqliteSchema(db);
+      }
+    });
+  });
+
   it("creates, updates and deletes a structured document linked to an associate", async () => {
     const created = await documentRepository.create({
       associateId: "asc_01",
@@ -244,6 +360,266 @@ describe("repositories", () => {
       owner: "Equipe de Cadastro",
       dueDate: "2099-08-15",
       notes: "Atualizacao via upsert.",
+    });
+  });
+
+  it("rejects duplicate RG values through the partial unique index", async () => {
+    await withSqliteWriteLock((db) => {
+      db.run(
+        `
+          INSERT INTO associates (
+            id,
+            name,
+            cpf,
+            category,
+            registration_number,
+            status,
+            admission_date,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          "asc_rg_index",
+          "Associado RG",
+          "52998224725",
+          "Titular",
+          "MAT-2026-0100",
+          "Ativo",
+          "2025-01-10",
+          "2026-04-06T08:15:00.000Z",
+          "2026-04-06T08:15:00.000Z",
+        ],
+      );
+
+      expect(() =>
+        db.run(
+          `
+            INSERT INTO associate_profiles (
+              associate_id,
+              rg,
+              created_at,
+              updated_at
+            ) VALUES (?, ?, ?, ?)
+          `,
+          [
+            "asc_rg_index",
+            "284567890",
+            "2026-04-06T08:15:00.000Z",
+            "2026-04-06T08:15:00.000Z",
+          ],
+        ),
+      ).toThrow();
+    });
+  });
+
+  it("rejects duplicate CNH values through the partial unique index", async () => {
+    await withSqliteWriteLock((db) => {
+      db.run(
+        `
+          INSERT INTO associates (
+            id,
+            name,
+            cpf,
+            category,
+            registration_number,
+            status,
+            admission_date,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          "asc_cnh_index",
+          "Associado CNH",
+          "11144477735",
+          "Titular",
+          "MAT-2026-0101",
+          "Ativo",
+          "2025-01-10",
+          "2026-04-06T08:15:00.000Z",
+          "2026-04-06T08:15:00.000Z",
+        ],
+      );
+
+      expect(() =>
+        db.run(
+          `
+            INSERT INTO associate_profiles (
+              associate_id,
+              cnh,
+              created_at,
+              updated_at
+            ) VALUES (?, ?, ?, ?)
+          `,
+          [
+            "asc_cnh_index",
+            "01234567890",
+            "2026-04-06T08:15:00.000Z",
+            "2026-04-06T08:15:00.000Z",
+          ],
+        ),
+      ).toThrow();
+    });
+  });
+
+  it("rejects duplicate company CNPJ values through the partial unique index", async () => {
+    await withSqliteWriteLock((db) => {
+      db.run(
+        `
+          INSERT INTO associates (
+            id,
+            name,
+            cpf,
+            category,
+            registration_number,
+            status,
+            admission_date,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          "asc_cnpj_index",
+          "Associado CNPJ",
+          "32699768006",
+          "Titular",
+          "MAT-2026-0102",
+          "Ativo",
+          "2025-01-10",
+          "2026-04-06T08:15:00.000Z",
+          "2026-04-06T08:15:00.000Z",
+        ],
+      );
+
+      expect(() =>
+        db.run(
+          `
+            INSERT INTO associate_profiles (
+              associate_id,
+              cnpj_empresa,
+              created_at,
+              updated_at
+            ) VALUES (?, ?, ?, ?)
+          `,
+          [
+            "asc_cnpj_index",
+            "27865757000102",
+            "2026-04-06T08:15:00.000Z",
+            "2026-04-06T08:15:00.000Z",
+          ],
+        ),
+      ).toThrow();
+    });
+  });
+
+  it("allows multiple null and empty identifier values in associate profiles", async () => {
+    await withSqliteWriteLock((db) => {
+      db.run(
+        `
+          INSERT INTO associates (
+            id,
+            name,
+            cpf,
+            category,
+            registration_number,
+            status,
+            admission_date,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          "asc_optional_a",
+          "Associado Opcional A",
+          "12345678909",
+          "Titular",
+          "MAT-2026-0200",
+          "Ativo",
+          "2025-01-10",
+          "2026-04-06T08:15:00.000Z",
+          "2026-04-06T08:15:00.000Z",
+        ],
+      );
+      db.run(
+        `
+          INSERT INTO associates (
+            id,
+            name,
+            cpf,
+            category,
+            registration_number,
+            status,
+            admission_date,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          "asc_optional_b",
+          "Associado Opcional B",
+          "12345678991",
+          "Titular",
+          "MAT-2026-0201",
+          "Ativo",
+          "2025-01-10",
+          "2026-04-06T08:15:00.000Z",
+          "2026-04-06T08:15:00.000Z",
+        ],
+      );
+      db.run(
+        `
+          INSERT INTO associate_profiles (
+            associate_id,
+            rg,
+            cnh,
+            cnpj_empresa,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        [
+          "asc_optional_a",
+          "",
+          "",
+          "",
+          "2026-04-06T08:15:00.000Z",
+          "2026-04-06T08:15:00.000Z",
+        ],
+      );
+      db.run(
+        `
+          INSERT INTO associate_profiles (
+            associate_id,
+            rg,
+            cnh,
+            cnpj_empresa,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        [
+          "asc_optional_b",
+          null,
+          null,
+          null,
+          "2026-04-06T08:15:00.000Z",
+          "2026-04-06T08:15:00.000Z",
+        ],
+      );
+
+      const total = Number(
+        db.exec(
+          `
+            SELECT COUNT(*)
+            FROM associate_profiles
+            WHERE associate_id IN (?, ?)
+          `,
+          ["asc_optional_a", "asc_optional_b"],
+        )[0]?.values?.[0]?.[0] ?? 0,
+      );
+
+      expect(total).toBe(2);
     });
   });
 

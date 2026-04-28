@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCurrentUser } from "@/features/auth/server/session";
 import { PrintAssociateActions } from "@/features/associates/components/print-associate-actions";
 import { PrintableAssociateSheet } from "@/features/associates/components/printable-associate-sheet";
 import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
@@ -12,10 +11,14 @@ import {
   AssociateNotFoundError,
   createAssociateService,
 } from "@/features/associates/server/associate.service";
+import type { Associate } from "@/features/associates/types";
+import { getCurrentUser } from "@/features/auth/server/session";
+import { createDataLayer } from "@/features/data/repositories";
+import type { FleetDocument } from "@/features/data/types";
 
 export const metadata: Metadata = {
   title: "Ficha de associado",
-  description: "Visualização institucional para impressão da ficha do associado.",
+  description: "Visualizacao institucional para impressao da ficha do associado.",
 };
 
 type PrintAssociatePageProps = {
@@ -42,7 +45,7 @@ export default async function PrintAssociatePage({
           <FeedbackAlert
             type="error"
             title="Acesso negado"
-            message={accessMessage ?? "Seu perfil não pode acessar a ficha do associado."}
+            message={accessMessage ?? "Seu perfil nao pode acessar a ficha do associado."}
           />
         </div>
       </main>
@@ -52,10 +55,13 @@ export default async function PrintAssociatePage({
   const { id } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const associateService = createAssociateService();
-  let associate;
+  const dataLayer = createDataLayer();
+  let associate: Associate;
+  let documents: FleetDocument[] = [];
 
   try {
     associate = await associateService.getAssociateById(id);
+    documents = await dataLayer.documents.findByAssociateId(id);
   } catch (error) {
     if (error instanceof AssociateNotFoundError) {
       notFound();
@@ -72,6 +78,7 @@ export default async function PrintAssociatePage({
       />
       <PrintableAssociateSheet
         associate={associate}
+        documents={documents}
         logoSrc="/logo-sintrarc-header-cropped.png"
       />
     </main>

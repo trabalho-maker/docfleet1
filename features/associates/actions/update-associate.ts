@@ -115,6 +115,60 @@ export async function updateAssociateAction(
       };
     }
 
+    if (
+      error instanceof AssociateConflictError &&
+      error.message === "ASSOCIATE_RG_ALREADY_EXISTS"
+    ) {
+      logger.warn("associates.update.duplicate_rg", {
+        userId: user.id,
+        associateId: id,
+        rg: validation.data.rg,
+      });
+
+      return {
+        success: false,
+        fieldErrors: {
+          rg: "JÃ¡ existe um associado cadastrado com este RG.",
+        },
+      };
+    }
+
+    if (
+      error instanceof AssociateConflictError &&
+      error.message === "ASSOCIATE_CNH_ALREADY_EXISTS"
+    ) {
+      logger.warn("associates.update.duplicate_cnh", {
+        userId: user.id,
+        associateId: id,
+        cnh: validation.data.cnh,
+      });
+
+      return {
+        success: false,
+        fieldErrors: {
+          cnh: "JÃ¡ existe um associado cadastrado com esta CNH.",
+        },
+      };
+    }
+
+    if (
+      error instanceof AssociateConflictError &&
+      error.message === "ASSOCIATE_COMPANY_CNPJ_ALREADY_EXISTS"
+    ) {
+      logger.warn("associates.update.duplicate_company_cnpj", {
+        userId: user.id,
+        associateId: id,
+        cnpjEmpresa: validation.data.cnpjEmpresa,
+      });
+
+      return {
+        success: false,
+        fieldErrors: {
+          cnpjEmpresa: "JÃ¡ existe um associado cadastrado com este CNPJ.",
+        },
+      };
+    }
+
     if (error instanceof AssociateNotFoundError) {
       logger.warn("associates.update.not_found", {
         userId: user.id,

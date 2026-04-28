@@ -2,6 +2,7 @@ import type {
   AssociateOperationRequirementKey,
   AssociateOperationType,
 } from "@/features/associates/operations/types";
+import type { DocumentType } from "@/features/documents/constants";
 
 type AssociateOperationRequirementDefinition = {
   key: AssociateOperationRequirementKey;
@@ -11,6 +12,7 @@ type AssociateOperationRequirementDefinition = {
     | "vehicleAuthorizationDueDate"
     | "driverAuthorizationDueDate"
     | "cargoLicensingDueDate";
+  documentType?: DocumentType;
 };
 
 export type AssociateOperationConfig = {
@@ -48,6 +50,7 @@ export const associateOperationConfigs: Record<
         key: "basicDocumentation",
         label: "Documentacao basica",
         field: "basicDocumentationDueDate",
+        documentType: "CNH",
       },
     ],
   },
@@ -70,11 +73,13 @@ export const associateOperationConfigs: Record<
         key: "vehicleAuthorization",
         label: "Autorizacao do veiculo",
         field: "vehicleAuthorizationDueDate",
+        documentType: "AUTORIZACAO_VEICULO",
       },
       {
         key: "driverAuthorization",
         label: "Autorizacao do condutor",
         field: "driverAuthorizationDueDate",
+        documentType: "AUTORIZACAO_CONDUTOR",
       },
     ],
   },

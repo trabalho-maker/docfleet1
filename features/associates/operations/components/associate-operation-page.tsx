@@ -120,9 +120,9 @@ export function AssociateOperationPage({
                           {requirement.label}
                         </p>
                         <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                          Regra isolada no perfil operacional, sem duplicar o cadastro
-                          base de associados nem misturar a categoria sindical com o
-                          tipo de operacao.
+                          Prioriza a base documental oficial quando houver
+                          documento equivalente e usa o perfil operacional como
+                          apoio temporario para manter a leitura da operacao.
                         </p>
                       </div>
                     ))}

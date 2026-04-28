@@ -135,6 +135,12 @@ export function createAssociateService(options: AssociateServiceOptions = {}) {
           repository,
           validation.data.registrationNumber,
         );
+        await assertRgAvailable(profileRepository, validation.data.rg);
+        await assertCnhAvailable(profileRepository, validation.data.cnh);
+        await assertCompanyCnpjAvailable(
+          profileRepository,
+          validation.data.cnpjEmpresa,
+        );
 
         const createdAssociate = await repository.create(validation.data);
         const savedProfile = await profileRepository.upsertByAssociateId(
@@ -175,10 +181,27 @@ export function createAssociateService(options: AssociateServiceOptions = {}) {
           );
         }
 
-        const updatedAssociate = await repository.update(associateId, validation.data);
         const existingProfile =
           (await profileRepository.findByAssociateId(associateId)) ??
           createEmptyAssociateProfile();
+        const nextRg =
+          validation.data.rg !== undefined ? validation.data.rg : existingProfile.rg;
+        const nextCnh =
+          validation.data.cnh !== undefined ? validation.data.cnh : existingProfile.cnh;
+        const nextCompanyCnpj =
+          validation.data.cnpjEmpresa !== undefined
+            ? validation.data.cnpjEmpresa
+            : existingProfile.cnpjEmpresa;
+
+        await assertRgAvailable(profileRepository, nextRg, existingAssociate.id);
+        await assertCnhAvailable(profileRepository, nextCnh, existingAssociate.id);
+        await assertCompanyCnpjAvailable(
+          profileRepository,
+          nextCompanyCnpj,
+          existingAssociate.id,
+        );
+
+        const updatedAssociate = await repository.update(associateId, validation.data);
         const savedProfile = await profileRepository.upsertByAssociateId(
           associateId,
           {
@@ -249,6 +272,54 @@ async function assertRegistrationNumberAvailable(
     throw new AssociateConflictError(
       "ASSOCIATE_REGISTRATION_NUMBER_ALREADY_EXISTS",
     );
+  }
+}
+
+async function assertRgAvailable(
+  profileRepository: AssociateProfileRepository,
+  rg: string | null | undefined,
+  currentAssociateId?: string,
+) {
+  if (!rg) {
+    return;
+  }
+
+  const existingProfile = await profileRepository.findByRg(rg);
+
+  if (existingProfile && existingProfile.associateId !== currentAssociateId) {
+    throw new AssociateConflictError("ASSOCIATE_RG_ALREADY_EXISTS");
+  }
+}
+
+async function assertCnhAvailable(
+  profileRepository: AssociateProfileRepository,
+  cnh: string | null | undefined,
+  currentAssociateId?: string,
+) {
+  if (!cnh) {
+    return;
+  }
+
+  const existingProfile = await profileRepository.findByCnh(cnh);
+
+  if (existingProfile && existingProfile.associateId !== currentAssociateId) {
+    throw new AssociateConflictError("ASSOCIATE_CNH_ALREADY_EXISTS");
+  }
+}
+
+async function assertCompanyCnpjAvailable(
+  profileRepository: AssociateProfileRepository,
+  cnpjEmpresa: string | null | undefined,
+  currentAssociateId?: string,
+) {
+  if (!cnpjEmpresa) {
+    return;
+  }
+
+  const existingProfile = await profileRepository.findByCompanyCnpj(cnpjEmpresa);
+
+  if (existingProfile && existingProfile.associateId !== currentAssociateId) {
+    throw new AssociateConflictError("ASSOCIATE_COMPANY_CNPJ_ALREADY_EXISTS");
   }
 }
 

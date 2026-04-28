@@ -4,6 +4,11 @@ import {
   normalizePlainTextInput,
 } from "@/lib/security/input";
 import {
+  normalizeAssociateCnh,
+  normalizeAssociateCompanyCnpj,
+  normalizeAssociateRg,
+} from "@/features/associates/lib/associate-profile-identifiers";
+import {
   associateCategories,
   associatesDefaults,
   associateCivilStates,
@@ -389,8 +394,8 @@ function normalizeAssociateProfile(
       errors,
       MAX_SHORT_TEXT_LENGTH,
     ),
-    rg: normalizeOptionalText(input.rg, "rg", errors, MAX_SHORT_TEXT_LENGTH),
-    cnh: normalizeOptionalText(input.cnh, "cnh", errors, MAX_SHORT_TEXT_LENGTH),
+    rg: normalizeOptionalRg(input.rg, errors),
+    cnh: normalizeOptionalCnh(input.cnh, errors),
     estadoCivil: normalizeOptionalCivilState(input.estadoCivil, errors),
     nomePai: normalizeOptionalText(input.nomePai, "nomePai", errors, MAX_ASSOCIATE_NAME_LENGTH),
     nomeMae: normalizeOptionalText(input.nomeMae, "nomeMae", errors, MAX_ASSOCIATE_NAME_LENGTH),
@@ -574,7 +579,7 @@ function normalizeAssociateProfileCategoryValue(value: string) {
 }
 
 function normalizeOptionalCompanyDocument(value: unknown, errors: AssociateFieldErrors) {
-  const digits = String(value ?? "").replace(/\D/g, "");
+  const digits = normalizeAssociateCompanyCnpj(value);
 
   if (!digits) {
     return null;
@@ -585,6 +590,34 @@ function normalizeOptionalCompanyDocument(value: unknown, errors: AssociateField
   }
 
   return digits;
+}
+
+function normalizeOptionalRg(value: unknown, errors: AssociateFieldErrors) {
+  const normalizedValue = normalizeAssociateRg(value);
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (hasExceededMaxLength(normalizedValue, MAX_SHORT_TEXT_LENGTH)) {
+    errors.rg = `Informe um valor com no mÃ¡ximo ${MAX_SHORT_TEXT_LENGTH} caracteres.`;
+  }
+
+  return normalizedValue;
+}
+
+function normalizeOptionalCnh(value: unknown, errors: AssociateFieldErrors) {
+  const normalizedValue = normalizeAssociateCnh(value);
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (hasExceededMaxLength(normalizedValue, MAX_SHORT_TEXT_LENGTH)) {
+    errors.cnh = `Informe um valor com no mÃ¡ximo ${MAX_SHORT_TEXT_LENGTH} caracteres.`;
+  }
+
+  return normalizedValue;
 }
 
 function normalizeOptionalLongText(

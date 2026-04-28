@@ -1,6 +1,11 @@
 import type { DatabaseAdapter, DatabaseRow } from "@/lib/database/adapter";
 import { getDatabaseAdapter } from "@/lib/database/provider";
 import type { AssociateProfileData } from "@/features/associates/types";
+import {
+  normalizeAssociateCnh,
+  normalizeAssociateCompanyCnpj,
+  normalizeAssociateRg,
+} from "@/features/associates/lib/associate-profile-identifiers";
 
 const profileFields = [
   "modalidadeAssociado",
@@ -69,6 +74,9 @@ type AssociateProfileRecord = {
 
 export interface AssociateProfileRepository {
   findByAssociateId(associateId: string): Promise<AssociateProfileData | null>;
+  findByRg(rg: string): Promise<{ associateId: string } | null>;
+  findByCnh(cnh: string): Promise<{ associateId: string } | null>;
+  findByCompanyCnpj(cnpj: string): Promise<{ associateId: string } | null>;
   upsertByAssociateId(
     associateId: string,
     data: AssociateProfileData,
@@ -124,6 +132,30 @@ export class SqliteAssociateProfileRepository
     );
 
     return row ? mapAssociateProfile(row) : null;
+  }
+
+  async findByRg(rg: string): Promise<{ associateId: string } | null> {
+    return findByNormalizedProfileIdentifier(this.database, {
+      field: "rg",
+      value: rg,
+      normalizer: normalizeAssociateRg,
+    });
+  }
+
+  async findByCnh(cnh: string): Promise<{ associateId: string } | null> {
+    return findByNormalizedProfileIdentifier(this.database, {
+      field: "cnh",
+      value: cnh,
+      normalizer: normalizeAssociateCnh,
+    });
+  }
+
+  async findByCompanyCnpj(cnpj: string): Promise<{ associateId: string } | null> {
+    return findByNormalizedProfileIdentifier(this.database, {
+      field: "cnpj_empresa",
+      value: cnpj,
+      normalizer: normalizeAssociateCompanyCnpj,
+    });
   }
 
   async upsertByAssociateId(
@@ -357,6 +389,43 @@ function normalizeProfileCategory(
 
   if (normalizedValue === "CNPJ") {
     return "CNPJ";
+  }
+
+  return null;
+}
+
+async function findByNormalizedProfileIdentifier(
+  database: DatabaseAdapter,
+  options: {
+    field: "rg" | "cnh" | "cnpj_empresa";
+    value: string;
+    normalizer: (value: unknown) => string | null;
+  },
+) {
+  const normalizedTarget = options.normalizer(options.value);
+
+  if (!normalizedTarget) {
+    return null;
+  }
+
+  const rows = await database.query(
+    `
+      SELECT associate_id, ${options.field}
+      FROM associate_profiles
+      WHERE ${options.field} IS NOT NULL
+        AND TRIM(${options.field}) <> ''
+      ORDER BY associate_id ASC
+    `,
+  );
+
+  for (const row of rows) {
+    const normalizedValue = options.normalizer(row[1]);
+
+    if (normalizedValue === normalizedTarget) {
+      return {
+        associateId: String(row[0]),
+      };
+    }
   }
 
   return null;

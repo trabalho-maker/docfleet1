@@ -1,4 +1,9 @@
 import type { SqliteDatabaseConnection as Database } from "@/lib/storage/sqlite-connection";
+import {
+  normalizeAssociateCnh,
+  normalizeAssociateCompanyCnpj,
+  normalizeAssociateRg,
+} from "@/features/associates/lib/associate-profile-identifiers";
 
 function tableExists(db: Database, tableName: string) {
   const result = db.exec(
@@ -231,6 +236,18 @@ function createIndexes(db: Database) {
 
     CREATE INDEX IF NOT EXISTS idx_associate_profiles_modalidade_associado
     ON associate_profiles(modalidade_associado);
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_associate_profiles_rg_unique_non_empty
+    ON associate_profiles(rg)
+    WHERE rg IS NOT NULL AND TRIM(rg) <> '';
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_associate_profiles_cnh_unique_non_empty
+    ON associate_profiles(cnh)
+    WHERE cnh IS NOT NULL AND TRIM(cnh) <> '';
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_associate_profiles_cnpj_empresa_unique_non_empty
+    ON associate_profiles(cnpj_empresa)
+    WHERE cnpj_empresa IS NOT NULL AND TRIM(cnpj_empresa) <> '';
 
     CREATE INDEX IF NOT EXISTS idx_taxista_profiles_placa
     ON taxista_profiles(placa);
@@ -527,6 +544,9 @@ function rebuildAssociateProfilesTable(db: Database) {
 
   dropIndexIfExists(db, "idx_associate_profiles_email");
   dropIndexIfExists(db, "idx_associate_profiles_modalidade_associado");
+  dropIndexIfExists(db, "idx_associate_profiles_rg_unique_non_empty");
+  dropIndexIfExists(db, "idx_associate_profiles_cnh_unique_non_empty");
+  dropIndexIfExists(db, "idx_associate_profiles_cnpj_empresa_unique_non_empty");
 
   db.run("ALTER TABLE associate_profiles RENAME TO associate_profiles__old");
   db.run(`
@@ -638,6 +658,91 @@ function rebuildAssociateProfilesTable(db: Database) {
   db.run("DROP TABLE associate_profiles__old");
 }
 
+function normalizeAssociateProfilesLegacyIdentifiers(db: Database) {
+  if (!tableExists(db, "associate_profiles")) {
+    return;
+  }
+
+  const rows = db.exec(`
+    SELECT
+      associate_id,
+      rg,
+      cnh,
+      cnpj_empresa
+    FROM associate_profiles
+  `)[0]?.values ?? [];
+
+  for (const row of rows) {
+    const associateId = String(row[0]);
+    const normalizedRg = normalizeAssociateRg(row[1]);
+    const normalizedCnh = normalizeAssociateCnh(row[2]);
+    const normalizedCompanyCnpj = normalizeAssociateCompanyCnpj(row[3]);
+
+    db.run(
+      `
+        UPDATE associate_profiles
+        SET
+          rg = ?,
+          cnh = ?,
+          cnpj_empresa = ?
+        WHERE associate_id = ?
+      `,
+      [
+        normalizedRg,
+        normalizedCnh,
+        normalizedCompanyCnpj,
+        associateId,
+      ],
+    );
+  }
+}
+
+function assertNoDuplicateAssociateProfileIdentifiers(db: Database) {
+  assertNoDuplicateAssociateProfileField(db, {
+    field: "rg",
+    errorCode: "SQLITE_ASSOCIATE_PROFILE_RG_DUPLICATE",
+  });
+  assertNoDuplicateAssociateProfileField(db, {
+    field: "cnh",
+    errorCode: "SQLITE_ASSOCIATE_PROFILE_CNH_DUPLICATE",
+  });
+  assertNoDuplicateAssociateProfileField(db, {
+    field: "cnpj_empresa",
+    errorCode: "SQLITE_ASSOCIATE_PROFILE_COMPANY_CNPJ_DUPLICATE",
+  });
+}
+
+function assertNoDuplicateAssociateProfileField(
+  db: Database,
+  options: {
+    field: "rg" | "cnh" | "cnpj_empresa";
+    errorCode: string;
+  },
+) {
+  const duplicates = db.exec(
+    `
+      SELECT
+        ${options.field},
+        COUNT(*)
+      FROM associate_profiles
+      WHERE ${options.field} IS NOT NULL
+        AND TRIM(${options.field}) <> ''
+      GROUP BY ${options.field}
+      HAVING COUNT(*) > 1
+    `,
+  )[0]?.values ?? [];
+
+  if (duplicates.length === 0) {
+    return;
+  }
+
+  const duplicateDetails = duplicates
+    .map((row) => `${String(row[0])} (${Number(row[1])})`)
+    .join(", ");
+
+  throw new Error(`${options.errorCode}: ${duplicateDetails}`);
+}
+
 function rebuildTaxistaProfilesTable(db: Database) {
   if (!tableExists(db, "taxista_profiles")) {
     return;
@@ -744,6 +849,8 @@ function migrateSqliteSchema(db: Database) {
     rebuildAssociateOperationProfilesTable(db);
     rebuildAssociateProfilesTable(db);
     rebuildTaxistaProfilesTable(db);
+    normalizeAssociateProfilesLegacyIdentifiers(db);
+    assertNoDuplicateAssociateProfileIdentifiers(db);
   } finally {
     db.run("PRAGMA foreign_keys = ON");
   }

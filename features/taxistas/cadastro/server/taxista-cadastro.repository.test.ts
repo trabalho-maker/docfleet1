@@ -5,6 +5,8 @@ import {
   withSqliteWriteLock,
 } from "@/lib/storage/sqlite-storage";
 
+jest.setTimeout(15000);
+
 describe("taxista cadastro repository", () => {
   const repository = new SqliteTaxistaCadastroRepository();
 

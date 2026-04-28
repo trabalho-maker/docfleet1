@@ -1,16 +1,22 @@
 import type { ReactNode } from "react";
 import type { Associate } from "@/features/associates/types";
+import type { FleetDocument } from "@/features/data/types";
+import { summarizeAssociateDocumentStatus } from "@/features/documents/lib/document-status-source";
 
 type PrintableAssociateSheetProps = {
   associate: Associate;
+  documents: FleetDocument[];
   logoSrc: string | null;
 };
 
 export function PrintableAssociateSheet({
   associate,
+  documents,
   logoSrc,
 }: PrintableAssociateSheetProps) {
   const documentReference = buildDocumentReference(associate);
+  const documentLabels = buildDocumentLabels(documents);
+  const documentStatusSummary = summarizeAssociateDocumentStatus(documents);
   const dependentEntries = buildDependentEntries(associate);
   const profileCategory = associate.modalidadeAssociado ?? associate.category;
   const isCompanyProfile = associate.modalidadeAssociado === "CNPJ";
@@ -37,10 +43,10 @@ export function PrintableAssociateSheet({
 
             <div className="print-sheet-brand-copy">
               <div className="print-sheet-brand-title-row">
-                <h1>Ficha de Inscrição</h1>
+                <h1>Ficha de Inscricao</h1>
               </div>
               <div className="print-sheet-brand-subtitle">
-                <p>Sindicato dos Transportadores Autônomos</p>
+                <p>Sindicato dos Transportadores Autonomos</p>
                 <p>de Pessoas, de Bens e de Cargas de Rio Claro-SP</p>
               </div>
             </div>
@@ -156,10 +162,10 @@ export function PrintableAssociateSheet({
             <TableCell head>Status</TableCell>
             <TableCell head>Observacao</TableCell>
 
-            <TableCell>RG / CPF / CNH</TableCell>
+            <TableCell>{documentLabels}</TableCell>
             <TableCell>{documentReference}</TableCell>
-            <TableCell>{associate.status}</TableCell>
-            <TableCell>-</TableCell>
+            <TableCell>{getPrintableDocumentStatusLabel(documentStatusSummary.status)}</TableCell>
+            <TableCell>{buildPrintableDocumentObservation(documentStatusSummary)}</TableCell>
           </div>
         </section>
 
@@ -305,6 +311,49 @@ function formatDate(value: string | null | undefined) {
 function buildDocumentReference(associate: Associate) {
   const parts = [associate.rg, formatCpf(associate.cpf), associate.cnh].filter(Boolean);
   return parts.length > 0 ? parts.join(" / ") : "-";
+}
+
+function buildDocumentLabels(documents: FleetDocument[]) {
+  if (documents.length === 0) {
+    return "Base documental";
+  }
+
+  return documents.map((document) => document.name).join(" / ");
+}
+
+function getPrintableDocumentStatusLabel(status: "Valido" | "Atencao" | "Vencido" | "Missing") {
+  if (status === "Valido") {
+    return "Regular";
+  }
+
+  if (status === "Atencao") {
+    return "Em atencao";
+  }
+
+  if (status === "Vencido") {
+    return "Vencido";
+  }
+
+  return "Sem documentos cadastrados";
+}
+
+function buildPrintableDocumentObservation(
+  summary: ReturnType<typeof summarizeAssociateDocumentStatus>,
+) {
+  if (summary.status === "Missing") {
+    return "Sem documentos cadastrados";
+  }
+
+  const baseLabel =
+    summary.documentsCount === 1
+      ? "1 documento oficial vinculado"
+      : `${summary.documentsCount} documentos oficiais vinculados`;
+
+  if (!summary.nextDueDate) {
+    return baseLabel;
+  }
+
+  return `${baseLabel} | Proximo vencimento: ${formatDate(summary.nextDueDate)}`;
 }
 
 function buildDependentEntries(associate: Associate) {

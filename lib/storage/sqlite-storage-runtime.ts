@@ -145,6 +145,7 @@ export async function resetSqliteDatabase(options?: ResetSqliteDatabaseOptions) 
 
     if (shouldSeed) {
       await seedSqliteDatabase(db);
+      createSqliteSchema(db);
     }
 
     logger.warn("storage.sqlite.reset", {

@@ -120,4 +120,52 @@ describe("associate actions", () => {
       }),
     );
   });
+
+  it("returns field errors for duplicate RG/CNH/CNPJ conflicts", async () => {
+    const { AssociateConflictError } = jest.requireMock(
+      "@/features/associates/server/associate.service",
+    ) as {
+      AssociateConflictError: new (message: string) => Error;
+    };
+
+    createAssociate.mockRejectedValueOnce(
+      new AssociateConflictError("ASSOCIATE_RG_ALREADY_EXISTS"),
+    );
+    await expect(createAssociateAction(buildFormValues({ rg: "28.456.789-0" }))).resolves.toEqual({
+      success: false,
+      fieldErrors: {
+        rg: "JÃ¡ existe um associado cadastrado com este RG.",
+      },
+    });
+
+    updateAssociate.mockRejectedValueOnce(
+      new AssociateConflictError("ASSOCIATE_CNH_ALREADY_EXISTS"),
+    );
+    await expect(
+      updateAssociateAction("asc_01", buildFormValues({ cnh: "01234567890" })),
+    ).resolves.toEqual({
+      success: false,
+      fieldErrors: {
+        cnh: "JÃ¡ existe um associado cadastrado com esta CNH.",
+      },
+    });
+
+    createAssociate.mockRejectedValueOnce(
+      new AssociateConflictError("ASSOCIATE_COMPANY_CNPJ_ALREADY_EXISTS"),
+    );
+    await expect(
+      createAssociateAction(
+        buildFormValues({
+          modalidadeAssociado: "CNPJ",
+          nomeEmpresa: "Empresa",
+          cnpjEmpresa: "27.865.757/0001-02",
+        }),
+      ),
+    ).resolves.toEqual({
+      success: false,
+      fieldErrors: {
+        cnpjEmpresa: "JÃ¡ existe um associado cadastrado com este CNPJ.",
+      },
+    });
+  });
 });

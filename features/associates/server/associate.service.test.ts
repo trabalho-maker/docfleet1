@@ -76,6 +76,50 @@ describe("associate service", () => {
     ).rejects.toThrow(AssociateConflictError);
   });
 
+  it("rejects duplicate RG on create after normalization", async () => {
+    await expect(
+      service.createAssociate({
+        name: "Outra Maria",
+        cpf: "529.982.247-25",
+        category: "Titular",
+        registrationNumber: "MAT-2026-0200",
+        status: "Ativo",
+        admissionDate: "2024-06-01",
+        rg: "28 456 789-0",
+      }),
+    ).rejects.toThrow("ASSOCIATE_RG_ALREADY_EXISTS");
+  });
+
+  it("rejects duplicate CNH on create after normalization", async () => {
+    await expect(
+      service.createAssociate({
+        name: "Outra Maria",
+        cpf: "529.982.247-25",
+        category: "Titular",
+        registrationNumber: "MAT-2026-0200",
+        status: "Ativo",
+        admissionDate: "2024-06-01",
+        cnh: "0123 4567-890",
+      }),
+    ).rejects.toThrow("ASSOCIATE_CNH_ALREADY_EXISTS");
+  });
+
+  it("rejects duplicate company CNPJ on create after normalization", async () => {
+    await expect(
+      service.createAssociate({
+        name: "Outra Empresa",
+        cpf: "529.982.247-25",
+        category: "Titular",
+        registrationNumber: "MAT-2026-0200",
+        status: "Ativo",
+        admissionDate: "2024-06-01",
+        modalidadeAssociado: "CNPJ",
+        nomeEmpresa: "Nova Empresa",
+        cnpjEmpresa: "27.865.757/0001-02",
+      }),
+    ).rejects.toThrow("ASSOCIATE_COMPANY_CNPJ_ALREADY_EXISTS");
+  });
+
   it("updates an existing associate", async () => {
     const updated = await service.updateAssociate("asc_01", {
       name: "Maria de Souza Lima",
@@ -91,6 +135,63 @@ describe("associate service", () => {
     expect(updated.enderecoCompleto).toBe("Rua 1, 200");
     expect(updated.cidade).toBe("Rio Claro");
     expect(updated.estado).toBe("SP");
+  });
+
+  it("allows keeping the same RG, CNH and company CNPJ on the same associate update", async () => {
+    const updatedCompany = await service.updateAssociate("asc_04", {
+      rg: null,
+      cnh: null,
+      cnpjEmpresa: "27.865.757/0001-02",
+      nomeEmpresa: "Transporte Azul Logística Ltda.",
+    });
+    const updatedPerson = await service.updateAssociate("asc_01", {
+      rg: "28.456.789-0",
+      cnh: "0123 4567-890",
+    });
+
+    expect(updatedCompany.cnpjEmpresa).toBe("27865757000102");
+    expect(updatedPerson.rg).toBe("284567890");
+    expect(updatedPerson.cnh).toBe("01234567890");
+  });
+
+  it("rejects using another associate RG, CNH or company CNPJ on update", async () => {
+    await expect(
+      service.updateAssociate("asc_02", {
+        rg: "28.456.789-0",
+      }),
+    ).rejects.toThrow("ASSOCIATE_RG_ALREADY_EXISTS");
+
+    await expect(
+      service.updateAssociate("asc_02", {
+        cnh: "0123 4567-890",
+      }),
+    ).rejects.toThrow("ASSOCIATE_CNH_ALREADY_EXISTS");
+
+    await expect(
+      service.updateAssociate("asc_02", {
+        modalidadeAssociado: "CNPJ",
+        nomeEmpresa: "Empresa Escolar",
+        cnpjEmpresa: "27.865.757/0001-02",
+      }),
+    ).rejects.toThrow("ASSOCIATE_COMPANY_CNPJ_ALREADY_EXISTS");
+  });
+
+  it("ignores blank RG, CNH and company CNPJ when checking uniqueness", async () => {
+    await expect(
+      service.createAssociate({
+        name: "Carlos Alberto",
+        cpf: "529.982.247-25",
+        category: "Titular",
+        registrationNumber: "MAT-2026-0100",
+        status: "Ativo",
+        admissionDate: "2025-03-20",
+        rg: null,
+        cnh: null,
+        cnpjEmpresa: null,
+      }),
+    ).resolves.toMatchObject({
+      registrationNumber: "MAT-2026-0100",
+    });
   });
 
   it("deletes an existing associate", async () => {
@@ -160,6 +261,9 @@ describe("associate service", () => {
     const failingService = createAssociateService({
       profileRepositoryFactory: () => ({
         findByAssociateId: async () => null,
+        findByRg: async () => null,
+        findByCnh: async () => null,
+        findByCompanyCnpj: async () => null,
         upsertByAssociateId: async () => {
           throw new Error("PROFILE_WRITE_FAILED");
         },
