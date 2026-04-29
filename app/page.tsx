@@ -1,13 +1,12 @@
-import { CallToAction } from "@/components/home/call-to-action";
-import { FeatureGrid } from "@/components/home/feature-grid";
-import { HeroSection } from "@/components/home/hero-section";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 
-export default function Home() {
-  return (
-    <main className="df-page-container flex w-full flex-1 flex-col gap-16 px-6 py-10 sm:px-10 lg:px-12 lg:py-16">
-      <HeroSection />
-      <FeatureGrid />
-      <CallToAction />
-    </main>
-  );
+export default async function Home() {
+  const session = await auth();
+
+  if (session?.user?.email && session.user.id) {
+    redirect("/dashboard");
+  }
+
+  redirect("/login");
 }

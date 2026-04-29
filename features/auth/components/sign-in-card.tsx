@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -71,7 +72,7 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
 
     if (!result || result.error) {
       setErrors({
-        general: "Email ou senha invalidos.",
+        general: "Email ou senha inválidos.",
       });
       return;
     }
@@ -81,19 +82,25 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
   }
 
   return (
-    <section className="w-full rounded-[32px] border border-slate-200/85 bg-white/96 p-8 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur sm:rounded-[36px] sm:p-10">
-      <div className="space-y-9">
-        <header className="space-y-5">
-          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Area segura
+    <section className="w-full rounded-[30px] border border-white/70 bg-white/97 p-7 shadow-[0_32px_90px_rgba(2,6,23,0.22)] backdrop-blur sm:p-9">
+      <div className="space-y-6">
+        <header className="space-y-4 text-center">
+          <div className="flex justify-center">
+            <Image
+              src="/logo-docfleet.svg"
+              alt="DocFleet"
+              width={620}
+              height={310}
+              priority
+              className="h-auto w-[210px] sm:w-[236px]"
+            />
           </div>
-          <div className="space-y-3">
-            <h2 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2.1rem]">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-950">
               Entrar no DocFleet
             </h2>
-            <p className="max-w-md text-sm leading-7 text-slate-500">
-              Acesse seu painel para acompanhar vencimentos, alertas operacionais e
-              documentos da frota em um unico lugar.
+            <p className="text-sm text-slate-500">
+              Acesse seu ambiente operacional.
             </p>
           </div>
         </header>
@@ -165,7 +172,7 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
 
             <Link
               href="/recuperar-senha"
-              className="font-semibold text-slate-900 transition-colors hover:text-[#f97316]"
+              className="font-medium text-slate-600 transition-colors hover:text-[#f97316]"
             >
               Esqueceu sua senha?
             </Link>
@@ -175,13 +182,13 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
             type="submit"
             isLoading={isLoading}
             loadingLabel="Entrando..."
-            className="mt-1 rounded-[14px] shadow-[0_18px_40px_rgba(249,115,22,0.24)]"
+            className="mt-1 rounded-[14px] bg-[#f97316] text-white shadow-[0_20px_40px_rgba(249,115,22,0.28)] hover:bg-[#ea6a11]"
           >
             Entrar
           </Button>
         </form>
 
-        <div className="space-y-4 border-t border-slate-100 pt-5">
+        <div className="space-y-4 border-t border-slate-100 pt-5 text-center">
           {isDevelopment && devSeedEmail && devSeedPassword ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
               Ambiente de desenvolvimento:
@@ -192,13 +199,17 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
           ) : null}
 
           <p className="text-sm text-slate-500">
-            Ainda nao tem acesso?{" "}
+            Ainda não tem acesso?{" "}
             <Link
               href="/cadastro"
-              className="font-semibold text-slate-900 transition-colors hover:text-[#f97316]"
+              className="font-medium text-slate-700 transition-colors hover:text-[#f97316]"
             >
               Criar conta
             </Link>
+          </p>
+
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-300/75">
+            Plataforma segura e confiável
           </p>
         </div>
       </div>
