@@ -89,7 +89,7 @@ export function DocumentManager({
           throw new Error(
             "error" in payload && payload.error
               ? payload.error
-              : "Nao foi possivel carregar os documentos.",
+              : "Não foi possível carregar os documentos.",
           );
         }
 
@@ -120,7 +120,7 @@ export function DocumentManager({
             text:
               error instanceof Error
                 ? error.message
-                : "Nao foi possivel carregar os documentos.",
+                : "Não foi possível carregar os documentos.",
           });
         }
       } finally {
@@ -191,7 +191,7 @@ export function DocumentManager({
     if (!canManageDocuments) {
       setMessage({
         type: "error",
-        text: accessMessage ?? "Seu perfil nao pode editar documentos.",
+        text: accessMessage ?? "Seu perfil não pode editar documentos.",
       });
       return;
     }
@@ -218,7 +218,7 @@ export function DocumentManager({
         throw new Error(
           "error" in payload && payload.error
             ? payload.error
-            : "Nao foi possivel salvar o documento.",
+            : "Não foi possível salvar o documento.",
         );
       }
 
@@ -238,7 +238,7 @@ export function DocumentManager({
         text:
           error instanceof Error
             ? error.message
-            : "Nao foi possivel salvar o documento.",
+            : "Não foi possível salvar o documento.",
       });
     } finally {
       setIsSubmitting(false);
@@ -249,7 +249,7 @@ export function DocumentManager({
     if (!canManageDocuments) {
       setMessage({
         type: "error",
-        text: accessMessage ?? "Seu perfil nao pode excluir documentos.",
+        text: accessMessage ?? "Seu perfil não pode excluir documentos.",
       });
       return;
     }
@@ -270,7 +270,7 @@ export function DocumentManager({
       const payload = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        throw new Error(payload.error || "Nao foi possivel excluir o documento.");
+        throw new Error(payload.error || "Não foi possível excluir o documento.");
       }
 
       if (editingDocument?.id === documentId) {
@@ -293,7 +293,7 @@ export function DocumentManager({
         text:
           error instanceof Error
             ? error.message
-            : "Nao foi possivel excluir o documento.",
+            : "Não foi possível excluir o documento.",
       });
     }
   }

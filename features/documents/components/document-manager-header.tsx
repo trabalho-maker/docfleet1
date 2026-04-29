@@ -16,13 +16,13 @@ export function DocumentManagerHeader({
 }: DocumentManagerHeaderProps) {
   return (
     <AuthenticatedPageHeader
-      eyebrow="Gestao documental"
+      eyebrow="Gestão documental"
       title="Documentos operacionais"
-      description="Acompanhe vencimentos estruturados por associado, filtre por categoria operacional e mantenha a leitura documental em uma unica base."
+      description="Acompanhe vencimentos estruturados por associado, filtre por categoria operacional e mantenha a leitura documental em uma única base."
       userName={userName}
       userEmail={userEmail}
       userRole={userRole}
-      supportingText="Area conectada ao cadastro complementar dos associados, aos alertas de expiracao e ao dashboard documental do DocFleet."
+      supportingText="Área conectada ao cadastro complementar dos associados, aos alertas de expiração e ao dashboard documental do DocFleet."
       actions={
         <Link href="/dashboard" className="df-button-secondary">
           Voltar ao dashboard

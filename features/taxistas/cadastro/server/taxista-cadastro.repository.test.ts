@@ -139,12 +139,24 @@ describe("taxista cadastro repository", () => {
 
     const cpfSearch = await repository.findMany({ search: "390.533.447-05" });
     expect(cpfSearch.records.map((record) => record.associateId)).toEqual(["asc_01"]);
+    const cpfDigitsSearch = await repository.findMany({ search: "39053344705" });
+    expect(cpfDigitsSearch.records.map((record) => record.associateId)).toEqual([
+      "asc_01",
+    ]);
 
     const seloSearch = await repository.findMany({ search: "sl100" });
     expect(seloSearch.records.map((record) => record.associateId)).toEqual(["asc_10"]);
+    const seloMaskedSearch = await repository.findMany({ search: "SL-100" });
+    expect(seloMaskedSearch.records.map((record) => record.associateId)).toEqual([
+      "asc_10",
+    ]);
 
     const placaSearch = await repository.findMany({ search: "xyz9876" });
     expect(placaSearch.records.map((record) => record.associateId)).toEqual(["asc_11"]);
+    const placaMaskedSearch = await repository.findMany({ search: "ABC-1234" });
+    expect(placaMaskedSearch.records.map((record) => record.associateId)).toEqual([
+      "asc_10",
+    ]);
 
     const protocoladoPage = await repository.findMany({
       mode: "PROTOCOLADO",

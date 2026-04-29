@@ -37,7 +37,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           </div>
           <div className="hidden xl:block">
             <p className="text-base font-semibold tracking-tight">TransDocs</p>
-            <p className="text-sm text-white/65">Gestao de Documentos</p>
+            <p className="text-sm text-white/65">Gestão de Documentos</p>
           </div>
         </div>
       </div>
@@ -54,7 +54,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
         </div>
       </div>
 
-      <nav aria-label="Navegacao principal" className="flex-1 px-3 py-6">
+      <nav aria-label="Navegação principal" className="flex-1 px-3 py-6">
         <div className="space-y-2">
           {navigationItems.map((item) =>
             item.href === "/taxistas" ? (

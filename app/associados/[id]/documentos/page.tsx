@@ -45,7 +45,7 @@ export default async function AssociateDocumentsPage({
         <div className="w-full">
           <FeedbackAlert
             type="error"
-            message={accessMessage ?? "Seu perfil nao pode editar associados."}
+            message={accessMessage ?? "Seu perfil não pode editar associados."}
           />
         </div>
       </main>

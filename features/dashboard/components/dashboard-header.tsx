@@ -69,7 +69,7 @@ export function DashboardHeader({
             <SearchIcon />
             <input
               type="text"
-              placeholder="Busca ainda nao disponivel nesta tela."
+              placeholder="Busca ainda não disponível nesta tela."
               className="w-full min-w-0 border-none bg-transparent text-sm text-[#0F172A] outline-none placeholder:text-[#94A3B8]"
               aria-label="Busca indisponivel"
               disabled
@@ -166,7 +166,7 @@ export function DashboardHeader({
                       className="inline-flex min-h-11 w-full items-center justify-center rounded-[16px] bg-[#22C55E] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#16A34A]"
                       onClick={() => setIsPanelOpen(false)}
                     >
-                      Abrir gestao documental
+                      Abrir gestão documental
                     </Link>
                   </div>
                 </div>

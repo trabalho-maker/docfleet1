@@ -33,7 +33,7 @@ describe("documents api integration", () => {
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({
-      error: "Nao autenticado.",
+      error: "Não autenticado.",
     });
   });
 

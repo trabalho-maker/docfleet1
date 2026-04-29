@@ -42,7 +42,7 @@ export function AssociateOperationDirectory({
   emptyStateTitle,
   emptyStateDescription,
   documentsHrefBase,
-  statusColumnLabel = "Situacao documental",
+  statusColumnLabel = "Situação documental",
   statusFilterLabel = "Status documental",
   noRequirementsLabel = "Sem requisitos configurados",
   missingStatusLabel = "Sem documentos",
@@ -270,8 +270,8 @@ export function AssociateOperationDirectory({
           title="Nenhum associado encontrado"
           description={
             hasActiveFilters
-              ? "Ajuste os filtros para localizar um associado vinculado a esta operacao."
-              : "Nao ha associados disponiveis para exibicao nesta visao."
+              ? "Ajuste os filtros para localizar um associado vinculado a esta operação."
+              : "Não há associados disponíveis para exibição nesta visão."
           }
           actionLabel="Limpar filtros"
           actionOnClick={() => {

@@ -501,6 +501,32 @@ type SearchWhereClause = {
   params: unknown[];
 };
 
+type SearchPattern =
+  | {
+      kind: "cpf_exact";
+      digits: string;
+    }
+  | {
+      kind: "plate_exact";
+      code: string;
+      exactCandidates: string[];
+    }
+  | {
+      kind: "code_prefix";
+      code: string;
+      rawUpper: string;
+    }
+  | {
+      kind: "text";
+      text: string;
+    }
+  | {
+      kind: "broad";
+      text: string | null;
+      digits: string | null;
+      code: string | null;
+    };
+
 async function fetchCountValue(
   database: DatabaseAdapter,
   sql: string,
@@ -525,26 +551,52 @@ function buildSearchWhereClause({
   }
 
   if (search) {
-    const normalizedSearch = normalizeComparableText(search);
-    const searchDigits = normalizeDigits(search);
-    const normalizedCode = normalizeCode(search);
+    const pattern = classifySearchPattern(search);
     const searchConditions: string[] = [];
 
-    if (normalizedSearch) {
-      searchConditions.push(`${buildNormalizedNameExpression("a.name")} LIKE ?`);
-      params.push(`%${normalizedSearch}%`);
-    }
+    switch (pattern.kind) {
+      case "cpf_exact":
+        searchConditions.push("a.cpf = ?");
+        params.push(pattern.digits);
+        break;
+      case "plate_exact": {
+        const exactConditions = pattern.exactCandidates.map(() => "tp.placa = ?");
+        searchConditions.push(
+          `(${[...exactConditions, `${buildCodeExpression("tp.placa")} = ?`].join(" OR ")})`,
+        );
+        params.push(...pattern.exactCandidates, pattern.code);
+        break;
+      }
+      case "code_prefix":
+        searchConditions.push("tp.selo = ?");
+        params.push(pattern.rawUpper);
+        searchConditions.push(`${buildCodeExpression("tp.selo")} LIKE ?`);
+        params.push(`${pattern.code}%`);
+        searchConditions.push(`${buildCodeExpression("tp.placa")} LIKE ?`);
+        params.push(`${pattern.code}%`);
+        break;
+      case "text":
+        searchConditions.push(`${buildNormalizedNameExpression("a.name")} LIKE ?`);
+        params.push(`%${pattern.text}%`);
+        break;
+      case "broad":
+        if (pattern.text) {
+          searchConditions.push(`${buildNormalizedNameExpression("a.name")} LIKE ?`);
+          params.push(`%${pattern.text}%`);
+        }
 
-    if (searchDigits) {
-      searchConditions.push(`${buildDigitsExpression("a.cpf")} LIKE ?`);
-      params.push(`%${searchDigits}%`);
-    }
+        if (pattern.digits) {
+          searchConditions.push(`${buildDigitsExpression("a.cpf")} LIKE ?`);
+          params.push(`%${pattern.digits}%`);
+        }
 
-    if (normalizedCode) {
-      searchConditions.push(`${buildCodeExpression("tp.selo")} LIKE ?`);
-      params.push(`%${normalizedCode}%`);
-      searchConditions.push(`${buildCodeExpression("tp.placa")} LIKE ?`);
-      params.push(`%${normalizedCode}%`);
+        if (pattern.code) {
+          searchConditions.push(`${buildCodeExpression("tp.selo")} LIKE ?`);
+          params.push(`${pattern.code}%`);
+          searchConditions.push(`${buildCodeExpression("tp.placa")} LIKE ?`);
+          params.push(`${pattern.code}%`);
+        }
+        break;
     }
 
     if (searchConditions.length > 0) {
@@ -618,6 +670,50 @@ function normalizeSearchTerm(value: string | undefined) {
   return normalized ? normalized : null;
 }
 
+function classifySearchPattern(search: string): SearchPattern {
+  const normalizedText = normalizeComparableText(search);
+  const digits = normalizeDigits(search);
+  const code = normalizeCode(search);
+  const rawUpper = search.trim().toUpperCase();
+
+  if (digits && digits.length === 11 && !/[A-Za-z]/.test(search)) {
+    return {
+      kind: "cpf_exact",
+      digits,
+    };
+  }
+
+  if (code && isLikelyPlateCode(code)) {
+    return {
+      kind: "plate_exact",
+      code,
+      exactCandidates: buildPlateExactCandidates(search, code),
+    };
+  }
+
+  if (code && isLikelyCodeSearch(search, code)) {
+    return {
+      kind: "code_prefix",
+      code,
+      rawUpper,
+    };
+  }
+
+  if (normalizedText) {
+    return {
+      kind: "text",
+      text: normalizedText,
+    };
+  }
+
+  return {
+    kind: "broad",
+    text: normalizedText,
+    digits,
+    code,
+  };
+}
+
 function normalizeComparableText(value: string) {
   return value
     .normalize("NFD")
@@ -635,6 +731,30 @@ function normalizeDigits(value: string) {
 function normalizeCode(value: string) {
   const normalized = value.replace(/[^\p{L}\p{N}]+/gu, "").toUpperCase().trim();
   return normalized ? normalized : null;
+}
+
+function isLikelyPlateCode(code: string) {
+  return /^[A-Z]{3}\d{4}$/.test(code) || /^[A-Z]{3}\d[A-Z0-9]\d{2}$/.test(code);
+}
+
+function isLikelyCodeSearch(raw: string, code: string) {
+  return /[A-Za-z]/.test(raw) && /\d/.test(code);
+}
+
+function buildPlateExactCandidates(raw: string, code: string) {
+  const candidates = new Set<string>();
+  const trimmedRaw = raw.trim();
+
+  if (trimmedRaw) {
+    candidates.add(trimmedRaw);
+    candidates.add(trimmedRaw.toUpperCase());
+  }
+
+  if (code.length === 7) {
+    candidates.add(`${code.slice(0, 3)}-${code.slice(3)}`);
+  }
+
+  return [...candidates];
 }
 
 function normalizeMode(value: TaxistaCadastroFilterMode | undefined): TaxistaCadastroFilterMode {

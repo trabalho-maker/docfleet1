@@ -128,7 +128,7 @@ export async function updateAssociateAction(
       return {
         success: false,
         fieldErrors: {
-          rg: "JÃ¡ existe um associado cadastrado com este RG.",
+          rg: "Já existe um associado cadastrado com este RG.",
         },
       };
     }
@@ -146,7 +146,7 @@ export async function updateAssociateAction(
       return {
         success: false,
         fieldErrors: {
-          cnh: "JÃ¡ existe um associado cadastrado com esta CNH.",
+          cnh: "Já existe um associado cadastrado com esta CNH.",
         },
       };
     }
@@ -164,7 +164,7 @@ export async function updateAssociateAction(
       return {
         success: false,
         fieldErrors: {
-          cnpjEmpresa: "JÃ¡ existe um associado cadastrado com este CNPJ.",
+          cnpjEmpresa: "Já existe um associado cadastrado com este CNPJ.",
         },
       };
     }

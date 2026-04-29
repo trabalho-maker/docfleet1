@@ -130,6 +130,12 @@ export async function flushSqliteDatabase(reason = "flush") {
 
 export async function resetSqliteDatabase(options?: ResetSqliteDatabaseOptions) {
   return withSqliteWriteLock(async (db) => {
+    db.run("DROP TABLE IF EXISTS alerts__old");
+    db.run("DROP TABLE IF EXISTS password_reset_tokens__old");
+    db.run("DROP TABLE IF EXISTS taxista_profiles__old");
+    db.run("DROP TABLE IF EXISTS associate_operation_profiles__old");
+    db.run("DROP TABLE IF EXISTS associate_profiles__old");
+    db.run("DROP TABLE IF EXISTS documents__old");
     db.run("DROP TABLE IF EXISTS alerts");
     db.run("DROP TABLE IF EXISTS password_reset_tokens");
     db.run("DROP TABLE IF EXISTS auth_rate_limits");

@@ -61,8 +61,8 @@ export async function updateTaxistaAlvaraStatusAction(
       error.message === "TAXISTA_PRONTO_REQUIRES_PROTOCOLADO"
         ? "Somente taxistas protocolados podem ser movidos para pronto."
         : error instanceof Error && error.message === "TAXISTA_NOT_FOUND"
-          ? "O taxista informado nao foi encontrado."
-          : "Nao foi possivel atualizar o status do alvara agora. Tente novamente em instantes.";
+          ? "O taxista informado não foi encontrado."
+          : "Não foi possível atualizar o status do alvará agora. Tente novamente em instantes.";
 
     logger.error("taxistas.cadastro.alvara.update.error", {
       userId: user.id,

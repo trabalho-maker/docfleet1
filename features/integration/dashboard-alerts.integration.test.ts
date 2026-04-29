@@ -5,6 +5,7 @@ jest.mock("@/features/auth/server/session", () => ({
 import { getCurrentUser } from "@/features/auth/server/session";
 import { createDataLayer } from "@/features/data/repositories";
 import { getDashboardOverview } from "@/features/dashboard/server/get-dashboard-overview";
+import { createDocumentWithAlerts } from "@/features/documents/server/document-service";
 import {
   resetSqliteDatabase,
   resetSqliteStorageState,
@@ -29,9 +30,8 @@ describe("dashboard alerts integration", () => {
     await resetSqliteStorageState();
   });
 
-  it("reconciles generated alerts and exposes them through the dashboard overview", async () => {
-    const dataLayer = createDataLayer();
-    const createdDocument = await dataLayer.documents.create({
+  it("exposes document alerts that were already synchronized by document flows", async () => {
+    const createdDocument = await createDocumentWithAlerts({
       associateId: "asc_01",
       documentType: "TACOGRAFO",
       dueDate: "2000-01-03",
@@ -62,5 +62,25 @@ describe("dashboard alerts integration", () => {
         }),
       ]),
     );
+  });
+
+  it("does not trigger a global reconciliation when loading the dashboard", async () => {
+    const dataLayer = createDataLayer();
+    const unsyncedDocument = await dataLayer.documents.create({
+      associateId: "asc_01",
+      documentType: "CNH",
+      dueDate: "2000-01-03",
+      owner: "Seguranca Operacional",
+    });
+
+    const overview = await getDashboardOverview();
+    const generatedAlert = overview.alerts.find(
+      (alert) => alert.sourceDocumentId === unsyncedDocument.id,
+    );
+
+    expect(overview.recentDocuments.some((item) => item.id === unsyncedDocument.id)).toBe(
+      true,
+    );
+    expect(generatedAlert).toBeUndefined();
   });
 });

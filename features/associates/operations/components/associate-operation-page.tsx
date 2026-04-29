@@ -62,7 +62,7 @@ export function AssociateOperationPage({
           <FeedbackAlert
             type="error"
             title="Acesso negado"
-            message={accessMessage ?? "Seu perfil nao pode acessar esta operacao."}
+            message={accessMessage ?? "Seu perfil não pode acessar esta operação."}
           />
         ) : null}
 
@@ -75,7 +75,7 @@ export function AssociateOperationPage({
                   value: overview.metrics.totalAssociates,
                   helper: isTaxistaPage
                     ? undefined
-                    : "Associados atualmente vinculados a esta operacao.",
+                    : "Associados atualmente vinculados a esta operação.",
                 }}
               />
               <MetricCard

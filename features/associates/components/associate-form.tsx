@@ -214,7 +214,7 @@ export function AssociateForm({
         noValidate
       >
         <FormSection
-          title="Identificacao"
+          title="Identificação"
           description="Campos principais para localizar o associado e manter a ficha institucional consistente."
         >
           <div className="grid gap-5 md:grid-cols-2">

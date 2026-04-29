@@ -135,7 +135,7 @@ export function TaxistaCadastroModal({
     event.preventDefault();
 
     if (!canEdit) {
-      setFormError("Seu perfil nao pode editar o cadastro do taxista.");
+      setFormError("Seu perfil não pode editar o cadastro do taxista.");
       return;
     }
 
@@ -242,7 +242,7 @@ export function TaxistaCadastroModal({
 
               <section className="rounded-[24px] border border-slate-200 bg-[#FAFCFF] p-5">
                 <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#35577E]">
-                  Observacao
+                  Observação
                 </h3>
 
                 <div className="mt-4">

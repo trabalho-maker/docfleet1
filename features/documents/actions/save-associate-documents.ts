@@ -51,7 +51,7 @@ export async function saveAssociateDocumentsAction(
     return {
       success: false,
       notFound: true,
-      formError: "Associado nao encontrado.",
+      formError: "Associado não encontrado.",
     };
   }
 
@@ -62,7 +62,7 @@ export async function saveAssociateDocumentsAction(
     return {
       success: false,
       notFound: true,
-      formError: "Associado nao encontrado.",
+      formError: "Associado não encontrado.",
     };
   }
 
@@ -76,7 +76,7 @@ export async function saveAssociateDocumentsAction(
     }
 
     if (!parseDocumentDueDate(dueDate)) {
-      fieldErrors[documentType] = `Informe um vencimento valido para ${getDocumentTypeLabel(documentType)}.`;
+      fieldErrors[documentType] = `Informe um vencimento válido para ${getDocumentTypeLabel(documentType)}.`;
     }
   }
 
@@ -89,7 +89,7 @@ export async function saveAssociateDocumentsAction(
 
   await syncAssociateDocumentsWithAlerts({
     associateId: normalizedAssociateId,
-    owner: user.name ?? user.email ?? "Usuario DocFleet",
+    owner: user.name ?? user.email ?? "Usuário DocFleet",
     documents: associateDocumentTypes.map((documentType) => ({
       documentType,
       dueDate: values[documentType].trim(),

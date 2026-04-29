@@ -18,7 +18,7 @@ import type { FleetDocument } from "@/features/data/types";
 
 export const metadata: Metadata = {
   title: "Ficha de associado",
-  description: "Visualizacao institucional para impressao da ficha do associado.",
+  description: "Visualização institucional para impressão da ficha do associado.",
 };
 
 type PrintAssociatePageProps = {
@@ -45,7 +45,7 @@ export default async function PrintAssociatePage({
           <FeedbackAlert
             type="error"
             title="Acesso negado"
-            message={accessMessage ?? "Seu perfil nao pode acessar a ficha do associado."}
+            message={accessMessage ?? "Seu perfil não pode acessar a ficha do associado."}
           />
         </div>
       </main>

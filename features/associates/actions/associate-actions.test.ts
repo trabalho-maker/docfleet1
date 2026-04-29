@@ -134,7 +134,7 @@ describe("associate actions", () => {
     await expect(createAssociateAction(buildFormValues({ rg: "28.456.789-0" }))).resolves.toEqual({
       success: false,
       fieldErrors: {
-        rg: "JÃ¡ existe um associado cadastrado com este RG.",
+        rg: "Já existe um associado cadastrado com este RG.",
       },
     });
 
@@ -146,7 +146,7 @@ describe("associate actions", () => {
     ).resolves.toEqual({
       success: false,
       fieldErrors: {
-        cnh: "JÃ¡ existe um associado cadastrado com esta CNH.",
+        cnh: "Já existe um associado cadastrado com esta CNH.",
       },
     });
 
@@ -164,7 +164,7 @@ describe("associate actions", () => {
     ).resolves.toEqual({
       success: false,
       fieldErrors: {
-        cnpjEmpresa: "JÃ¡ existe um associado cadastrado com este CNPJ.",
+        cnpjEmpresa: "Já existe um associado cadastrado com este CNPJ.",
       },
     });
   });

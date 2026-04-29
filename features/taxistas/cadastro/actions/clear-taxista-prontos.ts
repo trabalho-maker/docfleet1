@@ -50,7 +50,7 @@ export async function clearTaxistaProntosAction(): Promise<ClearTaxistaProntosAc
 
     return {
       success: false,
-      formError: "Nao foi possivel limpar os alvaras prontos agora. Tente novamente em instantes.",
+      formError: "Não foi possível limpar os alvarás prontos agora. Tente novamente em instantes.",
     };
   }
 }

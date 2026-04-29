@@ -75,14 +75,14 @@ export function DocumentFormPanel({
 
       {!canViewDocuments ? (
         <div className="mt-6 rounded-[24px] border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
-          {accessMessage ?? "Seu perfil nao pode acessar os documentos."}
+          {accessMessage ?? "Seu perfil não pode acessar os documentos."}
         </div>
       ) : null}
 
       {canViewDocuments && !canManageDocuments ? (
         <div className="mt-6 rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
           {accessMessage ??
-            "Seu perfil pode consultar documentos, mas nao pode alterar a base documental."}
+            "Seu perfil pode consultar documentos, mas não pode alterar a base documental."}
         </div>
       ) : null}
 
@@ -96,13 +96,13 @@ export function DocumentFormPanel({
               <DocumentStatusBadge status={editingDocument.status} />
             </div>
             <p className="mt-3 text-sm text-[var(--color-muted)]">
-              {editingDocument.associateName ?? "Associado nao informado"}
+              {editingDocument.associateName ?? "Associado não informado"}
               {editingDocument.associateCategory
                 ? ` · ${editingDocument.associateCategory}`
                 : ""}
             </p>
             <p className="mt-1 text-sm text-[var(--color-muted)]">
-              Matricula: {editingDocument.associateRegistrationNumber ?? "Nao informada"}
+              Matrícula: {editingDocument.associateRegistrationNumber ?? "Não informada"}
             </p>
           </div>
 
@@ -118,7 +118,7 @@ export function DocumentFormPanel({
           />
 
           <label htmlFor="document-notes" className="grid gap-2 text-sm font-medium text-slate-700">
-            <span>Observacao</span>
+            <span>Observação</span>
             <textarea
               id="document-notes"
               value={formValues.notes}
@@ -126,7 +126,7 @@ export function DocumentFormPanel({
               disabled={!canManageDocuments}
               rows={5}
               className="min-h-[120px] rounded-[18px] border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-colors focus:border-[var(--color-accent-strong)]"
-              placeholder="Observacoes operacionais do documento"
+              placeholder="Observações operacionais do documento"
             />
             {formErrors.notes ? (
               <span className="text-sm text-red-600">{formErrors.notes}</span>

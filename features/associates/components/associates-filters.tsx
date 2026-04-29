@@ -47,7 +47,7 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
             Combine nome, CPF, categoria, modalidade e situacao para localizar
-            associados com rapidez e manter a operacao mais previsivel.
+            associados com rapidez e manter a operação mais previsível.
           </p>
         </div>
         {hasActiveFilters ? (

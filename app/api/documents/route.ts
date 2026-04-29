@@ -47,7 +47,7 @@ export async function GET(request: Request) {
   const session = await auth();
 
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   if (!canViewOperationalData(session.user)) {
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
   const session = await auth();
 
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   if (!canManageOperationalData(session.user)) {
@@ -148,7 +148,7 @@ export async function POST(request: Request) {
   const associate = await associateRepository.findById(associateId);
 
   if (!associate) {
-    return NextResponse.json({ error: "Associado nao encontrado." }, { status: 404 });
+    return NextResponse.json({ error: "Associado não encontrado." }, { status: 404 });
   }
 
   const document = await createDocumentWithAlerts({

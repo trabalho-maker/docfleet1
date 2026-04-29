@@ -155,7 +155,7 @@ export function DashboardShell({ overview }: DashboardShellProps) {
             <div className="mt-5 flex flex-1 flex-col gap-4">
               {overview.alerts.length === 0 ? (
                 <div className="rounded-[24px] border border-dashed border-[#D7DEE7] bg-[#F8FAFC] px-5 py-6 text-sm text-[#64748B]">
-                  Nao ha alertas documentais ou operacionais relevantes no momento.
+                  Não há alertas documentais ou operacionais relevantes no momento.
                 </div>
               ) : (
                 overview.alerts.map((alert) => (
@@ -196,7 +196,7 @@ export function DashboardShell({ overview }: DashboardShellProps) {
               href="/documentos"
               className="mt-5 inline-flex min-h-12 items-center justify-center rounded-[18px] bg-[#22C55E] px-5 text-sm font-semibold text-white shadow-[0_18px_30px_rgba(34,197,94,0.24)] transition-colors hover:bg-[#16A34A]"
             >
-              Abrir gestao documental
+              Abrir gestão documental
             </Link>
           </article>
         </section>
@@ -205,7 +205,7 @@ export function DashboardShell({ overview }: DashboardShellProps) {
           <a
             href="#alertas-criticos"
             className="pointer-events-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#35577E] text-white shadow-[0_18px_32px_rgba(15,23,42,0.2)] transition-transform hover:-translate-y-0.5"
-            aria-label="Ir para alertas criticos"
+            aria-label="Ir para alertas críticos"
           >
             <BellFloatingIcon />
           </a>
@@ -272,7 +272,7 @@ function DocumentsByTypeChart({
   if (items.length === 0) {
     return (
       <div className="mt-6 rounded-[24px] border border-dashed border-[#D7DEE7] bg-[#F8FAFC] px-5 py-10 text-sm text-[#64748B]">
-        Nao ha dados suficientes para montar o grafico por tipo.
+        Não há dados suficientes para montar o gráfico por tipo.
       </div>
     );
   }
@@ -344,7 +344,7 @@ function DocumentsByTypeChart({
 
       <div className="mt-4 flex flex-wrap items-center justify-center gap-6 text-sm text-[#475569]">
         <Legend tone="bg-[#F87171]" label="Vencidos" />
-        <Legend tone="bg-[#FACC15]" label="Atencao" />
+        <Legend tone="bg-[#FACC15]" label="Atenção" />
         <Legend tone="bg-[#22C55E]" label="Em dia" />
       </div>
     </div>
@@ -382,7 +382,7 @@ function ExpirationTimelineChart({
   if (points.length === 0) {
     return (
       <div className="mt-6 rounded-[24px] border border-dashed border-[#D7DEE7] bg-[#F8FAFC] px-5 py-10 text-sm text-[#64748B]">
-        Nao ha dados suficientes para montar a linha temporal.
+        Não há dados suficientes para montar a linha temporal.
       </div>
     );
   }

@@ -27,9 +27,9 @@ export type DocumentCategoryFilter = (typeof documentCategoryFilters)[number];
 
 const documentTypeLabels: Record<DocumentType, string> = {
   CNH: "CNH",
-  TOXICOLOGICO: "Toxicologico",
-  AUTORIZACAO_CONDUTOR: "Autorizacao condutor",
-  AUTORIZACAO_VEICULO: "Autorizacao veiculo",
+  TOXICOLOGICO: "Toxicológico",
+  AUTORIZACAO_CONDUTOR: "Autorização condutor",
+  AUTORIZACAO_VEICULO: "Autorização veículo",
   TACOGRAFO: "Tacografo",
   OUTRO: "Outro",
 };

@@ -83,7 +83,7 @@ export function DocumentsListPanel({
       <div className="mt-6 grid gap-4">
         {!canViewDocuments ? (
           <div className="rounded-[24px] border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-            {accessMessage ?? "Seu perfil nao pode acessar os documentos."}
+            {accessMessage ?? "Seu perfil não pode acessar os documentos."}
           </div>
         ) : isLoading ? (
           <div className="rounded-[24px] border border-[var(--color-border)] bg-[linear-gradient(180deg,#FCFDFE_0%,#FFFFFF_100%)] p-6 text-sm text-[var(--color-muted)]">
@@ -112,13 +112,13 @@ export function DocumentsListPanel({
                     onClick={() => onEditDocument(document)}
                     className="text-left text-sm font-medium text-[#1D4ED8] transition-colors hover:text-[#1E40AF]"
                   >
-                    {document.associateName ?? "Associado nao informado"}
+                    {document.associateName ?? "Associado não informado"}
                   </button>
                   <p className="text-sm text-[var(--color-muted)]">
-                    Matricula: {document.associateRegistrationNumber ?? "Nao informada"}
+                    Matrícula: {document.associateRegistrationNumber ?? "Não informada"}
                   </p>
                   <p className="text-sm text-[var(--color-muted)]">
-                    Modalidade: {document.associateCategory ?? "Nao vinculada"}
+                    Modalidade: {document.associateCategory ?? "Não vinculada"}
                   </p>
                   <p className="text-sm text-[var(--color-muted)]">
                     Vencimento: {formatDate(document.dueDate)}

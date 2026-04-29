@@ -34,6 +34,10 @@ function dropIndexIfExists(db: Database, indexName: string) {
   db.run(`DROP INDEX IF EXISTS ${indexName}`);
 }
 
+function dropLegacyRebuildTableIfExists(db: Database, tableName: string) {
+  db.run(`DROP TABLE IF EXISTS ${tableName}__old`);
+}
+
 function trimmedColumnOrNull(db: Database, tableName: string, columnName: string) {
   return hasColumn(db, tableName, columnName)
     ? `NULLIF(TRIM(${columnName}), '')`
@@ -286,6 +290,7 @@ function rebuildDocumentsTable(db: Database) {
     return;
   }
 
+  dropLegacyRebuildTableIfExists(db, "documents");
   dropIndexIfExists(db, "idx_documents_due_date");
   dropIndexIfExists(db, "idx_documents_status");
   dropIndexIfExists(db, "idx_documents_associate_id");
@@ -356,6 +361,7 @@ function rebuildAlertsTable(db: Database) {
     return;
   }
 
+  dropLegacyRebuildTableIfExists(db, "alerts");
   dropIndexIfExists(db, "idx_alerts_created_at");
   dropIndexIfExists(db, "idx_alerts_kind");
   dropIndexIfExists(db, "idx_alerts_kind_created_at");
@@ -455,6 +461,7 @@ function rebuildPasswordResetTokensTable(db: Database) {
     return;
   }
 
+  dropLegacyRebuildTableIfExists(db, "password_reset_tokens");
   dropIndexIfExists(db, "idx_password_reset_tokens_user_id");
 
   db.run("ALTER TABLE password_reset_tokens RENAME TO password_reset_tokens__old");
@@ -497,6 +504,7 @@ function rebuildAssociateOperationProfilesTable(db: Database) {
     return;
   }
 
+  dropLegacyRebuildTableIfExists(db, "associate_operation_profiles");
   dropIndexIfExists(db, "idx_associate_operation_profiles_type");
   dropIndexIfExists(db, "idx_associate_operation_profiles_type_associate_id");
 
@@ -546,6 +554,7 @@ function rebuildAssociateProfilesTable(db: Database) {
     return;
   }
 
+  dropLegacyRebuildTableIfExists(db, "associate_profiles");
   dropIndexIfExists(db, "idx_associate_profiles_email");
   dropIndexIfExists(db, "idx_associate_profiles_modalidade_associado");
   dropIndexIfExists(db, "idx_associate_profiles_rg_unique_non_empty");
@@ -752,6 +761,7 @@ function rebuildTaxistaProfilesTable(db: Database) {
     return;
   }
 
+  dropLegacyRebuildTableIfExists(db, "taxista_profiles");
   dropIndexIfExists(db, "idx_taxista_profiles_placa");
 
   db.run("ALTER TABLE taxista_profiles RENAME TO taxista_profiles__old");

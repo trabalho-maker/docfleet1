@@ -340,12 +340,12 @@ export function TaxistaCadastroSection({
                               </div>
                             </td>
                             <td className="px-6 py-4">{formatCpf(record.cpf)}</td>
-                            <td className="px-6 py-4">{record.telefone ?? "Nao informado"}</td>
-                            <td className="px-6 py-4">{record.selo ?? "Nao informado"}</td>
-                            <td className="px-6 py-4">{record.placa ?? "Nao informada"}</td>
-                            <td className="px-6 py-4">{record.ponto ?? "Nao informado"}</td>
+                            <td className="px-6 py-4">{record.telefone ?? "Não informado"}</td>
+                            <td className="px-6 py-4">{record.selo ?? "Não informado"}</td>
+                            <td className="px-6 py-4">{record.placa ?? "Não informada"}</td>
+                            <td className="px-6 py-4">{record.ponto ?? "Não informado"}</td>
                             <td className="px-6 py-4">
-                              {record.numeroTaximetro ?? "Nao informado"}
+                              {record.numeroTaximetro ?? "Não informado"}
                             </td>
                             <td className="px-6 py-4">
                               <AlvaraStatusBadge status={record.statusAlvara} />

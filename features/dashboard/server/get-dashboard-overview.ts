@@ -1,4 +1,3 @@
-import { reconcileDocumentExpirationAlerts } from "@/features/alerts/server/document-expiration-alert-service";
 import { SqliteAssociateRepository } from "@/features/associates/server/associate.repository";
 import { getCurrentUser } from "@/features/auth/server/session";
 import { createDataLayer } from "@/features/data/repositories";
@@ -11,7 +10,6 @@ import { getDocumentTypeLabel } from "@/features/documents/constants";
 
 export async function getDashboardOverview(): Promise<DashboardOverview> {
   const user = await getCurrentUser();
-  await reconcileDocumentExpirationAlerts();
 
   const dataLayer = createDataLayer();
   const associateRepository = new SqliteAssociateRepository();
@@ -44,7 +42,7 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
     user,
     title: "Dashboard",
     description:
-      "Visao geral com foco nas pendencias documentais e nos alertas relevantes da operacao.",
+      "Visão geral com foco nas pendências documentais e nos alertas relevantes da operação.",
     alertCount: totalAlerts,
     recentDocuments,
     alerts,
@@ -52,14 +50,14 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
       {
         label: "Total de Documentos",
         value: documentSummary.total,
-        helper: "Base documental disponivel no sistema.",
+        helper: "Base documental disponível no sistema.",
         tone: "neutral",
         icon: "documents",
       },
       {
-        label: "Proximos do Vencimento",
+        label: "Próximos do Vencimento",
         value: attentionDocuments,
-        helper: "Documentos dentro da janela de atencao operacional.",
+        helper: "Documentos dentro da janela de atenção operacional.",
         tone: "warning",
         icon: "attention",
       },
@@ -68,8 +66,8 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
         value: expiredDocuments,
         helper:
           expiredDocuments > 0
-            ? "Acao necessaria para regularizacao."
-            : "Nenhuma pendencia vencida no momento.",
+            ? "Ação necessária para regularização."
+            : "Nenhuma pendência vencida no momento.",
         tone: "danger",
         icon: "expired",
       },
@@ -79,7 +77,7 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
         helper:
           pendingDocuments > 0
             ? `${pendingDocuments} item(ns) exigem acompanhamento.`
-            : "Base sem pendencias criticas abertas.",
+            : "Base sem pendências críticas abertas.",
         tone: "success",
         icon: "associates",
       },

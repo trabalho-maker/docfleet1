@@ -92,7 +92,7 @@ export default async function TaxistasCadastroPage({
           <FeedbackAlert
             type="error"
             title="Acesso negado"
-            message={accessMessage ?? "Seu perfil nao pode acessar o cadastro de taxistas."}
+            message={accessMessage ?? "Seu perfil não pode acessar o cadastro de taxistas."}
           />
         ) : null}
 

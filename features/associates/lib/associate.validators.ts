@@ -614,7 +614,7 @@ function normalizeOptionalRg(value: unknown, errors: AssociateFieldErrors) {
   }
 
   if (hasExceededMaxLength(normalizedValue, MAX_SHORT_TEXT_LENGTH)) {
-    errors.rg = `Informe um valor com no mÃ¡ximo ${MAX_SHORT_TEXT_LENGTH} caracteres.`;
+    errors.rg = `Informe um valor com no máximo ${MAX_SHORT_TEXT_LENGTH} caracteres.`;
   }
 
   return normalizedValue;
@@ -628,7 +628,7 @@ function normalizeOptionalCnh(value: unknown, errors: AssociateFieldErrors) {
   }
 
   if (hasExceededMaxLength(normalizedValue, MAX_SHORT_TEXT_LENGTH)) {
-    errors.cnh = `Informe um valor com no mÃ¡ximo ${MAX_SHORT_TEXT_LENGTH} caracteres.`;
+    errors.cnh = `Informe um valor com no máximo ${MAX_SHORT_TEXT_LENGTH} caracteres.`;
   }
 
   return normalizedValue;

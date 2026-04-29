@@ -41,11 +41,11 @@ export function validateDocumentInput(
   const errors: Partial<Record<keyof DocumentFormValues, string>> = {};
 
   if (notes && hasExceededMaxLength(notes, MAX_DOCUMENT_NOTES_LENGTH)) {
-    errors.notes = `Informe uma observacao com no maximo ${MAX_DOCUMENT_NOTES_LENGTH} caracteres.`;
+    errors.notes = `Informe uma observação com no máximo ${MAX_DOCUMENT_NOTES_LENGTH} caracteres.`;
   }
 
   if (!isValidDueDate(dueDate) || !parseDocumentDueDate(dueDate)) {
-    errors.dueDate = "Informe uma data de vencimento valida.";
+    errors.dueDate = "Informe uma data de vencimento válida.";
   }
 
   if (Object.keys(errors).length > 0) {

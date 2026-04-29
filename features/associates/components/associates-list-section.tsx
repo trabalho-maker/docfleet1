@@ -78,7 +78,7 @@ export function AssociatesListSection({
     if (!canDelete) {
       setFeedback({
         type: "info",
-        message: accessMessage ?? "Seu perfil nao pode excluir associados.",
+        message: accessMessage ?? "Seu perfil não pode excluir associados.",
       });
       return;
     }
@@ -131,7 +131,7 @@ export function AssociatesListSection({
         eyebrow: "Primeiros passos",
         title: "Sua base de associados ainda esta vazia",
         description:
-          "Comece cadastrando o primeiro associado para liberar a operacao do modulo com historico, filtros e acoes administrativas.",
+          "Comece cadastrando o primeiro associado para liberar a operação do módulo com histórico, filtros e ações administrativas.",
         action: canCreate ? (
           <Link href="/associados/novo" className="df-button-primary">
             Criar primeiro associado
@@ -167,7 +167,7 @@ export function AssociatesListSection({
         <div className="mt-6">
           <FeedbackAlert
             type="error"
-            title="Nao foi possivel carregar a listagem"
+            title="Não foi possível carregar a listagem"
             message={loadError}
             action={
               <Link href="/associados" className="df-button-secondary">
