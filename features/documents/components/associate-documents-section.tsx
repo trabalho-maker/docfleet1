@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AssociatesPageHeader } from "@/features/associates/components/associates-page-header";
@@ -41,10 +41,26 @@ export function AssociateDocumentsSection({
   const [values, setValues] = useState<AssociateDocumentFormValues>(initialValues);
   const [fieldErrors, setFieldErrors] = useState<AssociateDocumentFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [message, setMessage] = useState<{
-    type: "success" | "error";
+    type: "error";
     text: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (!isSuccessOpen) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      router.push("/associados");
+      router.refresh();
+    }, 1400);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isSuccessOpen, router]);
 
   function updateField(
     field: keyof AssociateDocumentFormValues,
@@ -65,6 +81,7 @@ export function AssociateDocumentsSection({
     setIsSubmitting(true);
     setFieldErrors({});
     setMessage(null);
+    setIsSuccessOpen(false);
 
     try {
       const result = await saveAssociateDocumentsAction(associateId, values);
@@ -82,11 +99,7 @@ export function AssociateDocumentsSection({
         return;
       }
 
-      setMessage({
-        type: "success",
-        text: "Documentos atualizados com sucesso.",
-      });
-      router.refresh();
+      setIsSuccessOpen(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -94,6 +107,27 @@ export function AssociateDocumentsSection({
 
   return (
     <div className="flex w-full flex-col gap-6">
+      {isSuccessOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f172a]/45 px-6 backdrop-blur-sm">
+          <div
+            role="alertdialog"
+            aria-live="assertive"
+            aria-label="Cadastro salvo com sucesso"
+            className="w-full max-w-md rounded-[28px] border border-emerald-200 bg-white px-6 py-7 text-center shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
+          >
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <SuccessCheckIcon />
+            </div>
+            <p className="mt-5 text-[1.2rem] font-semibold tracking-[0.08em] text-emerald-700">
+              CADASTRO SALVO COM SUCESSO
+            </p>
+            <p className="mt-3 text-sm text-slate-500">
+              Redirecionando para a Base de Associados...
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       <AssociatesPageHeader
         eyebrow="Cadastro complementar"
         title="Documentos com vencimento"
@@ -104,7 +138,7 @@ export function AssociateDocumentsSection({
         action={
           <div className="flex flex-wrap gap-3">
             <Link href={`/associados/${associateId}/editar`} className="df-button-secondary">
-              Voltar para edicao
+              Voltar para edição
             </Link>
             <Link href="/associados" className="df-button-secondary">
               Base de associados
@@ -132,11 +166,7 @@ export function AssociateDocumentsSection({
         {message ? (
           <div
             role="alert"
-            className={`mt-6 rounded-2xl px-4 py-3 text-sm ${
-              message.type === "success"
-                ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border border-red-200 bg-red-50 text-red-700"
-            }`}
+            className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
           >
             {message.text}
           </div>
@@ -177,5 +207,22 @@ export function AssociateDocumentsSection({
         </form>
       </article>
     </div>
+  );
+}
+
+function SuccessCheckIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-7 w-7"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m5 13 4 4L19 7" />
+    </svg>
   );
 }

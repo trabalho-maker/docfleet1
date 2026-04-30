@@ -44,7 +44,12 @@ export function AssociatesTable({
                 className="align-top transition-colors hover:bg-[#FCFDFE]"
               >
                 <td className="px-5 py-4">
-                  <p className="font-semibold text-[#0F172A]">{associate.name}</p>
+                  <Link
+                    href={`/associados/${associate.id}/mensalidades`}
+                    className="font-semibold text-[#0F172A] transition-colors hover:text-[#1D4ED8]"
+                  >
+                    {associate.name}
+                  </Link>
                   <p className="mt-1 text-sm text-[#64748B]">
                     Cadastro ativo desde {formatDate(associate.admissionDate)}
                   </p>
@@ -71,6 +76,13 @@ export function AssociatesTable({
                       className="df-button-secondary"
                     >
                       Ver ficha
+                    </Link>
+
+                    <Link
+                      href={`/associados/${associate.id}/mensalidades`}
+                      className="df-button-secondary"
+                    >
+                      Mensalidades
                     </Link>
 
                     <ActionLink

@@ -26,7 +26,12 @@ const navigationItems = [
 
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
   const pathname = usePathname();
-  const [taxistasExpanded, setTaxistasExpanded] = useState(false);
+  const [associadosExpanded, setAssociadosExpanded] = useState(
+    isAssociatesSubmenuPath(pathname),
+  );
+  const [taxistasExpanded, setTaxistasExpanded] = useState(
+    pathname.startsWith("/taxistas/cadastro"),
+  );
 
   return (
     <aside className="flex h-full flex-col bg-[linear-gradient(180deg,#1B3555_0%,#243F62_100%)] text-white md:sticky md:top-0 md:min-h-screen">
@@ -37,7 +42,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           </div>
           <div className="hidden xl:block">
             <p className="text-base font-semibold tracking-tight">TransDocs</p>
-            <p className="text-sm text-white/65">Gestão de Documentos</p>
+            <p className="text-sm text-white/65">Gestao de Documentos</p>
           </div>
         </div>
       </div>
@@ -54,52 +59,41 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
         </div>
       </div>
 
-      <nav aria-label="Navegação principal" className="flex-1 px-3 py-6">
+      <nav aria-label="Navegacao principal" className="flex-1 px-3 py-6">
         <div className="space-y-2">
           {navigationItems.map((item) =>
-            item.href === "/taxistas" ? (
-              <div key={item.href} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <NavigationItem
-                    href={item.href}
-                    active={isActivePath(pathname, item.href)}
-                    icon={item.icon}
-                    title={item.label}
-                    className="flex-1"
-                  >
-                    {item.label}
-                  </NavigationItem>
-                  <button
-                    type="button"
-                    aria-label={
-                      taxistasExpanded
-                        ? "Recolher submenu de taxistas"
-                        : "Expandir submenu de taxistas"
-                    }
-                    aria-expanded={taxistasExpanded}
-                    onClick={() => setTaxistasExpanded((current) => !current)}
-                    className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-[#F39C12] transition-all duration-200 hover:bg-white/10 hover:text-[#FFB238] xl:inline-flex"
-                  >
-                    <ChevronIcon expanded={taxistasExpanded} />
-                  </button>
-                </div>
-
-                {taxistasExpanded ? (
-                  <div className="hidden pl-4 pr-2 xl:block">
-                    <Link
-                      href="/taxistas/cadastro"
-                      className={`flex items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-medium transition-colors ${
-                        pathname === "/taxistas/cadastro"
-                          ? "bg-white/10 text-white"
-                          : "text-white/62 hover:bg-white/8 hover:text-white"
-                      }`}
-                    >
-                      <span className="inline-flex h-2 w-2 rounded-full bg-[#F59E0B]" />
-                      <span>Cadastro</span>
-                    </Link>
-                  </div>
-                ) : null}
-              </div>
+            item.href === "/associados" ? (
+              <ExpandableNavigationGroup
+                key={item.href}
+                item={item}
+                pathname={pathname}
+                expanded={associadosExpanded}
+                onToggle={() => setAssociadosExpanded((current) => !current)}
+                expandLabel="associados"
+                childrenItems={[
+                  {
+                    href: "/associados/mensalidades",
+                    label: "Mensalidades",
+                    active: isAssociatesSubmenuPath(pathname),
+                  },
+                ]}
+              />
+            ) : item.href === "/taxistas" ? (
+              <ExpandableNavigationGroup
+                key={item.href}
+                item={item}
+                pathname={pathname}
+                expanded={taxistasExpanded}
+                onToggle={() => setTaxistasExpanded((current) => !current)}
+                expandLabel="taxistas"
+                childrenItems={[
+                  {
+                    href: "/taxistas/cadastro",
+                    label: "Cadastro",
+                    active: pathname === "/taxistas/cadastro",
+                  },
+                ]}
+              />
             ) : (
               <NavigationItem
                 key={item.href}
@@ -134,6 +128,69 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
         v1.0.0 · 2026
       </div>
     </aside>
+  );
+}
+
+function ExpandableNavigationGroup({
+  item,
+  pathname,
+  expanded,
+  onToggle,
+  expandLabel,
+  childrenItems,
+}: {
+  item: (typeof navigationItems)[number];
+  pathname: string;
+  expanded: boolean;
+  onToggle: () => void;
+  expandLabel: string;
+  childrenItems: Array<{
+    href: string;
+    label: string;
+    active: boolean;
+  }>;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <NavigationItem
+          href={item.href}
+          active={isActivePath(pathname, item.href)}
+          icon={item.icon}
+          title={item.label}
+          className="flex-1"
+        >
+          {item.label}
+        </NavigationItem>
+        <button
+          type="button"
+          aria-label={
+            expanded
+              ? `Recolher submenu de ${expandLabel}`
+              : `Expandir submenu de ${expandLabel}`
+          }
+          aria-expanded={expanded}
+          onClick={onToggle}
+          className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-[#F39C12] transition-all duration-200 hover:bg-white/10 hover:text-[#FFB238] xl:inline-flex"
+        >
+          <ChevronIcon expanded={expanded} />
+        </button>
+      </div>
+
+      {expanded ? (
+        <div className="hidden pl-4 pr-2 xl:block">
+          {childrenItems.map((childItem) => (
+            <SubmenuLink
+              key={childItem.href}
+              href={childItem.href}
+              active={childItem.active}
+            >
+              {childItem.label}
+            </SubmenuLink>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -172,8 +229,36 @@ function NavigationItem({
   );
 }
 
+function SubmenuLink({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-medium transition-colors ${
+        active
+          ? "bg-white/10 text-white"
+          : "text-white/62 hover:bg-white/8 hover:text-white"
+      }`}
+    >
+      <span className="inline-flex h-2 w-2 rounded-full bg-[#F59E0B]" />
+      <span>{children}</span>
+    </Link>
+  );
+}
+
 function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function isAssociatesSubmenuPath(pathname: string) {
+  return pathname === "/associados/mensalidades" || pathname.includes("/mensalidades");
 }
 
 function getUserInitials(name: string) {

@@ -5,6 +5,7 @@ import {
   withSqliteWriteLock,
 } from "@/lib/storage/sqlite-storage";
 import { SqliteAssociateRepository } from "@/features/associates/server/associate.repository";
+import { SqliteMembershipFeeRepository } from "@/features/membership-fees/server/membership-fee.repository";
 import {
   AssociateConflictError,
   AssociateNotFoundError,
@@ -15,6 +16,7 @@ import { createDocumentWithAlerts } from "@/features/documents/server/document-s
 
 describe("associate service", () => {
   const repository = new SqliteAssociateRepository();
+  const membershipFeeRepository = new SqliteMembershipFeeRepository();
   const service = createAssociateService();
 
   beforeEach(async () => {
@@ -39,6 +41,17 @@ describe("associate service", () => {
     expect(created.cpf).toBe("52998224725");
     expect(created.registrationNumber).toBe("MAT-2026-0100");
     expect(created.enderecoCompleto).toBeNull();
+    await expect(
+      membershipFeeRepository.findSheetByAssociateIdAndYear(
+        created.id,
+        new Date().getUTCFullYear(),
+      ),
+    ).resolves.toMatchObject({
+      associateId: created.id,
+      referenceYear: new Date().getUTCFullYear(),
+      status: "active",
+      snapshotName: "Carlos Alberto",
+    });
   });
 
   it("keeps a created associate after the storage layer is restarted", async () => {
@@ -244,15 +257,33 @@ describe("associate service", () => {
             ["asc_01"],
           )[0]?.values?.[0]?.[0],
         ) || 0;
+      const membershipFeeSheets =
+        Number(
+          db.exec(
+            "SELECT COUNT(*) FROM membership_fee_sheets WHERE associate_id = ?",
+            ["asc_01"],
+          )[0]?.values?.[0]?.[0],
+        ) || 0;
+      const membershipFeePayments =
+        Number(
+          db.exec(
+            "SELECT COUNT(*) FROM membership_fee_payments WHERE associate_id = ?",
+            ["asc_01"],
+          )[0]?.values?.[0]?.[0],
+        ) || 0;
 
       expect({
         associateProfiles,
         operationProfiles,
         taxistaProfiles,
+        membershipFeeSheets,
+        membershipFeePayments,
       }).toEqual({
         associateProfiles: 0,
         operationProfiles: 0,
         taxistaProfiles: 0,
+        membershipFeeSheets: 0,
+        membershipFeePayments: 0,
       });
     });
   });
@@ -283,6 +314,14 @@ describe("associate service", () => {
     ).rejects.toThrow("PROFILE_WRITE_FAILED");
 
     expect(await repository.findByRegistrationNumber("MAT-2026-0100")).toBeNull();
+    await withSqliteDatabase((db) => {
+      const totalSheets =
+        Number(
+          db.exec("SELECT COUNT(*) FROM membership_fee_sheets")[0]?.values?.[0]?.[0],
+        ) || 0;
+
+      expect(totalSheets).toBe(0);
+    });
   });
 
   it("filters associates by search, CPF, category, modalidade and status", async () => {

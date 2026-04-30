@@ -157,6 +157,38 @@ function createCoreTables(db: Database) {
       FOREIGN KEY (associate_id) REFERENCES associates(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS membership_fee_sheets (
+      id TEXT PRIMARY KEY,
+      associate_id TEXT NOT NULL,
+      reference_year INTEGER NOT NULL,
+      status TEXT NOT NULL,
+      snapshot_name TEXT,
+      snapshot_address TEXT,
+      snapshot_category TEXT,
+      snapshot_phone TEXT,
+      snapshot_registration_suffix TEXT,
+      snapshot_inss TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (associate_id) REFERENCES associates(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS membership_fee_payments (
+      id TEXT PRIMARY KEY,
+      sheet_id TEXT NOT NULL,
+      associate_id TEXT NOT NULL,
+      competence_year INTEGER NOT NULL,
+      competence_month INTEGER NOT NULL CHECK (competence_month BETWEEN 1 AND 12),
+      paid_at TEXT NOT NULL,
+      paid_by_user_id TEXT,
+      notes TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (sheet_id) REFERENCES membership_fee_sheets(id) ON DELETE CASCADE,
+      FOREIGN KEY (associate_id) REFERENCES associates(id) ON DELETE CASCADE,
+      FOREIGN KEY (paid_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+    );
+
     CREATE TABLE IF NOT EXISTS taxista_profiles (
       associate_id TEXT PRIMARY KEY,
       status_alvara TEXT NOT NULL DEFAULT 'CADASTRO',
@@ -255,6 +287,31 @@ function createIndexes(db: Database) {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_associate_profiles_cnpj_empresa_unique_non_empty
     ON associate_profiles(cnpj_empresa)
     WHERE cnpj_empresa IS NOT NULL AND TRIM(cnpj_empresa) <> '';
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_membership_fee_sheets_associate_year_unique
+    ON membership_fee_sheets(associate_id, reference_year);
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_membership_fee_sheets_associate_active_unique
+    ON membership_fee_sheets(associate_id)
+    WHERE status = 'active';
+
+    CREATE INDEX IF NOT EXISTS idx_membership_fee_sheets_status_year
+    ON membership_fee_sheets(status, reference_year);
+
+    CREATE INDEX IF NOT EXISTS idx_membership_fee_sheets_associate_year
+    ON membership_fee_sheets(associate_id, reference_year);
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_membership_fee_payments_associate_competence_unique
+    ON membership_fee_payments(associate_id, competence_year, competence_month);
+
+    CREATE INDEX IF NOT EXISTS idx_membership_fee_payments_associate_year
+    ON membership_fee_payments(associate_id, competence_year);
+
+    CREATE INDEX IF NOT EXISTS idx_membership_fee_payments_competence
+    ON membership_fee_payments(competence_year, competence_month);
+
+    CREATE INDEX IF NOT EXISTS idx_membership_fee_payments_sheet_id
+    ON membership_fee_payments(sheet_id);
 
     CREATE INDEX IF NOT EXISTS idx_taxista_profiles_placa
     ON taxista_profiles(placa);

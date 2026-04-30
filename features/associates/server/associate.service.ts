@@ -8,6 +8,11 @@ import {
   type AssociateProfileRepository,
 } from "@/features/associates/server/associate-profile.repository";
 import {
+  SqliteMembershipFeeRepository,
+  type MembershipFeeRepository,
+} from "@/features/membership-fees/server/membership-fee.repository";
+import { createMembershipFeeService } from "@/features/membership-fees/server/membership-fee.service";
+import {
   validateAssociateFilters,
   validateCreateAssociateInput,
   validateUpdateAssociateInput,
@@ -50,8 +55,10 @@ type AssociateServiceOptions = {
   adapter?: DatabaseAdapter;
   repository?: AssociateRepository;
   profileRepository?: AssociateProfileRepository;
+  membershipFeeRepository?: MembershipFeeRepository;
   repositoryFactory?: (adapter: DatabaseAdapter) => AssociateRepository;
   profileRepositoryFactory?: (adapter: DatabaseAdapter) => AssociateProfileRepository;
+  membershipFeeRepositoryFactory?: (adapter: DatabaseAdapter) => MembershipFeeRepository;
 };
 
 export function createAssociateService(options: AssociateServiceOptions = {}) {
@@ -62,21 +69,31 @@ export function createAssociateService(options: AssociateServiceOptions = {}) {
   const profileRepositoryFactory =
     options.profileRepositoryFactory ??
     ((scopedAdapter: DatabaseAdapter) => new SqliteAssociateProfileRepository(scopedAdapter));
+  const membershipFeeRepositoryFactory =
+    options.membershipFeeRepositoryFactory ??
+    ((scopedAdapter: DatabaseAdapter) => new SqliteMembershipFeeRepository(scopedAdapter));
   const repository = options.repository ?? repositoryFactory(adapter);
   const profileRepository =
     options.profileRepository ?? profileRepositoryFactory(adapter);
-  const canUseScopedTransaction = !options.repository && !options.profileRepository;
+  const membershipFeeRepository =
+    options.membershipFeeRepository ?? membershipFeeRepositoryFactory(adapter);
+  const canUseScopedTransaction =
+    !options.repository &&
+    !options.profileRepository &&
+    !options.membershipFeeRepository;
 
   async function runWriteOperation<T>(
     operation: (repositories: {
       repository: AssociateRepository;
       profileRepository: AssociateProfileRepository;
+      membershipFeeRepository: MembershipFeeRepository;
     }) => Promise<T>,
   ) {
     if (!canUseScopedTransaction) {
       return operation({
         repository,
         profileRepository,
+        membershipFeeRepository,
       });
     }
 
@@ -86,6 +103,7 @@ export function createAssociateService(options: AssociateServiceOptions = {}) {
       return operation({
         repository: repositoryFactory(scopedAdapter),
         profileRepository: profileRepositoryFactory(scopedAdapter),
+        membershipFeeRepository: membershipFeeRepositoryFactory(scopedAdapter),
       });
     });
   }
@@ -143,27 +161,37 @@ export function createAssociateService(options: AssociateServiceOptions = {}) {
         throw new AssociateValidationError(getFirstErrorMessage(validation.errors));
       }
 
-      return runWriteOperation(async ({ repository, profileRepository }) => {
-        await assertCpfAvailable(repository, validation.data.cpf);
-        await assertRegistrationNumberAvailable(
-          repository,
-          validation.data.registrationNumber,
-        );
-        await assertRgAvailable(profileRepository, validation.data.rg);
-        await assertCnhAvailable(profileRepository, validation.data.cnh);
-        await assertCompanyCnpjAvailable(
-          profileRepository,
-          validation.data.cnpjEmpresa,
-        );
+      return runWriteOperation(
+        async ({ repository, profileRepository, membershipFeeRepository }) => {
+          await assertCpfAvailable(repository, validation.data.cpf);
+          await assertRegistrationNumberAvailable(
+            repository,
+            validation.data.registrationNumber,
+          );
+          await assertRgAvailable(profileRepository, validation.data.rg);
+          await assertCnhAvailable(profileRepository, validation.data.cnh);
+          await assertCompanyCnpjAvailable(
+            profileRepository,
+            validation.data.cnpjEmpresa,
+          );
 
-        const createdAssociate = await repository.create(validation.data);
-        const savedProfile = await profileRepository.upsertByAssociateId(
-          createdAssociate.id,
-          extractAssociateProfileData(validation.data),
-        );
+          const createdAssociate = await repository.create(validation.data);
+          const savedProfile = await profileRepository.upsertByAssociateId(
+            createdAssociate.id,
+            extractAssociateProfileData(validation.data),
+          );
+          const membershipFeeService = createMembershipFeeService({
+            adapter,
+            repository: membershipFeeRepository,
+            associateRepository: repository,
+            profileRepository,
+          });
 
-        return mergeAssociateWithProfile(createdAssociate, savedProfile);
-      });
+          await membershipFeeService.getOrCreateCurrentSheet(createdAssociate.id);
+
+          return mergeAssociateWithProfile(createdAssociate, savedProfile);
+        },
+      );
     },
 
     async updateAssociate(id: string, input: UpdateAssociateInput) {

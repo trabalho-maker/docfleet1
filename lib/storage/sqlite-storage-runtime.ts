@@ -135,6 +135,8 @@ export async function resetSqliteDatabase(options?: ResetSqliteDatabaseOptions) 
     db.run("DROP TABLE IF EXISTS taxista_profiles__old");
     db.run("DROP TABLE IF EXISTS associate_operation_profiles__old");
     db.run("DROP TABLE IF EXISTS associate_profiles__old");
+    db.run("DROP TABLE IF EXISTS membership_fee_payments__old");
+    db.run("DROP TABLE IF EXISTS membership_fee_sheets__old");
     db.run("DROP TABLE IF EXISTS documents__old");
     db.run("DROP TABLE IF EXISTS alerts");
     db.run("DROP TABLE IF EXISTS password_reset_tokens");
@@ -142,6 +144,8 @@ export async function resetSqliteDatabase(options?: ResetSqliteDatabaseOptions) 
     db.run("DROP TABLE IF EXISTS taxista_profiles");
     db.run("DROP TABLE IF EXISTS associate_operation_profiles");
     db.run("DROP TABLE IF EXISTS associate_profiles");
+    db.run("DROP TABLE IF EXISTS membership_fee_payments");
+    db.run("DROP TABLE IF EXISTS membership_fee_sheets");
     db.run("DROP TABLE IF EXISTS documents");
     db.run("DROP TABLE IF EXISTS associates");
     db.run("DROP TABLE IF EXISTS users");
