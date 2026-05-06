@@ -26,6 +26,7 @@ import type {
   MembershipFeePayment,
   MembershipFeeSheet,
   MembershipFeeSheetView,
+  ReverseMembershipPaymentInput,
 } from "@/features/membership-fees/types";
 
 const MONTH_LABELS = [
@@ -228,6 +229,35 @@ export function createMembershipFeeService(
           paidByUserId: input.paidByUserId ?? null,
           notes: input.notes ?? null,
         });
+      });
+    },
+
+    async reverseMembershipPayment(
+      input: ReverseMembershipPaymentInput,
+    ) {
+      const normalizedAssociateId = normalizeRequiredId(input.associateId);
+      const competenceYear = normalizeReferenceYear(input.competenceYear);
+      const competenceMonth = normalizeCompetenceMonth(input.competenceMonth);
+
+      return runWriteOperation(async (repositories) => {
+        await getAssociateWithProfile(
+          repositories.associateRepository,
+          repositories.profileRepository,
+          normalizedAssociateId,
+        );
+        const existingPayment = await repositories.repository.findPaymentByCompetence(
+          normalizedAssociateId,
+          competenceYear,
+          competenceMonth,
+        );
+
+        if (!existingPayment) {
+          throw new MembershipFeeNotFoundError("MEMBERSHIP_FEE_PAYMENT_NOT_FOUND");
+        }
+
+        await repositories.repository.deletePaymentById(existingPayment.id);
+
+        return existingPayment;
       });
     },
 
@@ -486,7 +516,7 @@ export function calculateMembershipStatus(
       competenceLabel,
       status,
       paidAt: payment?.paidAt ?? null,
-      canConfirmPayment: !payment && status !== "future",
+      canConfirmPayment: !payment,
     });
   }
 

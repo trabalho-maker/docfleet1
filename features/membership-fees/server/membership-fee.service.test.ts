@@ -160,6 +160,213 @@ describe("membership fee service", () => {
     ).toEqual(["5/2026", "6/2026", "7/2026"]);
   });
 
+  it("allows paying a future month in advance", async () => {
+    const paidAt = new Date("2026-05-10T14:30:00.000Z");
+
+    await service.confirmMembershipPayment(
+      {
+        associateId: "asc_01",
+        competenceYear: 2026,
+        competenceMonth: 6,
+      },
+      paidAt,
+    );
+
+    const sheetView = await service.getMembershipFeeSheet("asc_01", 2026, paidAt);
+    const june = sheetView.months.find((month) => month.month === 6);
+
+    expect(june).toMatchObject({
+      status: "paid",
+      canConfirmPayment: false,
+      paidAt: paidAt.toISOString(),
+    });
+    expect(sheetView.summary.totalOverdueMonths).toBe(4);
+    expect(sheetView.summary.futureMonths).toBe(6);
+  });
+
+  it("allows paying the current month", async () => {
+    const paidAt = new Date("2026-05-10T14:30:00.000Z");
+
+    await service.confirmMembershipPayment(
+      {
+        associateId: "asc_01",
+        competenceYear: 2026,
+        competenceMonth: 5,
+      },
+      paidAt,
+    );
+
+    const sheetView = await service.getMembershipFeeSheet("asc_01", 2026, paidAt);
+    const may = sheetView.months.find((month) => month.month === 5);
+
+    expect(may).toMatchObject({
+      status: "paid",
+      canConfirmPayment: false,
+      paidAt: paidAt.toISOString(),
+    });
+    expect(sheetView.summary.currentOpenMonths).toBe(0);
+    expect(sheetView.summary.totalOverdueMonths).toBe(4);
+  });
+
+  it("allows paying an overdue month and preserves other overdue months", async () => {
+    const paidAt = new Date("2026-05-10T14:30:00.000Z");
+
+    await service.confirmMembershipPayment(
+      {
+        associateId: "asc_01",
+        competenceYear: 2026,
+        competenceMonth: 2,
+      },
+      paidAt,
+    );
+
+    const sheetView = await service.getMembershipFeeSheet("asc_01", 2026, paidAt);
+    const february = sheetView.months.find((month) => month.month === 2);
+    const january = sheetView.months.find((month) => month.month === 1);
+
+    expect(february).toMatchObject({
+      status: "paid",
+      canConfirmPayment: false,
+      paidAt: paidAt.toISOString(),
+    });
+    expect(january?.status).toBe("critical_overdue");
+    expect(sheetView.summary.totalOverdueMonths).toBe(3);
+  });
+
+  it("removes only the selected payment when reversing and keeps the sheet", async () => {
+    const paidAt = new Date("2026-05-10T14:30:00.000Z");
+
+    await service.confirmMembershipPayment(
+      {
+        associateId: "asc_01",
+        competenceYear: 2026,
+        competenceMonth: 2,
+      },
+      paidAt,
+    );
+    await service.confirmMembershipPayment(
+      {
+        associateId: "asc_01",
+        competenceYear: 2026,
+        competenceMonth: 5,
+      },
+      paidAt,
+    );
+
+    await service.reverseMembershipPayment({
+      associateId: "asc_01",
+      competenceYear: 2026,
+      competenceMonth: 2,
+    });
+
+    const sheetView = await service.getMembershipFeeSheet("asc_01", 2026, paidAt);
+    const february = sheetView.months.find((month) => month.month === 2);
+    const may = sheetView.months.find((month) => month.month === 5);
+    const payments = await repository.findPaymentsByAssociateId("asc_01");
+    const years = await repository.listSheetYearsByAssociateId("asc_01");
+
+    expect(february?.status).toBe("critical_overdue");
+    expect(may?.status).toBe("paid");
+    expect(payments).toHaveLength(1);
+    expect(payments[0]).toMatchObject({
+      competenceMonth: 5,
+      competenceYear: 2026,
+    });
+    expect(years).toEqual([2026]);
+  });
+
+  it("allows paying the same competence again after reversing", async () => {
+    const paidAt = new Date("2026-05-10T14:30:00.000Z");
+    const repaidAt = new Date("2026-05-11T09:15:00.000Z");
+
+    await service.confirmMembershipPayment(
+      {
+        associateId: "asc_01",
+        competenceYear: 2026,
+        competenceMonth: 6,
+      },
+      paidAt,
+    );
+    await service.reverseMembershipPayment({
+      associateId: "asc_01",
+      competenceYear: 2026,
+      competenceMonth: 6,
+    });
+    const payment = await service.confirmMembershipPayment(
+      {
+        associateId: "asc_01",
+        competenceYear: 2026,
+        competenceMonth: 6,
+      },
+      repaidAt,
+    );
+
+    const sheetView = await service.getMembershipFeeSheet("asc_01", 2026, repaidAt);
+    const june = sheetView.months.find((month) => month.month === 6);
+
+    expect(payment.paidAt).toBe(repaidAt.toISOString());
+    expect(june?.status).toBe("paid");
+  });
+
+  it("recalculates the month status correctly after reversing a paid competence", async () => {
+    const currentDate = new Date("2026-05-10T14:30:00.000Z");
+
+    await service.confirmMembershipPayment(
+      {
+        associateId: "asc_01",
+        competenceYear: 2026,
+        competenceMonth: 7,
+      },
+      currentDate,
+    );
+    await service.confirmMembershipPayment(
+      {
+        associateId: "asc_01",
+        competenceYear: 2026,
+        competenceMonth: 5,
+      },
+      currentDate,
+    );
+    await service.confirmMembershipPayment(
+      {
+        associateId: "asc_01",
+        competenceYear: 2026,
+        competenceMonth: 4,
+      },
+      currentDate,
+    );
+
+    await service.reverseMembershipPayment({
+      associateId: "asc_01",
+      competenceYear: 2026,
+      competenceMonth: 7,
+    });
+    await service.reverseMembershipPayment({
+      associateId: "asc_01",
+      competenceYear: 2026,
+      competenceMonth: 5,
+    });
+    await service.reverseMembershipPayment({
+      associateId: "asc_01",
+      competenceYear: 2026,
+      competenceMonth: 4,
+    });
+
+    const sheetView = await service.getMembershipFeeSheet("asc_01", 2026, currentDate);
+    const april = sheetView.months.find((month) => month.month === 4);
+    const may = sheetView.months.find((month) => month.month === 5);
+    const july = sheetView.months.find((month) => month.month === 7);
+
+    expect(april?.status).toBe("critical_overdue");
+    expect(may?.status).toBe("current_open");
+    expect(july?.status).toBe("future");
+    expect(sheetView.summary.paidMonths).toBe(0);
+    expect(sheetView.summary.currentOpenMonths).toBe(1);
+    expect(sheetView.summary.futureMonths).toBe(7);
+    expect(sheetView.summary.totalOverdueMonths).toBe(4);
+    expect(sheetView.chargeEligible).toBe(true);
+  });
+
   it("marks the current month as open and not overdue", async () => {
     const sheetView = await service.getOrCreateCurrentSheet(
       "asc_01",
@@ -179,7 +386,30 @@ describe("membership fee service", () => {
     const august = sheetView.months.find((month) => month.month === 8);
 
     expect(august?.status).toBe("future");
+    expect(august?.canConfirmPayment).toBe(true);
     expect(sheetView.summary.futureMonths).toBe(5);
+  });
+
+  it("keeps a future month paid without turning it into debt and preserves previous overdue months", async () => {
+    const currentDate = new Date("2026-05-10T14:30:00.000Z");
+
+    await service.confirmMembershipPayment(
+      {
+        associateId: "asc_01",
+        competenceYear: 2026,
+        competenceMonth: 7,
+      },
+      currentDate,
+    );
+
+    const sheetView = await service.getMembershipFeeSheet("asc_01", 2026, currentDate);
+    const july = sheetView.months.find((month) => month.month === 7);
+    const april = sheetView.months.find((month) => month.month === 4);
+
+    expect(july?.status).toBe("paid");
+    expect(april?.status).toBe("critical_overdue");
+    expect(sheetView.summary.totalOverdueMonths).toBe(4);
+    expect(sheetView.summary.futureMonths).toBe(6);
   });
 
   it("marks previous unpaid months as overdue", async () => {
@@ -331,6 +561,19 @@ describe("membership fee service", () => {
 
     expect(documentsAfter).toEqual(documentsBefore);
     expect(alertsAfter).toBe(alertsBefore);
+  });
+
+  it("returns a friendly not-found error when trying to reverse a competence without payment", async () => {
+    await expect(
+      service.reverseMembershipPayment({
+        associateId: "asc_01",
+        competenceYear: 2026,
+        competenceMonth: 9,
+      }),
+    ).rejects.toMatchObject({
+      name: "MembershipFeeNotFoundError",
+      message: "MEMBERSHIP_FEE_PAYMENT_NOT_FOUND",
+    });
   });
 });
 

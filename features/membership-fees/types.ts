@@ -84,6 +84,12 @@ export type ConfirmMembershipPaymentInput = {
   notes?: string | null;
 };
 
+export type ReverseMembershipPaymentInput = {
+  associateId: string;
+  competenceYear: number;
+  competenceMonth: number;
+};
+
 export type MembershipFeeOverviewStatusFilter =
   | "all"
   | "up_to_date"

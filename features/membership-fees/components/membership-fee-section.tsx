@@ -8,7 +8,9 @@ import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
 import { AssociatesPageHeader } from "@/features/associates/components/associates-page-header";
 import { MetricCard } from "@/features/dashboard/components/metric-card";
 import { confirmMembershipPaymentAction } from "@/features/membership-fees/actions/confirm-membership-payment";
+import { reverseMembershipPaymentAction } from "@/features/membership-fees/actions/reverse-membership-payment";
 import type {
+  MembershipFeePayment,
   MembershipFeeMonthState,
   MembershipFeeSheetView,
 } from "@/features/membership-fees/types";
@@ -33,6 +35,8 @@ export function MembershipFeeSection({
   const router = useRouter();
   const [selectedMonth, setSelectedMonth] = useState<MembershipFeeMonthState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReversing, setIsReversing] = useState(false);
+  const [isReverseConfirmationOpen, setIsReverseConfirmationOpen] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error" | "info";
     message: string;
@@ -40,9 +44,12 @@ export function MembershipFeeSection({
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const associateId = sheetView.associate.id;
   const basePath = `/associados/${associateId}/mensalidades`;
+  const selectedPayment = selectedMonth
+    ? findPaymentForMonth(sheetView.payments, sheetView.sheet.referenceYear, selectedMonth.month)
+    : null;
 
   async function handleConfirmPayment() {
-    if (!selectedMonth) {
+    if (!selectedMonth || selectedMonth.status === "paid") {
       return;
     }
 
@@ -80,6 +87,48 @@ export function MembershipFeeSection({
     }
   }
 
+  async function handleReversePayment() {
+    if (!selectedMonth || selectedMonth.status !== "paid") {
+      return;
+    }
+
+    setIsReversing(true);
+    setFeedback(null);
+
+    try {
+      const result = await reverseMembershipPaymentAction({
+        associateId,
+        competenceYear: sheetView.sheet.referenceYear,
+        competenceMonth: selectedMonth.month,
+      });
+
+      if (!result.success) {
+        setFeedback({
+          type: result.notFound ? "info" : "error",
+          message: result.formError,
+        });
+
+        if (result.notFound) {
+          setSelectedMonth(null);
+          setIsReverseConfirmationOpen(false);
+          router.refresh();
+        }
+
+        return;
+      }
+
+      setIsReverseConfirmationOpen(false);
+      setSelectedMonth(null);
+      setFeedback({
+        type: "success",
+        message: `Pagamento de ${result.competenceLabel} estornado com sucesso.`,
+      });
+      router.refresh();
+    } finally {
+      setIsReversing(false);
+    }
+  }
+
   async function handleCopyMessage() {
     if (!sheetView.chargeMessage) {
       return;
@@ -105,6 +154,12 @@ export function MembershipFeeSection({
         supportingText="A ficha organiza competencias mensais, confirma pagamentos com data real e preserva o historico anual do associado."
         action={
           <div className="flex flex-wrap gap-3">
+            <Link
+              href={`/associados/${associateId}/mensalidades/imprimir${sheetView.sheet.referenceYear === currentYear ? "" : `?year=${sheetView.sheet.referenceYear}`}`}
+              className="df-button-secondary"
+            >
+              Imprimir ficha
+            </Link>
             <Link href={`/associados/${associateId}/editar`} className="df-button-secondary">
               Editar
             </Link>
@@ -286,7 +341,17 @@ export function MembershipFeeSection({
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {sheetView.months.map((month) => {
             const cardPalette = getMonthPalette(month.status);
-            const isClickable = canEdit && month.canConfirmPayment;
+            const isPaid = month.status === "paid";
+            const isClickable = isPaid || (canEdit && month.canConfirmPayment);
+            const helpText = month.paidAt
+              ? `Pago em ${formatPaidAt(month.paidAt)}. Clique para ver detalhes.`
+              : month.status === "future"
+                ? canEdit
+                  ? "Competencia futura - pode ser paga antecipadamente."
+                  : "Competencia futura disponivel para pagamento antecipado por usuarios com permissao de edicao."
+                : canEdit && month.canConfirmPayment
+                  ? "Clique para confirmar o pagamento desta competencia."
+                  : "Somente usuarios com permissao de edicao podem confirmar pagamentos.";
 
             return (
               <button
@@ -294,6 +359,7 @@ export function MembershipFeeSection({
                 type="button"
                 disabled={!isClickable}
                 onClick={() => setSelectedMonth(month)}
+                title={month.status === "future" && !month.paidAt ? "Competencia futura - pode ser paga antecipadamente" : undefined}
                 className={`group flex min-h-[184px] flex-col rounded-[28px] border p-5 text-left transition-all ${cardPalette.wrapper} ${
                   isClickable
                     ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_24px_50px_rgba(15,23,42,0.10)]"
@@ -315,19 +381,7 @@ export function MembershipFeeSection({
                 </div>
 
                 <div className="mt-5 flex-1">
-                  {month.paidAt ? (
-                    <p className="text-sm leading-6 text-[var(--color-muted)]">
-                      Pago em {formatPaidAt(month.paidAt)}
-                    </p>
-                  ) : (
-                    <p className="text-sm leading-6 text-[var(--color-muted)]">
-                      {month.status === "future"
-                        ? "Competencia futura ainda neutra."
-                        : canEdit && month.canConfirmPayment
-                          ? "Clique para confirmar o pagamento desta competencia."
-                          : "Somente usuarios com permissao de edicao podem confirmar pagamentos."}
-                    </p>
-                  )}
+                  <p className="text-sm leading-6 text-[var(--color-muted)]">{helpText}</p>
                 </div>
 
                 <div className={`mt-5 h-2.5 rounded-full ${cardPalette.bar}`} aria-hidden="true" />
@@ -345,12 +399,20 @@ export function MembershipFeeSection({
             aria-labelledby="membership-payment-dialog-title"
             className="w-full max-w-lg rounded-[32px] border border-[var(--color-border)] bg-white p-6 shadow-[0_30px_90px_rgba(15,23,42,0.22)]"
           >
-            <p className="df-eyebrow">Confirmacao de pagamento</p>
+            <p className="df-eyebrow">
+              {selectedMonth.status === "paid"
+                ? "Pagamento registrado"
+                : "Confirmacao de pagamento"}
+            </p>
             <h2
               id="membership-payment-dialog-title"
               className="mt-2 text-[1.9rem] font-semibold tracking-tight text-[var(--color-foreground)]"
             >
-              Confirmar pagamento da mensalidade
+              {selectedMonth.status === "paid"
+                ? "Pagamento registrado"
+                : selectedMonth.status === "future"
+                ? "Confirmar pagamento antecipado da mensalidade"
+                : "Confirmar pagamento da mensalidade"}
             </h2>
             <div className="mt-5 rounded-[24px] border border-[var(--color-border)] bg-[#F8FAFC] p-5">
               <p className="text-sm text-[var(--color-muted)]">Associado</p>
@@ -361,34 +423,130 @@ export function MembershipFeeSection({
               <p className="mt-1 text-base font-semibold text-[var(--color-foreground)]">
                 {selectedMonth.competenceLabel}
               </p>
+              <p className="mt-4 text-sm text-[var(--color-muted)]">Status</p>
+              <p className="mt-1 text-base font-semibold text-[var(--color-foreground)]">
+                {getMonthStatusLabel(selectedMonth.status)}
+              </p>
+              {selectedPayment?.paidAt ? (
+                <>
+                  <p className="mt-4 text-sm text-[var(--color-muted)]">Pago em</p>
+                  <p className="mt-1 text-base font-semibold text-[var(--color-foreground)]">
+                    {formatPaidAt(selectedPayment.paidAt)}
+                  </p>
+                </>
+              ) : null}
+              {selectedMonth.status === "paid" ? (
+                <>
+                  <p className="mt-4 text-sm text-[var(--color-muted)]">Observacao</p>
+                  <p className="mt-1 text-base text-[var(--color-foreground)]">
+                    {selectedPayment?.notes ?? "Sem observacao registrada."}
+                  </p>
+                </>
+              ) : null}
             </div>
             <p className="mt-5 text-sm leading-6 text-[var(--color-muted)]">
-              Ao confirmar, o sistema gravara a data real do pagamento e atualizara a ficha imediatamente.
+              {selectedMonth.status === "paid"
+                ? "Esta competencia ja possui pagamento confirmado. Se o lancamento foi feito por engano, voce pode estornar apenas este pagamento."
+                : selectedMonth.status === "future"
+                ? "Ao confirmar, o sistema gravara a data real do pagamento antecipado e mantera a competencia mensal sem alterar os atrasos anteriores."
+                : "Ao confirmar, o sistema gravara a data real do pagamento e atualizara a ficha imediatamente."}
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={() => setSelectedMonth(null)}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isReversing}
+                className="df-button-secondary sm:flex-1"
+              >
+                Fechar
+              </button>
+              {selectedMonth.status === "paid" ? (
+                canEdit ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsReverseConfirmationOpen(true)}
+                    disabled={isReversing}
+                    className="df-button-primary sm:flex-1"
+                  >
+                    Estornar pagamento
+                  </button>
+                ) : null
+              ) : (
+                <Button
+                  type="button"
+                  onClick={() => void handleConfirmPayment()}
+                  isLoading={isSubmitting}
+                  loadingLabel="Confirmando..."
+                  className="sm:flex-1"
+                >
+                  Confirmar pagamento
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {selectedMonth && isReverseConfirmationOpen ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0F172A]/60 px-6 backdrop-blur-sm">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="membership-reverse-dialog-title"
+            className="w-full max-w-md rounded-[32px] border border-[var(--color-border)] bg-white p-6 shadow-[0_30px_90px_rgba(15,23,42,0.24)]"
+          >
+            <p className="df-eyebrow">Confirmacao de estorno</p>
+            <h2
+              id="membership-reverse-dialog-title"
+              className="mt-2 text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]"
+            >
+              Estornar pagamento?
+            </h2>
+            <p className="mt-4 text-sm leading-6 text-[var(--color-muted)]">
+              Esta acao removera o lancamento de pagamento desta competencia. A mensalidade voltara ao status correspondente ao mes.
+            </p>
+            <p className="mt-4 text-sm font-semibold text-[var(--color-foreground)]">
+              Tem certeza que deseja remover o pagamento desta competencia?
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => setIsReverseConfirmationOpen(false)}
+                disabled={isReversing}
                 className="df-button-secondary sm:flex-1"
               >
                 Cancelar
               </button>
               <Button
                 type="button"
-                onClick={() => void handleConfirmPayment()}
-                isLoading={isSubmitting}
-                loadingLabel="Confirmando..."
+                onClick={() => void handleReversePayment()}
+                isLoading={isReversing}
+                loadingLabel="Estornando..."
                 className="sm:flex-1"
               >
-                Confirmar pagamento
+                Confirmar estorno
               </Button>
             </div>
           </div>
         </div>
       ) : null}
     </div>
+  );
+}
+
+function findPaymentForMonth(
+  payments: MembershipFeePayment[],
+  competenceYear: number,
+  competenceMonth: number,
+) {
+  return (
+    payments.find(
+      (payment) =>
+        payment.competenceYear === competenceYear &&
+        payment.competenceMonth === competenceMonth,
+    ) ?? null
   );
 }
 
@@ -479,4 +637,3 @@ function formatPaidAt(value: string) {
     return value;
   }
 }
-

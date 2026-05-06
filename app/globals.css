@@ -213,6 +213,306 @@ a {
     width: 100%;
   }
 
+  .membership-print-root {
+    width: 100%;
+  }
+
+  .membership-print-page {
+    width: min(100%, 198mm);
+    margin-inline: auto;
+    background: white;
+    overflow: hidden;
+  }
+
+  .membership-print-frame {
+    width: 198mm;
+    height: 285mm;
+    padding: 0 4mm;
+    background: white;
+    color: #111827;
+  }
+
+  .membership-print-header {
+    padding: 2.5mm 0 3mm;
+    border-bottom: 1px solid #111;
+  }
+
+  .membership-print-brand {
+    display: grid;
+    grid-template-columns: 28mm minmax(0, 1fr) 28mm;
+    align-items: center;
+    column-gap: 2mm;
+  }
+
+  .membership-print-logo {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 28mm;
+    height: 24mm;
+  }
+
+  .membership-print-logo-image {
+    max-width: 28mm;
+    max-height: 24mm;
+    object-fit: contain;
+  }
+
+  .membership-print-logo-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    height: 100%;
+    font-size: 3mm;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .membership-print-brand-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6mm;
+    text-align: center;
+    min-width: 0;
+  }
+
+  .membership-print-brand-spacer {
+    width: 28mm;
+    min-height: 1px;
+  }
+
+  .membership-print-brand-name {
+    margin: 0;
+    font-size: 8.5mm;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .membership-print-brand-subtitle {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    max-width: 132mm;
+    font-size: 2.7mm;
+    line-height: 1.2;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+
+  .membership-print-title {
+    margin: 1.4mm 0 0;
+    padding: 0;
+    font-size: 5.1mm;
+    line-height: 1.05;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .membership-print-section {
+    margin-top: 3mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .membership-print-section-tight {
+    margin-top: 2.8mm;
+  }
+
+  .membership-print-section-title {
+    display: none;
+  }
+
+  .membership-print-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 5mm;
+    padding: 3mm 0 2mm;
+    border-bottom: 1px solid #111;
+    position: relative;
+  }
+
+  .membership-print-info-grid::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 2mm;
+    left: calc(50% - 0.5px);
+    width: 1px;
+    background: #111;
+  }
+
+  .membership-print-info-column {
+    display: grid;
+    align-content: start;
+  }
+
+  .membership-print-field {
+    min-height: 11mm;
+    padding: 1.5mm 0;
+    background: transparent;
+    display: grid;
+    grid-template-columns: 8mm 32mm 1fr;
+    align-items: center;
+    column-gap: 1.8mm;
+    border-bottom: 1px solid #bdbdbd;
+  }
+
+  .membership-print-field-icon {
+    width: 5mm;
+    height: 5mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #111;
+  }
+
+  .membership-print-field-icon svg {
+    width: 100%;
+    height: 100%;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .membership-print-field span {
+    display: block;
+    font-size: 2.6mm;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #111;
+  }
+
+  .membership-print-field strong {
+    display: block;
+    font-size: 3.1mm;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .membership-print-month-sequence {
+    display: grid;
+    grid-template-columns: repeat(12, 9mm);
+    justify-content: center;
+    gap: 3mm;
+    padding: 3mm 0 3.5mm;
+    border-bottom: 1px solid #111;
+  }
+
+  .membership-print-sequence-pill {
+    display: inline-flex;
+    height: 8.5mm;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #777;
+    border-radius: 1mm;
+    background: white;
+    font-size: 3.2mm;
+    font-weight: 700;
+  }
+
+  .membership-print-month-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5mm;
+    padding-top: 3mm;
+  }
+
+  .membership-print-month-card {
+    position: relative;
+    min-height: 41mm;
+    border: 1px dashed #8c8c8c;
+    border-radius: 3mm;
+    background: white;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .membership-print-month-cutline {
+    position: absolute;
+    top: -2.8mm;
+    left: 1.6mm;
+    display: flex;
+    align-items: center;
+    gap: 1mm;
+    background: white;
+    padding-right: 1mm;
+    color: #444;
+  }
+
+  .membership-print-scissor {
+    font-size: 3mm;
+    line-height: 1;
+  }
+
+  .membership-print-cutline-rule {
+    display: none;
+  }
+
+  .membership-print-month-content {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 5.8mm 4mm 4mm;
+  }
+
+  .membership-print-month-top {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1mm;
+    align-items: center;
+    text-align: center;
+  }
+
+  .membership-print-month-competence {
+    font-size: 5.4mm;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+  }
+
+  .membership-print-month-brand {
+    font-size: 2.9mm;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .membership-print-month-meta {
+    margin-top: 2.4mm;
+    font-size: 3mm;
+    line-height: 1.2;
+  }
+
+  .membership-print-month-date-row {
+    display: flex;
+    width: 100%;
+    margin-top: auto;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1.4mm;
+    padding-top: 4mm;
+    font-size: 3mm;
+    font-weight: 500;
+  }
+
+  .membership-print-month-date-line {
+    display: inline-block;
+    min-width: 38mm;
+    text-align: left;
+    letter-spacing: 0;
+  }
+
   .print-sheet-page {
     width: min(100%, 210mm);
     margin-inline: auto;
@@ -645,12 +945,21 @@ a {
 @media print {
   html,
   body {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
     background: white !important;
+    overflow: hidden;
   }
 
   @page {
     size: A4 portrait;
-    margin: 0;
+    margin: 6mm;
+  }
+
+  body:has(.membership-print-root) * {
+    visibility: hidden;
   }
 
   .no-print {
@@ -660,6 +969,59 @@ a {
   .print-sheet-root {
     max-width: none !important;
     padding: 0 !important;
+  }
+
+  .membership-print-root {
+    position: relative !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  body:has(.membership-print-root) .membership-print-root,
+  body:has(.membership-print-root) .membership-print-root * {
+    visibility: visible;
+  }
+
+  .membership-print-page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 198mm !important;
+    height: 285mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+  }
+
+  .print-sheet {
+    width: 198mm !important;
+    height: 285mm !important;
+    min-height: 285mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    break-after: avoid !important;
+    break-before: avoid !important;
+    overflow: hidden !important;
+  }
+
+  .membership-print-frame,
+  .membership-print-section,
+  .membership-print-month-grid,
+  .membership-print-month-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-coupons-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 5mm !important;
   }
 
   .print-sheet-page {

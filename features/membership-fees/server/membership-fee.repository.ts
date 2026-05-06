@@ -71,6 +71,7 @@ export interface MembershipFeeRepository {
     paidByUserId?: string | null;
     notes?: string | null;
   }): Promise<MembershipFeePayment>;
+  deletePaymentById(paymentId: string): Promise<void>;
 }
 
 function normalizeNullableText(value: string | null | undefined) {
@@ -447,5 +448,16 @@ export class SqliteMembershipFeeRepository implements MembershipFeeRepository {
       return payment;
     });
   }
-}
 
+  async deletePaymentById(paymentId: string): Promise<void> {
+    await this.database.write(async (session) => {
+      await session.execute(
+        `
+          DELETE FROM membership_fee_payments
+          WHERE id = ?
+        `,
+        [paymentId],
+      );
+    });
+  }
+}
