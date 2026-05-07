@@ -44,20 +44,12 @@ export function DocumentFormPanel({
 }: DocumentFormPanelProps) {
   return (
     <article className="df-section-card p-6">
-      <div className="space-y-2">
-        <p className="df-eyebrow">
-          {editingDocument ? "Editar documento" : "Base documental"}
-        </p>
+      <div className="space-y-1.5">
         <h2 className="text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
           {editingDocument
             ? "Atualize o vencimento selecionado"
             : "Documentos vinculados aos associados"}
         </h2>
-        <p className="text-sm leading-6 text-[var(--color-muted)]">
-          {editingDocument
-            ? "Ajuste a data de vencimento e a observacao do registro selecionado."
-            : "Novos documentos sao cadastrados pela etapa complementar do associado para manter uma unica origem documental."}
-        </p>
       </div>
 
       {message ? (
@@ -102,7 +94,8 @@ export function DocumentFormPanel({
                 : ""}
             </p>
             <p className="mt-1 text-sm text-[var(--color-muted)]">
-              Matrícula: {editingDocument.associateRegistrationNumber ?? "Não informada"}
+              Matrícula:{" "}
+              {editingDocument.associateRegistrationNumber ?? "Não informada"}
             </p>
           </div>
 
@@ -117,7 +110,10 @@ export function DocumentFormPanel({
             required
           />
 
-          <label htmlFor="document-notes" className="grid gap-2 text-sm font-medium text-slate-700">
+          <label
+            htmlFor="document-notes"
+            className="grid gap-2 text-sm font-medium text-slate-700"
+          >
             <span>Observação</span>
             <textarea
               id="document-notes"
@@ -141,7 +137,7 @@ export function DocumentFormPanel({
               disabled={!canManageDocuments}
               className="sm:flex-1"
             >
-              Salvar alteracoes
+              Salvar alterações
             </Button>
 
             <button
@@ -158,9 +154,6 @@ export function DocumentFormPanel({
         <div className="mt-6 rounded-[24px] border border-dashed border-[var(--color-border)] bg-[linear-gradient(180deg,#F8FAFC_0%,#FFFFFF_100%)] p-6">
           <p className="text-sm font-semibold text-[var(--color-foreground)]">
             Selecione um documento da lista para editar
-          </p>
-          <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-            Para criar documentos novos, acesse a etapa complementar do associado.
           </p>
           <div className="mt-4">
             <Link href="/associados" className="df-button-secondary">

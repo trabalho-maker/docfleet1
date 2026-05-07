@@ -41,14 +41,9 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
     <section className="df-section-card p-6 lg:p-7">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="df-eyebrow">Busca e filtros</p>
-          <h2 className="mt-2 text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
-            Refine a listagem
+          <h2 className="text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
+            Filtros
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
-            Combine nome, CPF, categoria, modalidade e situacao para localizar
-            associados com rapidez e manter a operação mais previsível.
-          </p>
         </div>
         {hasActiveFilters ? (
           <Link href="/associados" className="df-button-secondary">
@@ -109,7 +104,7 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
 
         <Select
           id="associate-status"
-          label="Situacao"
+          label="Situação"
           name="status"
           defaultValue={values.status}
           options={[
@@ -123,7 +118,7 @@ export function AssociatesFilters({ values }: AssociatesFiltersProps) {
 
         <Select
           id="associate-page-size"
-          label="Itens por pagina"
+          label="Itens por página"
           name="pageSize"
           defaultValue={String(values.pageSize || associatesDefaults.pageSize)}
           options={[

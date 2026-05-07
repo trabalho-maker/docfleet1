@@ -107,7 +107,7 @@ export function AssociatesListSection({
       setCurrentTotal((current) => Math.max(0, current - 1));
       setFeedback({
         type: "success",
-        message: "Associado excluido com sucesso.",
+        message: "Associado excluído com sucesso.",
       });
       router.refresh();
     } finally {
@@ -120,7 +120,7 @@ export function AssociatesListSection({
         eyebrow: "Sem resultados",
         title: "Nenhum associado corresponde aos filtros atuais",
         description:
-          "Revise a busca por nome, CPF, categoria, modalidade ou situacao. Limpar os filtros pode ajudar a reencontrar os registros da base.",
+          "Revise a busca por nome, CPF, categoria, modalidade ou situação. Limpar os filtros pode ajudar a reencontrar os registros da base.",
         action: (
           <Link href="/associados" className="df-button-secondary">
             Limpar filtros
@@ -129,7 +129,7 @@ export function AssociatesListSection({
       }
     : {
         eyebrow: "Primeiros passos",
-        title: "Sua base de associados ainda esta vazia",
+        title: "Sua base de associados ainda está vazia",
         description:
           "Comece cadastrando o primeiro associado para liberar a operação do módulo com histórico, filtros e ações administrativas.",
         action: canCreate ? (
@@ -143,20 +143,9 @@ export function AssociatesListSection({
     <section className="df-section-card p-6 lg:p-7">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="df-eyebrow">Listagem</p>
-          <h2 className="mt-2 text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
+          <h2 className="text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
             Associados cadastrados
           </h2>
-          {hasActiveFilters ? (
-            <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-              Exibindo resultados filtrados por busca e criterios selecionados.
-            </p>
-          ) : (
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
-              Acompanhe a base operacional de associados com acoes administrativas e
-              feedbacks consistentes.
-            </p>
-          )}
         </div>
         <span className="df-badge-pill w-fit bg-[#FFF7ED] text-[#C2410C]">
           {associates.length} de {currentTotal} registro(s)
@@ -192,7 +181,7 @@ export function AssociatesListSection({
         <div className="mt-6">
           <FeedbackAlert
             type={feedback.type}
-            title={feedback.type === "success" ? "Operacao concluida" : undefined}
+            title={feedback.type === "success" ? "Operação concluída" : undefined}
             message={feedback.message}
           />
         </div>
@@ -221,7 +210,7 @@ export function AssociatesListSection({
       {associates.length > 0 ? (
         <div className="mt-6 flex flex-col gap-3 border-t border-[var(--color-border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-[var(--color-muted)]">
-            Pagina {page} de {totalPages} · {pageSize} por pagina
+            Página {page} de {totalPages} · {pageSize} por página
           </p>
           <div className="flex gap-3">
             <Link
@@ -236,7 +225,7 @@ export function AssociatesListSection({
               aria-disabled={page >= totalPages}
               className={`df-button-secondary ${page >= totalPages ? "pointer-events-none opacity-50" : ""}`}
             >
-              Proxima
+              Próxima
             </Link>
           </div>
         </div>

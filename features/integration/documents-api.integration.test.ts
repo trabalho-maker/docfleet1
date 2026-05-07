@@ -4,7 +4,10 @@ jest.mock("@/auth", () => ({
 
 import { auth } from "@/auth";
 import { createDataLayer } from "@/features/data/repositories";
-import { createJsonRequest, authenticatedSession } from "@/features/integration/test-helpers";
+import {
+  authenticatedSession,
+  createJsonRequest,
+} from "@/features/integration/test-helpers";
 import { DELETE, GET as GET_BY_ID, PUT } from "@/app/api/documents/[documentId]/route";
 import { GET, POST } from "@/app/api/documents/route";
 import {
@@ -78,7 +81,7 @@ describe("documents api integration", () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
-      error: "Corpo JSON invalido.",
+      error: "Corpo JSON inválido.",
     });
   });
 
@@ -98,7 +101,7 @@ describe("documents api integration", () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
-      error: "Corpo JSON invalido.",
+      error: "Corpo JSON inválido.",
     });
   });
 
@@ -116,9 +119,9 @@ describe("documents api integration", () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
-      error: "Dados invalidos.",
+      error: "Dados inválidos.",
       fieldErrors: {
-        documentType: "Informe um tipo valido.",
+        documentType: "Informe um tipo válido.",
       },
     });
   });

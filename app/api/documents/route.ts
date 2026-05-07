@@ -63,7 +63,7 @@ export async function GET(request: Request) {
   const category = parseCategoryFilter(searchParams.get("category"));
 
   if (category === null) {
-    return NextResponse.json({ error: "Categoria invalida." }, { status: 400 });
+    return NextResponse.json({ error: "Categoria inválida." }, { status: 400 });
   }
 
   const dataLayer = createDataLayer();
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
   }>(request);
 
   if (!bodyResult.success) {
-    return NextResponse.json({ error: "Corpo JSON invalido." }, { status: 400 });
+    return NextResponse.json({ error: "Corpo JSON inválido." }, { status: 400 });
   }
 
   const body = bodyResult.data;
@@ -125,21 +125,21 @@ export async function POST(request: Request) {
 
   if (!associateId) {
     return NextResponse.json(
-      { error: "Dados invalidos.", fieldErrors: { associateId: "Informe o associado." } },
+      { error: "Dados inválidos.", fieldErrors: { associateId: "Informe o associado." } },
       { status: 400 },
     );
   }
 
   if (!documentType) {
     return NextResponse.json(
-      { error: "Dados invalidos.", fieldErrors: { documentType: "Informe um tipo valido." } },
+      { error: "Dados inválidos.", fieldErrors: { documentType: "Informe um tipo válido." } },
       { status: 400 },
     );
   }
 
   if (!validation.success) {
     return NextResponse.json(
-      { error: "Dados invalidos.", fieldErrors: validation.errors },
+      { error: "Dados inválidos.", fieldErrors: validation.errors },
       { status: 400 },
     );
   }
@@ -156,7 +156,7 @@ export async function POST(request: Request) {
     documentType,
     dueDate: validation.data.dueDate,
     notes: validation.data.notes,
-    owner: session.user.name ?? session.user.email ?? "Usuario DocFleet",
+    owner: session.user.name ?? session.user.email ?? "Usuário DocFleet",
   });
 
   logger.info("api.documents.create.success", {

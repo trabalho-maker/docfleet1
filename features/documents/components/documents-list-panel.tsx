@@ -49,13 +49,9 @@ export function DocumentsListPanel({
     <article className="df-section-card p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="df-eyebrow">Documentos estruturados</p>
-          <h2 className="mt-2 text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
-            Base documental
+          <h2 className="text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
+            Documentos
           </h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-            Leia a base documental vinculada aos associados e acompanhe vencidos, alta prioridade e janela de 30 dias.
-          </p>
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -115,7 +111,8 @@ export function DocumentsListPanel({
                     {document.associateName ?? "Associado não informado"}
                   </button>
                   <p className="text-sm text-[var(--color-muted)]">
-                    Matrícula: {document.associateRegistrationNumber ?? "Não informada"}
+                    Matrícula:{" "}
+                    {document.associateRegistrationNumber ?? "Não informada"}
                   </p>
                   <p className="text-sm text-[var(--color-muted)]">
                     Modalidade: {document.associateCategory ?? "Não vinculada"}
@@ -124,7 +121,9 @@ export function DocumentsListPanel({
                     Vencimento: {formatDate(document.dueDate)}
                   </p>
                   {document.notes ? (
-                    <p className="text-sm text-[var(--color-muted)]">Obs.: {document.notes}</p>
+                    <p className="text-sm text-[var(--color-muted)]">
+                      Obs.: {document.notes}
+                    </p>
                   ) : null}
                 </div>
 
@@ -164,7 +163,7 @@ export function DocumentsListPanel({
 
       <div className="mt-6 flex flex-col gap-3 border-t border-[var(--color-border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-[var(--color-muted)]">
-          Pagina {page} de {totalPages}
+          Página {page} de {totalPages}
         </p>
         <div className="flex gap-3">
           <button
@@ -181,7 +180,7 @@ export function DocumentsListPanel({
             disabled={page >= totalPages || isLoading}
             className="df-button-secondary disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Proxima
+            Próxima
           </button>
         </div>
       </div>

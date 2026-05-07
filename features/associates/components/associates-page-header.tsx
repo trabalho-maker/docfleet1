@@ -52,10 +52,7 @@ export function AssociatesPageHeader({
       userName={userName}
       userEmail={userEmail}
       userRole={userRole}
-      supportingText={
-        supportingText ??
-        "Painel operacional conectado a base de associados, filtros e alertas do DocFleet."
-      }
+      supportingText={supportingText}
       actions={action}
       headerClassName={headerClassName}
       bodyClassName={bodyClassName}

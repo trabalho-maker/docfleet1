@@ -7,7 +7,7 @@ type AuthenticatedPageHeaderProps = {
   userName: string;
   userEmail: string;
   userRole: string;
-  supportingText: string;
+  supportingText?: string;
   actions?: ReactNode;
   headerClassName?: string;
   bodyClassName?: string;
@@ -73,9 +73,11 @@ export function AuthenticatedPageHeader({
                 {userName}
               </p>
               <p className={`mt-1 ${userEmailClassName ?? ""}`}>{userEmail}</p>
-              <p className={`mt-3 text-sm leading-6 ${supportingTextClassName ?? ""}`}>
-                {supportingText}
-              </p>
+              {supportingText ? (
+                <p className={`mt-3 text-sm leading-6 ${supportingTextClassName ?? ""}`}>
+                  {supportingText}
+                </p>
+              ) : null}
             </div>
             <div className={`flex flex-wrap gap-3 ${actionsRowClassName ?? ""}`}>
               {actions}

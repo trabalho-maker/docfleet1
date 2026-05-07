@@ -1,5 +1,12 @@
 import Link from "next/link";
 import type { OperationalAlert } from "@/features/data/types";
+import {
+  formatDateTime,
+  getAlertHref,
+  getAlertIconTone,
+  getAlertKindLabel,
+  getAlertSubtitle,
+} from "@/features/dashboard/utils/dashboard-alert-view-model";
 
 type DashboardAlertCenterProps = {
   alerts: OperationalAlert[];
@@ -60,7 +67,8 @@ export function DashboardAlertCenter({
         </div>
       ) : (
         <div className="mt-5 rounded-[24px] border border-dashed border-[#D7DEE7] bg-[#F8FAFC] px-5 py-10 text-sm leading-6 text-[#64748B]">
-          Nenhum alerta documental ou operacional relevante no momento. A operação está regular no período atual.
+          Nenhum alerta documental ou operacional relevante no momento. A operação
+          está regular no período atual.
         </div>
       )}
 
@@ -116,60 +124,6 @@ function buildSeverityBadgeClassName(severity: OperationalAlert["severity"]) {
   }
 
   return "inline-flex rounded-full bg-[#DBEAFE] px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]";
-}
-
-function getAlertHref(alert: OperationalAlert) {
-  if (alert.kind === "document_expiration") {
-    return "/documentos";
-  }
-
-  return "/dashboard#alertas-criticos";
-}
-
-function getAlertKindLabel(alert: OperationalAlert) {
-  if (alert.kind === "document_expiration") {
-    return "Documental";
-  }
-
-  if (alert.kind === "operational") {
-    return "Operacional";
-  }
-
-  return "Manual";
-}
-
-function getAlertSubtitle(alert: OperationalAlert) {
-  if (alert.kind === "document_expiration") {
-    return `${alert.team} - acompanhamento documental`;
-  }
-
-  return `${alert.team} - acompanhamento operacional`;
-}
-
-function getAlertIconTone(severity: OperationalAlert["severity"]) {
-  if (severity === "Alta") {
-    return "bg-[#EF4444]";
-  }
-
-  if (severity === "Media") {
-    return "bg-[#FACC15] text-[#6B4F00]";
-  }
-
-  return "bg-[#3B82F6]";
-}
-
-function formatDateTime(date: string) {
-  const normalized = date.includes("T") ? date : date.replace(" ", "T");
-
-  try {
-    return new Intl.DateTimeFormat("pt-BR", {
-      dateStyle: "short",
-      timeStyle: "short",
-      timeZone: "UTC",
-    }).format(new Date(normalized));
-  } catch {
-    return date;
-  }
 }
 
 function AlertIcon() {

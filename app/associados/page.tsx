@@ -110,9 +110,7 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
     <AppShell user={user}>
       <div className="flex w-full flex-1 flex-col gap-6 py-2 sm:py-4">
         <AssociatesPageHeader
-          eyebrow="Gestão de associados"
-          title="Base de associados"
-          description="Visualize a relação de associados, acompanhe categoria, situação e data de entrada em uma interface alinhada ao centro operacional do DocFleet."
+          title="Associados"
           userName={user.name}
           userEmail={user.email}
           userRole={user.role}
@@ -149,21 +147,18 @@ export default async function AssociatesPage({ searchParams }: AssociatesPagePro
                 metric={{
                   label: "Associados",
                   value: totalAssociates,
-                  helper: "Quantidade total de associados cadastrados no sistema.",
                 }}
               />
               <MetricCard
                 metric={{
                   label: "Ativos",
                   value: associatesByStatus.Ativo,
-                  helper: "Associados em situação ativa na base completa.",
                 }}
               />
               <MetricCard
                 metric={{
                   label: "Categorias",
                   value: activeCategories,
-                  helper: "Categorias com pelo menos um associado na base atual.",
                 }}
               />
             </section>

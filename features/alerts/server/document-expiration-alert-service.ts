@@ -5,6 +5,8 @@ import type {
   OperationalAlert,
 } from "@/features/data/types";
 import { getDaysUntilDocumentDueDate } from "@/features/documents/lib/expiration";
+import { createSessionDatabaseAdapter } from "@/lib/database/session-adapter";
+import { getDatabaseAdapter } from "@/lib/database/provider";
 import { logger } from "@/lib/logger";
 
 const HIGH_PRIORITY_ALERT_WINDOW_DAYS = 15;
@@ -24,6 +26,12 @@ export type AlertReconciliationResult = {
   updatedAlerts: number;
   deletedAlerts: number;
   unchangedAlerts: number;
+};
+
+type AlertReconciliationPlan = {
+  upserts: GeneratedOperationalAlertInput[];
+  deleteDocumentIds: string[];
+  result: AlertReconciliationResult;
 };
 
 function formatAlertTimestamp(date: Date) {
@@ -92,8 +100,6 @@ function toGeneratedAlert(
   return {
     title: buildAlertTitle(document, now),
     severity: getAlertSeverity(document, now),
-    // `team` is a legacy display field. Generated expiration alerts should use
-    // a neutral origin label instead of exposing the document author as a team.
     team: DOCUMENT_ALERT_ORIGIN_LABEL,
     createdAt: formatAlertTimestamp(now),
     sourceDocumentId: document.id,
@@ -112,6 +118,106 @@ function isSameGeneratedAlert(
     existingAlert.severity === desiredAlert.severity &&
     existingAlert.team === desiredAlert.team
   );
+}
+
+function buildAlertReconciliationPlan(
+  documentsRequiringAttention: FleetDocument[],
+  generatedAlerts: OperationalAlert[],
+  now: Date,
+): AlertReconciliationPlan {
+  const generatedAlertsByDocumentId = new Map(
+    generatedAlerts
+      .filter((alert) => Boolean(alert.sourceDocumentId))
+      .map((alert) => [alert.sourceDocumentId as string, alert]),
+  );
+  const pendingDocumentIds = new Set(
+    documentsRequiringAttention.map((document) => document.id),
+  );
+  const upserts: GeneratedOperationalAlertInput[] = [];
+  const deleteDocumentIds: string[] = [];
+  let createdAlerts = 0;
+  let updatedAlerts = 0;
+  let deletedAlerts = 0;
+  let unchangedAlerts = 0;
+
+  for (const document of documentsRequiringAttention) {
+    const existingAlert = generatedAlertsByDocumentId.get(document.id);
+    const desiredAlert = toGeneratedAlert(document, now);
+
+    if (!desiredAlert) {
+      unchangedAlerts += 1;
+      continue;
+    }
+
+    if (existingAlert && isSameGeneratedAlert(existingAlert, desiredAlert)) {
+      unchangedAlerts += 1;
+      continue;
+    }
+
+    upserts.push(desiredAlert);
+
+    if (existingAlert) {
+      updatedAlerts += 1;
+      continue;
+    }
+
+    createdAlerts += 1;
+  }
+
+  for (const alert of generatedAlerts) {
+    if (!alert.sourceDocumentId || pendingDocumentIds.has(alert.sourceDocumentId)) {
+      continue;
+    }
+
+    deleteDocumentIds.push(alert.sourceDocumentId);
+    deletedAlerts += 1;
+  }
+
+  return {
+    upserts,
+    deleteDocumentIds,
+    result: {
+      scannedDocuments: documentsRequiringAttention.length,
+      scannedAlerts: generatedAlerts.length,
+      createdAlerts,
+      updatedAlerts,
+      deletedAlerts,
+      unchangedAlerts,
+    },
+  };
+}
+
+async function applyAlertReconciliationPlan(
+  dataLayer: DataLayer,
+  plan: AlertReconciliationPlan,
+) {
+  for (const alert of plan.upserts) {
+    await dataLayer.alerts.upsertGeneratedForDocument(alert);
+  }
+
+  for (const documentId of plan.deleteDocumentIds) {
+    await dataLayer.alerts.deleteGeneratedBySourceDocumentId(documentId);
+  }
+}
+
+async function reconcileWithDataLayer(dataLayer: DataLayer, now: Date) {
+  const [documentsRequiringAttention, generatedAlerts] = await Promise.all([
+    dataLayer.documents.listRequiringAttention(now),
+    dataLayer.alerts.listGenerated(),
+  ]);
+  const plan = buildAlertReconciliationPlan(
+    documentsRequiringAttention,
+    generatedAlerts,
+    now,
+  );
+
+  if (plan.upserts.length > 0 || plan.deleteDocumentIds.length > 0) {
+    await applyAlertReconciliationPlan(dataLayer, plan);
+  }
+
+  logger.info("alerts.document_expiration.reconciled", plan.result);
+
+  return plan.result;
 }
 
 export async function syncDocumentExpirationAlertForDocument(
@@ -180,69 +286,22 @@ export async function reconcileDocumentExpirationAlerts(
   options?: { now?: Date; dataLayer?: DataLayer },
 ): Promise<AlertReconciliationResult> {
   const now = options?.now ?? new Date();
-  const dataLayer = options?.dataLayer ?? createDataLayer();
-  const [documentsRequiringAttention, generatedAlerts] = await Promise.all([
-    dataLayer.documents.listRequiringAttention(now),
-    dataLayer.alerts.listGenerated(),
-  ]);
 
-  const generatedAlertsByDocumentId = new Map(
-    generatedAlerts
-      .filter((alert) => Boolean(alert.sourceDocumentId))
-      .map((alert) => [alert.sourceDocumentId as string, alert]),
-  );
-  const pendingDocumentIds = new Set(documentsRequiringAttention.map((document) => document.id));
-
-  let createdAlerts = 0;
-  let updatedAlerts = 0;
-  let deletedAlerts = 0;
-  let unchangedAlerts = 0;
-
-  for (const document of documentsRequiringAttention) {
-    const existingAlert = generatedAlertsByDocumentId.get(document.id);
-    const desiredAlert = toGeneratedAlert(document, now);
-
-    if (!desiredAlert) {
-      unchangedAlerts += 1;
-      continue;
-    }
-
-    if (existingAlert && isSameGeneratedAlert(existingAlert, desiredAlert)) {
-      unchangedAlerts += 1;
-      continue;
-    }
-
-    await dataLayer.alerts.upsertGeneratedForDocument(desiredAlert);
-
-    if (existingAlert) {
-      updatedAlerts += 1;
-      continue;
-    }
-
-    createdAlerts += 1;
+  if (options?.dataLayer) {
+    return reconcileWithDataLayer(options.dataLayer, now);
   }
 
-  for (const alert of generatedAlerts) {
-    if (!alert.sourceDocumentId || pendingDocumentIds.has(alert.sourceDocumentId)) {
-      continue;
-    }
+  const databaseAdapter = getDatabaseAdapter();
 
-    await dataLayer.alerts.deleteGeneratedBySourceDocumentId(alert.sourceDocumentId);
-    deletedAlerts += 1;
-  }
+  return databaseAdapter.write(async (session) => {
+    const scopedAdapter = createSessionDatabaseAdapter(
+      databaseAdapter.provider,
+      session,
+    );
+    const scopedDataLayer = createDataLayer({ adapter: scopedAdapter });
 
-  const result = {
-    scannedDocuments: documentsRequiringAttention.length,
-    scannedAlerts: generatedAlerts.length,
-    createdAlerts,
-    updatedAlerts,
-    deletedAlerts,
-    unchangedAlerts,
-  };
-
-  logger.info("alerts.document_expiration.reconciled", result);
-
-  return result;
+    return reconcileWithDataLayer(scopedDataLayer, now);
+  });
 }
 
 export async function syncDocumentExpirationAlerts(options?: { now?: Date }) {

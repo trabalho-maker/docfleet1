@@ -59,7 +59,7 @@ export async function PUT(request: Request, context: RouteContext) {
   }>(request);
 
   if (!bodyResult.success) {
-    return NextResponse.json({ error: "Corpo JSON invalido." }, { status: 400 });
+    return NextResponse.json({ error: "Corpo JSON inválido." }, { status: 400 });
   }
 
   const validation = validateDocumentInput({
@@ -69,7 +69,7 @@ export async function PUT(request: Request, context: RouteContext) {
 
   if (!validation.success) {
     return NextResponse.json(
-      { error: "Dados invalidos.", fieldErrors: validation.errors },
+      { error: "Dados inválidos.", fieldErrors: validation.errors },
       { status: 400 },
     );
   }

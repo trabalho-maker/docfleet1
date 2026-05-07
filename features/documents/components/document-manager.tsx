@@ -141,7 +141,7 @@ export function DocumentManager({
     () => [
       { label: "Documentos", value: String(summary.total) },
       { label: "Vencidos", value: String(summary.expired) },
-      { label: "Ate 15 dias", value: String(summary.dueIn15Days) },
+      { label: "Até 15 dias", value: String(summary.dueIn15Days) },
       { label: "16 a 30 dias", value: String(summary.dueIn30Days) },
     ],
     [summary],
@@ -223,7 +223,7 @@ export function DocumentManager({
       }
 
       if (!("document" in payload)) {
-        throw new Error("Resposta invalida ao salvar o documento.");
+        throw new Error("Resposta inválida ao salvar o documento.");
       }
 
       setReloadKey((current) => current + 1);
