@@ -19,13 +19,9 @@ export function DashboardAlertCenter({
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="df-eyebrow">Central de alertas</p>
-          <h2 className="mt-2 text-[1.4rem] font-semibold tracking-tight text-[#163559]">
+          <h2 className="text-[1.4rem] font-semibold tracking-tight text-[#163559]">
             Alertas Críticos
           </h2>
-          <p className="mt-2 text-sm leading-6 text-[#64748B]">
-            Priorize os itens que exigem ação agora e acompanhe os próximos passos da operação documental.
-          </p>
         </div>
         <span className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-full bg-[#EF4444] px-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(239,68,68,0.18)]">
           {alertCount}

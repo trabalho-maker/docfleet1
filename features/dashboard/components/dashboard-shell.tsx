@@ -3,6 +3,7 @@ import { DashboardAlertCenter } from "@/features/dashboard/components/dashboard-
 import { DashboardChartsSection } from "@/features/dashboard/components/dashboard-charts-section";
 import { DashboardHeader } from "@/features/dashboard/components/dashboard-header";
 import { DashboardKpiGrid } from "@/features/dashboard/components/dashboard-kpi-grid";
+import { DashboardNotificationFab } from "@/features/dashboard/components/dashboard-notification-fab";
 import { UpcomingDocumentsTable } from "@/features/dashboard/components/upcoming-documents-table";
 import type { DashboardOverview } from "@/features/dashboard/types";
 
@@ -17,9 +18,7 @@ export function DashboardShell({ overview }: DashboardShellProps) {
         <DashboardHeader
           user={overview.user}
           title={overview.title}
-          description={overview.description}
           summary={overview.operationalSummary}
-          alerts={overview.alerts}
         />
 
         <DashboardKpiGrid kpis={overview.kpis} />
@@ -35,6 +34,11 @@ export function DashboardShell({ overview }: DashboardShellProps) {
         <DashboardChartsSection
           documentsByType={overview.documentsByType}
           expirationTimeline={overview.expirationTimeline}
+        />
+
+        <DashboardNotificationFab
+          alerts={overview.alerts}
+          alertCount={overview.alertCount}
         />
       </div>
     </AppShell>

@@ -14,13 +14,9 @@ export function UpcomingDocumentsTable({
     <article className="df-section-card overflow-hidden">
       <div className="flex flex-col gap-4 border-b border-[#E2E8F0] px-5 py-5 sm:flex-row sm:items-end sm:justify-between lg:px-6">
         <div>
-          <p className="df-eyebrow">Fila documental</p>
-          <h2 className="mt-2 text-[1.4rem] font-semibold tracking-tight text-[#163559]">
+          <h2 className="text-[1.4rem] font-semibold tracking-tight text-[#163559]">
             Próximos Vencimentos
           </h2>
-          <p className="mt-2 text-sm leading-6 text-[#64748B]">
-            Leitura rápida dos documentos com vencimento mais próximo e ação direta para acompanhamento.
-          </p>
         </div>
 
         <div className="flex items-center gap-3">

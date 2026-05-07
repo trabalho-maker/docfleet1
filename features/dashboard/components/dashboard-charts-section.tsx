@@ -12,36 +12,15 @@ export function DashboardChartsSection({
   documentsByType,
   expirationTimeline,
 }: DashboardChartsSectionProps) {
-  const dominantType = getDominantDocumentType(documentsByType);
-  const timelinePeak = getTimelinePeak(expirationTimeline);
-
   return (
     <section className="grid gap-5 2xl:grid-cols-[1.05fr_0.95fr]">
       <article className="df-section-card p-5 lg:p-6">
-        <SectionHeading
-          eyebrow="Leitura por tipo"
-          title="Documentos por Tipo"
-          description="Distribuição real dos documentos por tipo e status na base monitorada."
-          insight={
-            dominantType
-              ? `${dominantType.type} concentra o maior volume monitorado no momento.`
-              : "Sem dados suficientes para distribuição por tipo."
-          }
-        />
+        <SectionHeading title="Documentos por Tipo" />
         <DocumentsByTypeChart items={documentsByType} />
       </article>
 
       <article className="df-section-card p-5 lg:p-6">
-        <SectionHeading
-          eyebrow="Linha temporal"
-          title="Vencimentos ao Longo do Tempo"
-          description="Janela mensal dos vencimentos no horizonte operacional atual."
-          insight={
-            timelinePeak
-              ? `${timelinePeak.label} concentra o maior volume no período analisado.`
-              : "Sem vencimentos registrados no recorte atual."
-          }
-        />
+        <SectionHeading title="Vencimentos ao Longo do Tempo" />
         <ExpirationTimelineChart points={expirationTimeline} />
       </article>
     </section>
@@ -49,26 +28,15 @@ export function DashboardChartsSection({
 }
 
 function SectionHeading({
-  eyebrow,
   title,
-  description,
-  insight,
 }: {
-  eyebrow: string;
   title: string;
-  description: string;
-  insight: string;
 }) {
   return (
     <div>
-      <p className="df-eyebrow">{eyebrow}</p>
-      <h2 className="mt-2 text-[1.25rem] font-semibold tracking-tight text-[#163559]">
+      <h2 className="text-[1.25rem] font-semibold tracking-tight text-[#163559]">
         {title}
       </h2>
-      <p className="mt-2 text-sm leading-6 text-[#64748B]">{description}</p>
-      <p className="mt-3 inline-flex rounded-full bg-[#F8FAFC] px-3 py-1.5 text-xs font-semibold text-[#35577E]">
-        {insight}
-      </p>
     </div>
   );
 }
@@ -297,19 +265,6 @@ function Legend({ tone, label }: { tone: string; label: string }) {
       <span>{label}</span>
     </span>
   );
-}
-
-function getDominantDocumentType(items: DashboardDocumentsByTypeItem[]) {
-  return items
-    .map((item) => ({
-      type: item.type,
-      total: item.valid + item.attention + item.expired,
-    }))
-    .sort((left, right) => right.total - left.total)[0] ?? null;
-}
-
-function getTimelinePeak(points: DashboardTimelinePoint[]) {
-  return [...points].sort((left, right) => right.total - left.total)[0] ?? null;
 }
 
 function getChartX(

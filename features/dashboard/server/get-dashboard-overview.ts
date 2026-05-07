@@ -42,8 +42,7 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
   return {
     user,
     title: "Dashboard Operacional",
-    description:
-      "Visão geral dos documentos, vencimentos e alertas relevantes da operação.",
+    description: "Monitoramento diário da operação documental.",
     operationalSummary: {
       totalDocuments: documentSummary.total,
       attentionDocuments,
