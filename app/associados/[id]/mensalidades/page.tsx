@@ -45,7 +45,7 @@ export default async function MembershipFeesPage({
           <FeedbackAlert
             type="error"
             title="Acesso negado"
-            message={accessMessage ?? "Seu perfil nao pode acessar mensalidades."}
+            message={accessMessage ?? "Seu perfil não pode acessar mensalidades."}
           />
         </div>
       </AppShell>
@@ -57,44 +57,48 @@ export default async function MembershipFeesPage({
   const requestedYear = parseRequestedYear(resolvedSearchParams?.year);
   const currentYear = new Date().getUTCFullYear();
   const membershipFeeService = createMembershipFeeService();
+  const sheetView = await loadMembershipFeeSheetView({
+    membershipFeeService,
+    associateId: id,
+    requestedYear,
+    currentYear,
+  });
 
+  return (
+    <AppShell user={user}>
+      <MembershipFeeSection
+        sheetView={sheetView}
+        canEdit={canEdit}
+        userName={user.name}
+        userEmail={user.email}
+        userRole={user.role}
+        currentYear={currentYear}
+      />
+    </AppShell>
+  );
+}
+
+async function loadMembershipFeeSheetView({
+  membershipFeeService,
+  associateId,
+  requestedYear,
+  currentYear,
+}: {
+  membershipFeeService: ReturnType<typeof createMembershipFeeService>;
+  associateId: string;
+  requestedYear: number | null;
+  currentYear: number;
+}) {
   try {
-    const sheetView =
-      requestedYear && requestedYear !== currentYear
-        ? await membershipFeeService.getMembershipFeeSheet(id, requestedYear)
-        : await membershipFeeService.getOrCreateCurrentSheet(id);
-
-    return (
-      <AppShell user={user}>
-        <MembershipFeeSection
-          sheetView={sheetView}
-          canEdit={canEdit}
-          userName={user.name}
-          userEmail={user.email}
-          userRole={user.role}
-          currentYear={currentYear}
-        />
-      </AppShell>
-    );
+    return requestedYear && requestedYear !== currentYear
+      ? await membershipFeeService.getMembershipFeeSheet(associateId, requestedYear)
+      : await membershipFeeService.getOrCreateCurrentSheet(associateId);
   } catch (error) {
     if (
       error instanceof MembershipFeeNotFoundError &&
       error.message === "MEMBERSHIP_FEE_SHEET_NOT_FOUND"
     ) {
-      const fallbackSheet = await membershipFeeService.getOrCreateCurrentSheet(id);
-
-      return (
-        <AppShell user={user}>
-          <MembershipFeeSection
-            sheetView={fallbackSheet}
-            canEdit={canEdit}
-            userName={user.name}
-            userEmail={user.email}
-            userRole={user.role}
-            currentYear={currentYear}
-          />
-        </AppShell>
-      );
+      return membershipFeeService.getOrCreateCurrentSheet(associateId);
     }
 
     if (
@@ -121,4 +125,3 @@ function parseRequestedYear(value: string | undefined) {
 
   return parsedYear;
 }
-

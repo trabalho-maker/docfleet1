@@ -5,6 +5,9 @@ import {
   normalizeAssociateRg,
 } from "@/features/associates/lib/associate-profile-identifiers";
 
+const SCHEMA_VERSION_TABLE = "app_schema_version";
+const CURRENT_SQLITE_SCHEMA_VERSION = 2;
+
 function tableExists(db: Database, tableName: string) {
   const result = db.exec(
     "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
@@ -42,6 +45,139 @@ function trimmedColumnOrNull(db: Database, tableName: string, columnName: string
   return hasColumn(db, tableName, columnName)
     ? `NULLIF(TRIM(${columnName}), '')`
     : "NULL";
+}
+
+function normalizedIdentifierSql(columnName: string, uppercase = false) {
+  const strippedExpression = [
+    ".",
+    "-",
+    "/",
+    " ",
+    "(",
+    ")",
+  ].reduce(
+    (expression, token) => `REPLACE(${expression}, '${token}', '')`,
+    `TRIM(${columnName})`,
+  );
+
+  return uppercase ? `UPPER(${strippedExpression})` : strippedExpression;
+}
+
+function normalizedAssociateProfileRgSql(columnName: string) {
+  return normalizedIdentifierSql(columnName, true);
+}
+
+function normalizedAssociateProfileDigitsSql(columnName: string) {
+  return normalizedIdentifierSql(columnName);
+}
+
+function getDuplicateNormalizedAssociateProfileValue(
+  db: Database,
+  options: {
+    columnName: "rg" | "cnh" | "cnpj_empresa";
+    normalizedExpression: string;
+  },
+) {
+  const row = db.exec(
+    `
+      SELECT ${options.normalizedExpression} AS normalized_value, COUNT(*) AS duplicate_count
+      FROM associate_profiles
+      WHERE ${options.columnName} IS NOT NULL
+        AND TRIM(${options.columnName}) <> ''
+      GROUP BY ${options.normalizedExpression}
+      HAVING normalized_value <> ''
+        AND duplicate_count > 1
+      LIMIT 1
+    `,
+  )[0]?.values?.[0];
+
+  return row ? String(row[0]) : null;
+}
+
+function validateAssociateProfileIdentifierUniqueness(db: Database) {
+  const duplicateRg = getDuplicateNormalizedAssociateProfileValue(db, {
+    columnName: "rg",
+    normalizedExpression: normalizedAssociateProfileRgSql("rg"),
+  });
+
+  if (duplicateRg) {
+    throw new Error(`SQLITE_ASSOCIATE_PROFILE_RG_DUPLICATE:${duplicateRg}`);
+  }
+
+  const duplicateCnh = getDuplicateNormalizedAssociateProfileValue(db, {
+    columnName: "cnh",
+    normalizedExpression: normalizedAssociateProfileDigitsSql("cnh"),
+  });
+
+  if (duplicateCnh) {
+    throw new Error(`SQLITE_ASSOCIATE_PROFILE_CNH_DUPLICATE:${duplicateCnh}`);
+  }
+
+  const duplicateCompanyCnpj = getDuplicateNormalizedAssociateProfileValue(db, {
+    columnName: "cnpj_empresa",
+    normalizedExpression: normalizedAssociateProfileDigitsSql("cnpj_empresa"),
+  });
+
+  if (duplicateCompanyCnpj) {
+    throw new Error(
+      `SQLITE_ASSOCIATE_PROFILE_CNPJ_EMPRESA_DUPLICATE:${duplicateCompanyCnpj}`,
+    );
+  }
+}
+
+function dropAssociateProfileUniqueIndexes(db: Database) {
+  dropIndexIfExists(db, "idx_associate_profiles_rg_unique_non_empty");
+  dropIndexIfExists(db, "idx_associate_profiles_cnh_unique_non_empty");
+  dropIndexIfExists(db, "idx_associate_profiles_cnpj_empresa_unique_non_empty");
+}
+
+function createSchemaVersionTable(db: Database) {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS ${SCHEMA_VERSION_TABLE} (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      version INTEGER NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `);
+}
+
+function getRecordedSchemaVersion(db: Database) {
+  const value = db.exec(
+    `SELECT version FROM ${SCHEMA_VERSION_TABLE} WHERE id = 1 LIMIT 1`,
+  )[0]?.values?.[0]?.[0];
+
+  return value == null ? null : Number(value);
+}
+
+function setRecordedSchemaVersion(db: Database, version: number) {
+  const now = new Date().toISOString();
+
+  db.run(
+    `
+      INSERT INTO ${SCHEMA_VERSION_TABLE} (id, version, updated_at)
+      VALUES (1, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        version = excluded.version,
+        updated_at = excluded.updated_at
+    `,
+    [version, now],
+  );
+}
+
+function hasLegacySchemaWithoutVersion(db: Database) {
+  const rows = db.exec(
+    `
+      SELECT name
+      FROM sqlite_master
+      WHERE type = 'table'
+        AND name NOT LIKE 'sqlite_%'
+        AND name <> ?
+      LIMIT 1
+    `,
+    [SCHEMA_VERSION_TABLE],
+  )[0]?.values;
+
+  return (rows?.length ?? 0) > 0;
 }
 
 function createCoreTables(db: Database) {
@@ -277,16 +413,22 @@ function createIndexes(db: Database) {
     ON associate_profiles(modalidade_associado);
 
     CREATE UNIQUE INDEX IF NOT EXISTS idx_associate_profiles_rg_unique_non_empty
-    ON associate_profiles(rg)
-    WHERE rg IS NOT NULL AND TRIM(rg) <> '';
+    ON associate_profiles(${normalizedAssociateProfileRgSql("rg")})
+    WHERE rg IS NOT NULL
+      AND TRIM(rg) <> ''
+      AND ${normalizedAssociateProfileRgSql("rg")} <> '';
 
     CREATE UNIQUE INDEX IF NOT EXISTS idx_associate_profiles_cnh_unique_non_empty
-    ON associate_profiles(cnh)
-    WHERE cnh IS NOT NULL AND TRIM(cnh) <> '';
+    ON associate_profiles(${normalizedAssociateProfileDigitsSql("cnh")})
+    WHERE cnh IS NOT NULL
+      AND TRIM(cnh) <> ''
+      AND ${normalizedAssociateProfileDigitsSql("cnh")} <> '';
 
     CREATE UNIQUE INDEX IF NOT EXISTS idx_associate_profiles_cnpj_empresa_unique_non_empty
-    ON associate_profiles(cnpj_empresa)
-    WHERE cnpj_empresa IS NOT NULL AND TRIM(cnpj_empresa) <> '';
+    ON associate_profiles(${normalizedAssociateProfileDigitsSql("cnpj_empresa")})
+    WHERE cnpj_empresa IS NOT NULL
+      AND TRIM(cnpj_empresa) <> ''
+      AND ${normalizedAssociateProfileDigitsSql("cnpj_empresa")} <> '';
 
     CREATE UNIQUE INDEX IF NOT EXISTS idx_membership_fee_sheets_associate_year_unique
     ON membership_fee_sheets(associate_id, reference_year);
@@ -614,9 +756,7 @@ function rebuildAssociateProfilesTable(db: Database) {
   dropLegacyRebuildTableIfExists(db, "associate_profiles");
   dropIndexIfExists(db, "idx_associate_profiles_email");
   dropIndexIfExists(db, "idx_associate_profiles_modalidade_associado");
-  dropIndexIfExists(db, "idx_associate_profiles_rg_unique_non_empty");
-  dropIndexIfExists(db, "idx_associate_profiles_cnh_unique_non_empty");
-  dropIndexIfExists(db, "idx_associate_profiles_cnpj_empresa_unique_non_empty");
+  dropAssociateProfileUniqueIndexes(db);
 
   db.run("ALTER TABLE associate_profiles RENAME TO associate_profiles__old");
   db.run(`
@@ -910,7 +1050,7 @@ function rebuildTaxistaProfilesTable(db: Database) {
   db.run("DROP TABLE taxista_profiles__old");
 }
 
-function migrateSqliteSchema(db: Database) {
+function migrateLegacySqliteSchema(db: Database) {
   db.run("PRAGMA foreign_keys = OFF");
 
   try {
@@ -933,14 +1073,54 @@ function migrateSqliteSchema(db: Database) {
   }
 }
 
-export function createSqliteSchema(db: Database) {
-  createCoreTables(db);
-  migrateSqliteSchema(db);
-  createIndexes(db);
+function applySqliteSchemaCompatibility(db: Database) {
   ensureColumnExists(
     db,
     "auth_rate_limits",
     "penalty_level",
     "INTEGER NOT NULL DEFAULT 0",
   );
+}
+
+function runPendingSqliteSchemaMigrations(
+  db: Database,
+  currentVersion: number,
+) {
+  let nextVersion = currentVersion;
+
+  if (nextVersion < 2) {
+    applySqliteSchemaCompatibility(db);
+    validateAssociateProfileIdentifierUniqueness(db);
+    dropAssociateProfileUniqueIndexes(db);
+    nextVersion = 2;
+  }
+
+  if (nextVersion !== currentVersion) {
+    setRecordedSchemaVersion(db, nextVersion);
+  }
+}
+
+export function createSqliteSchema(db: Database) {
+  createSchemaVersionTable(db);
+
+  const recordedVersion = getRecordedSchemaVersion(db);
+
+  if (recordedVersion == null) {
+    const hasLegacySchema = hasLegacySchemaWithoutVersion(db);
+
+    createCoreTables(db);
+
+    if (hasLegacySchema) {
+      migrateLegacySqliteSchema(db);
+      applySqliteSchemaCompatibility(db);
+    }
+
+    createIndexes(db);
+    setRecordedSchemaVersion(db, CURRENT_SQLITE_SCHEMA_VERSION);
+    return;
+  }
+
+  createCoreTables(db);
+  runPendingSqliteSchemaMigrations(db, recordedVersion);
+  createIndexes(db);
 }

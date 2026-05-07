@@ -32,11 +32,10 @@ export function SignUpCard() {
           </div>
           <div className="space-y-2">
             <h2 className="text-3xl font-semibold tracking-tight text-slate-950">
-              Criar conta no DocFleet
+              Criar usuário no DocFleet
             </h2>
             <p className="text-sm leading-6 text-slate-500">
-              Cadastre um novo usuário para acompanhar documentos, alertas e
-              fluxos operacionais em um ambiente centralizado.
+              Use este formulário interno para provisionar um novo acesso com segurança.
             </p>
           </div>
         </header>
@@ -50,13 +49,22 @@ export function SignUpCard() {
           </div>
         ) : null}
 
+        {state.successMessage ? (
+          <div
+            role="status"
+            className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+          >
+            {state.successMessage}
+          </div>
+        ) : null}
+
         <form action={formAction} className="grid gap-5">
           <Input
             id={nameId}
             label="Nome completo"
             name="name"
             type="text"
-            placeholder="Seu nome"
+            placeholder="Nome do usuário"
             autoComplete="name"
             required
             error={state.fieldErrors?.name}
@@ -68,7 +76,7 @@ export function SignUpCard() {
             label="Email"
             name="email"
             type="email"
-            placeholder="voce@empresa.com"
+            placeholder="usuario@empresa.com"
             autoComplete="email"
             required
             error={state.fieldErrors?.email}
@@ -102,7 +110,7 @@ export function SignUpCard() {
             label="Confirmar senha"
             name="confirmPassword"
             type={showConfirmPassword ? "text" : "password"}
-            placeholder="Repita sua senha"
+            placeholder="Repita a senha"
             autoComplete="new-password"
             required
             error={state.fieldErrors?.confirmPassword}
@@ -126,9 +134,9 @@ export function SignUpCard() {
           <Button
             type="submit"
             isLoading={isPending}
-            loadingLabel="Criando conta..."
+            loadingLabel="Criando usuário..."
           >
-            Criar conta
+            Criar usuário
           </Button>
         </form>
 
@@ -141,12 +149,12 @@ export function SignUpCard() {
           </div>
 
           <p className="text-sm text-slate-500">
-            Já possui acesso?{" "}
+            Voltar para o painel?{" "}
             <Link
-              href="/login"
+              href="/dashboard"
               className="font-semibold text-slate-900 transition-colors hover:text-[#f97316]"
             >
-              Entrar no sistema
+              Abrir dashboard
             </Link>
           </p>
         </div>

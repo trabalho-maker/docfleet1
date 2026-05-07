@@ -5,6 +5,7 @@ const privateRoutePrefixes = [
   "/dashboard",
   "/documentos",
   "/associados",
+  "/cadastro",
   "/taxistas",
   "/transportes-escolares",
   "/caminhoes",
@@ -12,7 +13,6 @@ const privateRoutePrefixes = [
 ];
 const publicAuthRoutes = [
   "/login",
-  "/cadastro",
   "/recuperar-senha",
   "/redefinir-senha",
 ];

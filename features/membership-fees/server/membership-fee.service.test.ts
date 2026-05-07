@@ -538,6 +538,17 @@ describe("membership fee service", () => {
     expect(upToDate.entries[0]?.statusLabel).toBe("Mes atual em aberto");
   });
 
+  it("does not create current-year sheets while listing the overview", async () => {
+    const currentDate = new Date("2026-04-15T12:00:00.000Z");
+    const before = await countSheetsForAssociate("asc_01");
+
+    await service.listMembershipFeeOverview({}, currentDate);
+
+    const after = await countSheetsForAssociate("asc_01");
+
+    expect(after).toBe(before);
+  });
+
   it("does not create document rows or document alerts when handling membership payments", async () => {
     const dataLayer = createDataLayer();
     const [documentsBefore, alertsBefore] = await Promise.all([

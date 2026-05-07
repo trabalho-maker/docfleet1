@@ -1,6 +1,7 @@
 "use server";
 
-import { signIn } from "@/auth";
+import { auth } from "@/auth";
+import { canManageOperationalData } from "@/features/auth/lib/role-authorization";
 import { createDataLayer } from "@/features/data/repositories";
 import { validateSignUpInput } from "@/features/auth/server/validation";
 import { logger, maskEmail } from "@/lib/logger";
@@ -13,12 +14,14 @@ export type SignUpFormState = {
     confirmPassword?: string;
   };
   formError?: string;
+  successMessage?: string;
 };
 
 export async function signUpAction(
   _previousState: SignUpFormState,
   formData: FormData,
 ): Promise<SignUpFormState> {
+  const session = await auth();
   const rawEmail = formData.get("email")?.toString() ?? "";
   const validation = validateSignUpInput({
     name: formData.get("name")?.toString() ?? "",
@@ -30,6 +33,17 @@ export async function signUpAction(
   logger.info("auth.sign_up_action.attempt", {
     email: maskEmail(rawEmail),
   });
+
+  if (!session?.user?.id || !canManageOperationalData(session.user)) {
+    logger.warn("auth.sign_up_action.forbidden", {
+      email: maskEmail(rawEmail),
+      userId: session?.user?.id ?? null,
+      role: session?.user?.role ?? null,
+    });
+    return {
+      formError: "Apenas gestores autenticados podem criar novos usuários.",
+    };
+  }
 
   if (!validation.success) {
     logger.warn("auth.sign_up_action.validation_failed", {
@@ -52,26 +66,21 @@ export async function signUpAction(
 
     logger.info("auth.sign_up_action.user_created", {
       email: maskEmail(validation.data.email),
-    });
-
-    await signIn("credentials", {
-      email: validation.data.email,
-      password: validation.data.password,
-      redirectTo: "/dashboard",
+      createdByUserId: session.user.id,
     });
 
     logger.info("auth.sign_up_action.success", {
       email: maskEmail(validation.data.email),
+      createdByUserId: session.user.id,
     });
 
-    return {};
+    return {
+      successMessage: "Usuário criado com sucesso e pronto para acessar o DocFleet.",
+    };
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message === "USER_ALREADY_EXISTS"
-    ) {
+    if (error instanceof Error && error.message === "USER_ALREADY_EXISTS") {
       logger.warn("auth.sign_up_action.duplicate_email", {
-        email: maskEmail(validation.success ? validation.data.email : rawEmail),
+        email: maskEmail(validation.data.email),
       });
       return {
         fieldErrors: {

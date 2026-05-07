@@ -269,84 +269,94 @@ export function createMembershipFeeService(
     ): Promise<MembershipFeeOverview> {
       const normalizedFilters = normalizeOverviewFilters(filters);
       const currentYear = getReferenceYear(currentDate);
+      const associates = await listOverviewAssociates(adapter);
+      const totalAssociates = associates.length;
 
-      return runWriteOperation(async (repositories) => {
-        const totalAssociates = await repositories.associateRepository.countAll();
-        const baseAssociates =
-          totalAssociates > 0
-            ? await repositories.associateRepository.findMany({
-                page: 1,
-                pageSize: totalAssociates,
-              })
-            : [];
-        const entriesBeforeStatusFilter: MembershipFeeOverviewEntry[] = [];
+      if (totalAssociates === 0) {
+        return {
+          entries: [],
+          counts: {
+            upToDate: 0,
+            oneOverdue: 0,
+            twoOverdue: 0,
+            threePlusOverdue: 0,
+          },
+          totalAssociates: 0,
+          filteredAssociates: 0,
+        };
+      }
 
-        for (const baseAssociate of baseAssociates) {
-          const associate = await getAssociateWithProfile(
-            repositories.associateRepository,
-            repositories.profileRepository,
-            baseAssociate.id,
-          );
+      const associateIds = associates.map((associate) => associate.id);
+      const [currentSheets, currentYearPayments, latestPaymentDates] = await Promise.all([
+        listOverviewSheetsByAssociateIdsAndYear(adapter, associateIds, currentYear),
+        listOverviewPaymentsByAssociateIdsAndYear(adapter, associateIds, currentYear),
+        listLatestPaymentDatesByAssociateIds(adapter, associateIds),
+      ]);
+      const sheetByAssociateId = new Map(
+        currentSheets.map((sheet) => [sheet.associateId, sheet]),
+      );
+      const paymentsByAssociateId = new Map<string, MembershipFeePayment[]>();
 
-          if (!matchesOverviewSearch(associate, normalizedFilters.search)) {
-            continue;
-          }
+      for (const payment of currentYearPayments) {
+        const existingPayments = paymentsByAssociateId.get(payment.associateId) ?? [];
+        existingPayments.push(payment);
+        paymentsByAssociateId.set(payment.associateId, existingPayments);
+      }
 
-          if (!matchesOverviewCategory(associate, normalizedFilters.category)) {
-            continue;
-          }
+      const entriesBeforeStatusFilter: MembershipFeeOverviewEntry[] = [];
 
-          const currentSheet = await ensureSheetForYear(
-            repositories,
-            associate,
-            currentYear,
-            "active",
-          );
-          const [currentPayments, allPayments] = await Promise.all([
-            repositories.repository.findPaymentsBySheetId(currentSheet.id),
-            repositories.repository.findPaymentsByAssociateId(associate.id),
-          ]);
-          const calculatedStatus = calculateMembershipStatus(
-            currentSheet,
-            currentPayments,
-            currentDate,
-          );
-
-          entriesBeforeStatusFilter.push({
-            associateId: associate.id,
-            name: associate.name,
-            category: associate.modalidadeAssociado,
-            categoryLabel: formatOverviewCategoryLabel(associate),
-            registrationNumber: associate.registrationNumber,
-            phone: associate.telefone ?? associate.celular,
-            overdueMonths: calculatedStatus.summary.totalOverdueMonths,
-            statusLabel: buildOverviewStatusLabel(calculatedStatus.summary),
-            statusTone: buildOverviewStatusTone(calculatedStatus.summary),
-            lastPaymentAt: getLatestPaymentDate(allPayments),
-            currentYear,
-          });
+      for (const associate of associates) {
+        if (!matchesOverviewSearch(associate, normalizedFilters.search)) {
+          continue;
         }
 
-        const counts = buildOverviewCounts(entriesBeforeStatusFilter);
-        const entries = entriesBeforeStatusFilter
-          .filter((entry) =>
-            matchesOverviewStatus(entry.overdueMonths, normalizedFilters.status),
-          )
-          .sort((left, right) => {
-            if (right.overdueMonths !== left.overdueMonths) {
-              return right.overdueMonths - left.overdueMonths;
-            }
+        if (!matchesOverviewCategory(associate, normalizedFilters.category)) {
+          continue;
+        }
 
-            return left.name.localeCompare(right.name, "pt-BR");
-          });
+        const currentSheet =
+          sheetByAssociateId.get(associate.id) ??
+          buildTransientCurrentSheet(associate, currentYear);
+        const calculatedStatus = calculateMembershipStatus(
+          currentSheet,
+          paymentsByAssociateId.get(associate.id) ?? [],
+          currentDate,
+        );
 
-        return {
-          entries,
-          counts,
-          totalAssociates,
-          filteredAssociates: entries.length,
-        };
-      });
+        entriesBeforeStatusFilter.push({
+          associateId: associate.id,
+          name: associate.name,
+          category: associate.modalidadeAssociado,
+          categoryLabel: formatOverviewCategoryLabel(associate),
+          registrationNumber: associate.registrationNumber,
+          phone: associate.telefone ?? associate.celular,
+          overdueMonths: calculatedStatus.summary.totalOverdueMonths,
+          statusLabel: buildOverviewStatusLabel(calculatedStatus.summary),
+          statusTone: buildOverviewStatusTone(calculatedStatus.summary),
+          lastPaymentAt: latestPaymentDates.get(associate.id) ?? null,
+          currentYear,
+        });
+      }
+
+      const counts = buildOverviewCounts(entriesBeforeStatusFilter);
+      const entries = entriesBeforeStatusFilter
+        .filter((entry) =>
+          matchesOverviewStatus(entry.overdueMonths, normalizedFilters.status),
+        )
+        .sort((left, right) => {
+          if (right.overdueMonths !== left.overdueMonths) {
+            return right.overdueMonths - left.overdueMonths;
+          }
+
+          return left.name.localeCompare(right.name, "pt-BR");
+        });
+
+      return {
+        entries,
+        counts,
+        totalAssociates,
+        filteredAssociates: entries.length,
+      };
     },
 
     async getChargeMessage(associateId: string, currentDate = new Date()) {
@@ -581,6 +591,266 @@ function buildChargeMessage(
   };
 }
 
+async function listOverviewAssociates(adapter: DatabaseAdapter): Promise<Associate[]> {
+  const rows = await adapter.query(`
+    SELECT
+      associates.id,
+      associates.name,
+      associates.cpf,
+      associates.category,
+      associates.registration_number,
+      associates.status,
+      associates.admission_date,
+      associates.created_at,
+      associates.updated_at,
+      associate_profiles.modalidade_associado,
+      associate_profiles.cnpj_empresa,
+      associate_profiles.nome_empresa,
+      associate_profiles.endereco_completo,
+      associate_profiles.bairro,
+      associate_profiles.cidade,
+      associate_profiles.estado,
+      associate_profiles.cep,
+      associate_profiles.profissao,
+      associate_profiles.sexo,
+      associate_profiles.data_nascimento,
+      associate_profiles.nacionalidade,
+      associate_profiles.naturalidade,
+      associate_profiles.rg,
+      associate_profiles.cnh,
+      associate_profiles.estado_civil,
+      associate_profiles.nome_pai,
+      associate_profiles.nome_mae,
+      associate_profiles.dependentes,
+      associate_profiles.grau_parentesco,
+      associate_profiles.telefone,
+      associate_profiles.celular,
+      associate_profiles.email,
+      associate_profiles.observacoes,
+      associate_profiles.situacao_financeira,
+      associate_profiles.situacao_documental,
+      associate_profiles.historico_resumo,
+      associate_profiles.foto_url
+    FROM associates
+    LEFT JOIN associate_profiles
+      ON associate_profiles.associate_id = associates.id
+    ORDER BY associates.name ASC
+  `);
+
+  return rows.map((row) => {
+    const emptyProfile = createEmptyAssociateProfile();
+
+    return {
+      id: String(row[0]),
+      name: String(row[1]),
+      cpf: String(row[2]),
+      category: String(row[3]) as Associate["category"],
+      registrationNumber: String(row[4]),
+      status: String(row[5]) as Associate["status"],
+      admissionDate: String(row[6]),
+      createdAt: String(row[7]),
+      updatedAt: String(row[8]),
+      ...emptyProfile,
+      modalidadeAssociado: normalizeOverviewCategory(row[9]),
+      cnpjEmpresa: normalizeOverviewNullable(row[10]),
+      nomeEmpresa: normalizeOverviewNullable(row[11]),
+      enderecoCompleto: normalizeOverviewNullable(row[12]),
+      bairro: normalizeOverviewNullable(row[13]),
+      cidade: normalizeOverviewNullable(row[14]),
+      estado: normalizeOverviewNullable(row[15]),
+      cep: normalizeOverviewNullable(row[16]),
+      profissao: normalizeOverviewNullable(row[17]),
+      sexo: normalizeOverviewNullable(row[18]) as Associate["sexo"],
+      dataNascimento: normalizeOverviewNullable(row[19]),
+      nacionalidade: normalizeOverviewNullable(row[20]),
+      naturalidade: normalizeOverviewNullable(row[21]),
+      rg: normalizeOverviewNullable(row[22]),
+      cnh: normalizeOverviewNullable(row[23]),
+      estadoCivil: normalizeOverviewNullable(row[24]),
+      nomePai: normalizeOverviewNullable(row[25]),
+      nomeMae: normalizeOverviewNullable(row[26]),
+      dependentes: normalizeOverviewNullable(row[27]),
+      grauParentesco: normalizeOverviewNullable(row[28]),
+      telefone: normalizeOverviewNullable(row[29]),
+      celular: normalizeOverviewNullable(row[30]),
+      email: normalizeOverviewNullable(row[31]),
+      observacoes: normalizeOverviewNullable(row[32]),
+      situacaoFinanceira: normalizeOverviewNullable(row[33]),
+      situacaoDocumental: normalizeOverviewNullable(row[34]),
+      historicoResumo: normalizeOverviewNullable(row[35]),
+      fotoUrl: normalizeOverviewNullable(row[36]),
+    };
+  });
+}
+
+async function listOverviewSheetsByAssociateIdsAndYear(
+  adapter: DatabaseAdapter,
+  associateIds: string[],
+  referenceYear: number,
+) {
+  if (associateIds.length === 0) {
+    return [];
+  }
+
+  const rows = await adapter.query(
+    `
+      SELECT
+        id,
+        associate_id,
+        reference_year,
+        status,
+        snapshot_name,
+        snapshot_address,
+        snapshot_category,
+        snapshot_phone,
+        snapshot_registration_suffix,
+        snapshot_inss,
+        created_at,
+        updated_at
+      FROM membership_fee_sheets
+      WHERE reference_year = ?
+        AND associate_id IN (${buildSqliteInClause(associateIds.length)})
+    `,
+    [referenceYear, ...associateIds],
+  );
+
+  return rows.map((row) => ({
+    id: String(row[0]),
+    associateId: String(row[1]),
+    referenceYear: Number(row[2]),
+    status: String(row[3]) as MembershipFeeSheet["status"],
+    snapshotName: normalizeOverviewNullable(row[4]),
+    snapshotAddress: normalizeOverviewNullable(row[5]),
+    snapshotCategory: normalizeOverviewNullable(row[6]),
+    snapshotPhone: normalizeOverviewNullable(row[7]),
+    snapshotRegistrationSuffix: normalizeOverviewNullable(row[8]),
+    snapshotInss: normalizeOverviewNullable(row[9]),
+    createdAt: String(row[10]),
+    updatedAt: String(row[11]),
+  }));
+}
+
+async function listOverviewPaymentsByAssociateIdsAndYear(
+  adapter: DatabaseAdapter,
+  associateIds: string[],
+  competenceYear: number,
+) {
+  if (associateIds.length === 0) {
+    return [];
+  }
+
+  const rows = await adapter.query(
+    `
+      SELECT
+        id,
+        sheet_id,
+        associate_id,
+        competence_year,
+        competence_month,
+        paid_at,
+        paid_by_user_id,
+        notes,
+        created_at,
+        updated_at
+      FROM membership_fee_payments
+      WHERE competence_year = ?
+        AND associate_id IN (${buildSqliteInClause(associateIds.length)})
+      ORDER BY associate_id ASC, competence_month ASC, paid_at ASC
+    `,
+    [competenceYear, ...associateIds],
+  );
+
+  return rows.map((row) => ({
+    id: String(row[0]),
+    sheetId: String(row[1]),
+    associateId: String(row[2]),
+    competenceYear: Number(row[3]),
+    competenceMonth: Number(row[4]),
+    paidAt: String(row[5]),
+    paidByUserId: normalizeOverviewNullable(row[6]),
+    notes: normalizeOverviewNullable(row[7]),
+    createdAt: String(row[8]),
+    updatedAt: String(row[9]),
+  }));
+}
+
+async function listLatestPaymentDatesByAssociateIds(
+  adapter: DatabaseAdapter,
+  associateIds: string[],
+) {
+  const latestDates = new Map<string, string>();
+
+  if (associateIds.length === 0) {
+    return latestDates;
+  }
+
+  const rows = await adapter.query(
+    `
+      SELECT associate_id, MAX(paid_at)
+      FROM membership_fee_payments
+      WHERE associate_id IN (${buildSqliteInClause(associateIds.length)})
+      GROUP BY associate_id
+    `,
+    associateIds,
+  );
+
+  for (const row of rows) {
+    latestDates.set(String(row[0]), String(row[1]));
+  }
+
+  return latestDates;
+}
+
+function buildTransientCurrentSheet(
+  associate: Associate,
+  referenceYear: number,
+): MembershipFeeSheet {
+  return {
+    id: `virtual:${associate.id}:${referenceYear}`,
+    associateId: associate.id,
+    referenceYear,
+    status: "active",
+    snapshotName: associate.name,
+    snapshotAddress: associate.enderecoCompleto,
+    snapshotCategory: associate.modalidadeAssociado ?? associate.category,
+    snapshotPhone: associate.telefone ?? associate.celular,
+    snapshotRegistrationSuffix: extractRegistrationSuffix(associate.registrationNumber),
+    snapshotInss: null,
+    createdAt: "",
+    updatedAt: "",
+  };
+}
+
+function buildSqliteInClause(length: number) {
+  return Array.from({ length }, () => "?").join(", ");
+}
+
+function normalizeOverviewNullable(value: unknown) {
+  if (value == null) {
+    return null;
+  }
+
+  const normalizedValue = String(value).trim();
+  return normalizedValue ? normalizedValue : null;
+}
+
+function normalizeOverviewCategory(
+  value: unknown,
+): Associate["modalidadeAssociado"] {
+  const normalizedValue = normalizeOverviewNullable(value)?.toUpperCase();
+
+  if (
+    normalizedValue === "TAXI" ||
+    normalizedValue === "ESCOLAR" ||
+    normalizedValue === "CAMINHAO" ||
+    normalizedValue === "CNPJ"
+  ) {
+    return normalizedValue;
+  }
+
+  return null;
+}
+
 function normalizeOverviewFilters(
   filters: MembershipFeeOverviewFilters,
 ): Required<MembershipFeeOverviewFilters> {
@@ -677,18 +947,6 @@ function buildOverviewStatusTone(summary: {
   }
 
   return "success";
-}
-
-function getLatestPaymentDate(payments: MembershipFeePayment[]) {
-  let latestPaymentAt: string | null = null;
-
-  for (const payment of payments) {
-    if (!latestPaymentAt || payment.paidAt > latestPaymentAt) {
-      latestPaymentAt = payment.paidAt;
-    }
-  }
-
-  return latestPaymentAt;
 }
 
 function formatOverviewCategoryLabel(associate: Associate) {

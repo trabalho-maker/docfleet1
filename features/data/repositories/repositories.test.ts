@@ -60,6 +60,28 @@ describe("repositories", () => {
     expect(existsSync(getSqliteDatabasePath())).toBe(true);
   });
 
+  it("records the schema version and avoids rerunning legacy rebuild flow on repeated bootstrap", async () => {
+    await withSqliteWriteLock((db) => {
+      const before = Number(
+        db.exec("SELECT COUNT(*) FROM documents")[0]?.values?.[0]?.[0] ?? 0,
+      );
+
+      createSqliteSchema(db);
+
+      const after = Number(
+        db.exec("SELECT COUNT(*) FROM documents")[0]?.values?.[0]?.[0] ?? 0,
+      );
+      const version = Number(
+        db.exec(
+          "SELECT version FROM app_schema_version WHERE id = 1 LIMIT 1",
+        )[0]?.values?.[0]?.[0] ?? 0,
+      );
+
+      expect(after).toBe(before);
+      expect(version).toBe(2);
+    });
+  });
+
   it("rejects duplicate users by email", async () => {
     await expect(
       userRepository.create({
@@ -206,6 +228,7 @@ describe("repositories", () => {
 
   it("consolidates legacy duplicates before enforcing associate/type uniqueness", async () => {
     await withSqliteWriteLock(async (db) => {
+      db.run("DELETE FROM app_schema_version");
       db.run("DROP TABLE IF EXISTS documents");
       db.run(`
         CREATE TABLE documents (
@@ -283,6 +306,7 @@ describe("repositories", () => {
 
   it("normalizes legacy RG, CNH and company CNPJ values during schema bootstrap", async () => {
     await withSqliteWriteLock((db) => {
+      db.run("DELETE FROM app_schema_version");
       db.run(
         `
           UPDATE associate_profiles
@@ -333,6 +357,7 @@ describe("repositories", () => {
 
   it("fails schema bootstrap with a clear error when RG duplicates remain after normalization", async () => {
     await withSqliteWriteLock((db) => {
+      db.run("DELETE FROM app_schema_version");
       db.run("DROP INDEX IF EXISTS idx_associate_profiles_rg_unique_non_empty");
       db.run("DROP INDEX IF EXISTS idx_associate_profiles_cnh_unique_non_empty");
       db.run("DROP INDEX IF EXISTS idx_associate_profiles_cnpj_empresa_unique_non_empty");
@@ -390,6 +415,7 @@ describe("repositories", () => {
       } finally {
         db.run("DELETE FROM associate_profiles WHERE associate_id = ?", ["asc_dup_rg"]);
         db.run("DELETE FROM associates WHERE id = ?", ["asc_dup_rg"]);
+        db.run("DELETE FROM app_schema_version");
         createSqliteSchema(db);
       }
     });

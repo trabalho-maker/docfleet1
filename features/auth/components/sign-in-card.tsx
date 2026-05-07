@@ -199,13 +199,7 @@ export function SignInCard({ resetSuccess = false }: SignInCardProps) {
           ) : null}
 
           <p className="text-sm text-slate-500">
-            Ainda não tem acesso?{" "}
-            <Link
-              href="/cadastro"
-              className="font-medium text-slate-700 transition-colors hover:text-[#f97316]"
-            >
-              Criar conta
-            </Link>
+            O cadastro de novos usuários é interno e controlado por gestores autenticados.
           </p>
 
           <p className="text-xs uppercase tracking-[0.18em] text-slate-300/75">
