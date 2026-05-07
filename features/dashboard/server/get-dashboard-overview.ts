@@ -30,6 +30,7 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
     dataLayer.documents.summarizeExpirationTimeline(),
     associateRepository.countAll(),
   ]);
+
   const pendingDocuments =
     documentSummary.expired +
     documentSummary.dueIn15Days +
@@ -40,9 +41,16 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
 
   return {
     user,
-    title: "Dashboard",
+    title: "Dashboard Operacional",
     description:
-      "Visão geral com foco nas pendências documentais e nos alertas relevantes da operação.",
+      "Visão geral dos documentos, vencimentos e alertas relevantes da operação.",
+    operationalSummary: {
+      totalDocuments: documentSummary.total,
+      attentionDocuments,
+      expiredDocuments,
+      totalAssociates,
+      alertCount: totalAlerts,
+    },
     alertCount: totalAlerts,
     recentDocuments,
     alerts,
@@ -50,14 +58,17 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
       {
         label: "Total de Documentos",
         value: documentSummary.total,
-        helper: "Base documental disponível no sistema.",
+        helper: "Base documental monitorada no sistema.",
         tone: "neutral",
         icon: "documents",
       },
       {
         label: "Próximos do Vencimento",
         value: attentionDocuments,
-        helper: "Documentos dentro da janela de atenção operacional.",
+        helper:
+          attentionDocuments > 0
+            ? "Itens exigem acompanhamento nos próximos 30 dias."
+            : "Nenhum vencimento próximo na janela atual.",
         tone: "warning",
         icon: "attention",
       },
@@ -66,7 +77,7 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
         value: expiredDocuments,
         helper:
           expiredDocuments > 0
-            ? "Ação necessária para regularização."
+            ? "Ação imediata necessária para regularização."
             : "Nenhuma pendência vencida no momento.",
         tone: "danger",
         icon: "expired",
@@ -76,8 +87,8 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
         value: totalAssociates,
         helper:
           pendingDocuments > 0
-            ? `${pendingDocuments} item(ns) exigem acompanhamento.`
-            : "Base sem pendências críticas abertas.",
+            ? `${pendingDocuments} item(ns) estão em acompanhamento.`
+            : "Base acompanhada sem pendências críticas abertas.",
         tone: "success",
         icon: "associates",
       },

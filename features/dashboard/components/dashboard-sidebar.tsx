@@ -10,18 +10,37 @@ type DashboardSidebarProps = {
   user: AuthUser;
 };
 
-const navigationItems = [
-  { label: "Dashboard", href: "/dashboard", icon: DashboardGridIcon },
-  { label: "Documentos", href: "/documentos", icon: DocumentsIcon },
-  { label: "Associados", href: "/associados", icon: AssociatesIcon },
-  { label: "Taxistas", href: "/taxistas", icon: TaxiIcon },
+type NavigationItemConfig = {
+  label: string;
+  href: string;
+  icon: (props: { active: boolean }) => JSX.Element;
+};
+
+const navigationSections: Array<{
+  label: string;
+  items: NavigationItemConfig[];
+}> = [
   {
-    label: "Transporte escolar",
-    href: "/transportes-escolares",
-    icon: SchoolBusIcon,
+    label: "Visão geral",
+    items: [
+      { label: "Dashboard", href: "/dashboard", icon: DashboardGridIcon },
+      { label: "Documentos", href: "/documentos", icon: DocumentsIcon },
+      { label: "Associados", href: "/associados", icon: AssociatesIcon },
+    ],
   },
-  { label: "Caminhoes", href: "/caminhoes", icon: TruckIcon },
-  { label: "Empresas", href: "/empresas", icon: BuildingsIcon },
+  {
+    label: "Categorias",
+    items: [
+      { label: "Taxistas", href: "/taxistas", icon: TaxiIcon },
+      {
+        label: "Transporte escolar",
+        href: "/transportes-escolares",
+        icon: SchoolBusIcon,
+      },
+      { label: "Caminhões", href: "/caminhoes", icon: TruckIcon },
+      { label: "Empresas", href: "/empresas", icon: BuildingsIcon },
+    ],
+  },
 ];
 
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
@@ -35,97 +54,107 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
 
   return (
     <aside className="flex h-full flex-col bg-[linear-gradient(180deg,#1B3555_0%,#243F62_100%)] text-white md:sticky md:top-0 md:min-h-screen">
-      <div className="border-b border-white/10 px-4 py-5 xl:px-5 xl:py-6">
-        <div className="flex items-center justify-center gap-3 xl:justify-start">
+      <div className="border-b border-white/10 px-4 py-5 lg:px-5 lg:py-6">
+        <div className="flex items-center justify-center gap-3 lg:justify-start">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F59E0B] text-white shadow-[0_12px_24px_rgba(245,158,11,0.28)]">
             <DocFleetMark />
           </div>
-          <div className="hidden xl:block">
-            <p className="text-base font-semibold tracking-tight">TransDocs</p>
-            <p className="text-sm text-white/65">Gestao de Documentos</p>
+          <div className="hidden lg:block">
+            <p className="text-base font-semibold tracking-tight">DocFleet</p>
+            <p className="text-sm text-white/65">Operação documental</p>
           </div>
         </div>
       </div>
 
-      <div className="border-b border-white/10 px-4 py-5 xl:px-5">
-        <div className="flex items-center justify-center gap-3 xl:justify-start">
+      <div className="border-b border-white/10 px-4 py-5 lg:px-5">
+        <div className="flex items-center justify-center gap-3 lg:justify-start">
           <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/12 text-sm font-semibold text-white">
             {getUserInitials(user.name)}
           </span>
-          <div className="hidden min-w-0 xl:block">
+          <div className="hidden min-w-0 lg:block">
             <p className="truncate text-sm font-semibold text-white">{user.name}</p>
             <p className="truncate text-sm text-white/65">{user.role}</p>
           </div>
         </div>
       </div>
 
-      <nav aria-label="Navegacao principal" className="flex-1 px-3 py-6">
-        <div className="space-y-2">
-          {navigationItems.map((item) =>
-            item.href === "/associados" ? (
-              <ExpandableNavigationGroup
-                key={item.href}
-                item={item}
-                pathname={pathname}
-                expanded={associadosExpanded}
-                onToggle={() => setAssociadosExpanded((current) => !current)}
-                expandLabel="associados"
-                childrenItems={[
-                  {
-                    href: "/associados/mensalidades",
-                    label: "Mensalidades",
-                    active: isAssociatesSubmenuPath(pathname),
-                  },
-                ]}
-              />
-            ) : item.href === "/taxistas" ? (
-              <ExpandableNavigationGroup
-                key={item.href}
-                item={item}
-                pathname={pathname}
-                expanded={taxistasExpanded}
-                onToggle={() => setTaxistasExpanded((current) => !current)}
-                expandLabel="taxistas"
-                childrenItems={[
-                  {
-                    href: "/taxistas/cadastro",
-                    label: "Cadastro",
-                    active: pathname === "/taxistas/cadastro",
-                  },
-                ]}
-              />
-            ) : (
-              <NavigationItem
-                key={item.href}
-                href={item.href}
-                active={isActivePath(pathname, item.href)}
-                icon={item.icon}
-                title={item.label}
-              >
-                {item.label}
-              </NavigationItem>
-            ),
-          )}
+      <nav aria-label="Navegação principal" className="flex-1 px-3 py-5">
+        <div className="space-y-5">
+          {navigationSections.map((section) => (
+            <div key={section.label}>
+              <p className="hidden px-3 pb-2 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-white/40 lg:block">
+                {section.label}
+              </p>
+
+              <div className="space-y-2">
+                {section.items.map((item) =>
+                  item.href === "/associados" ? (
+                    <ExpandableNavigationGroup
+                      key={item.href}
+                      item={item}
+                      pathname={pathname}
+                      expanded={associadosExpanded}
+                      onToggle={() => setAssociadosExpanded((current) => !current)}
+                      expandLabel="associados"
+                      childrenItems={[
+                        {
+                          href: "/associados/mensalidades",
+                          label: "Mensalidades",
+                          active: isAssociatesSubmenuPath(pathname),
+                        },
+                      ]}
+                    />
+                  ) : item.href === "/taxistas" ? (
+                    <ExpandableNavigationGroup
+                      key={item.href}
+                      item={item}
+                      pathname={pathname}
+                      expanded={taxistasExpanded}
+                      onToggle={() => setTaxistasExpanded((current) => !current)}
+                      expandLabel="taxistas"
+                      childrenItems={[
+                        {
+                          href: "/taxistas/cadastro",
+                          label: "Cadastro",
+                          active: pathname === "/taxistas/cadastro",
+                        },
+                      ]}
+                    />
+                  ) : (
+                    <NavigationItem
+                      key={item.href}
+                      href={item.href}
+                      active={isActivePath(pathname, item.href)}
+                      icon={item.icon}
+                      title={item.label}
+                    >
+                      {item.label}
+                    </NavigationItem>
+                  ),
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </nav>
 
-      <div className="px-3 pb-4 xl:px-4">
+      <div className="px-3 pb-4 lg:px-4">
         <form action={signOutAction}>
           <button
             type="submit"
             className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-white/12 bg-white/8 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/14 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#243F62]"
             title="Sair do painel"
           >
-            <span className="xl:hidden">
+            <span className="lg:hidden">
               <LogoutIcon />
             </span>
-            <span className="hidden xl:inline">Sair do painel</span>
+            <span className="hidden lg:inline">Sair do painel</span>
           </button>
         </form>
       </div>
 
-      <div className="hidden px-5 pb-5 pt-1 text-xs text-white/45 xl:block">
-        v1.0.0 · 2026
+      <div className="hidden px-5 pb-5 pt-1 text-xs text-white/45 lg:block">
+        DocFleet v1.0.0 - 2026
       </div>
     </aside>
   );
@@ -139,7 +168,7 @@ function ExpandableNavigationGroup({
   expandLabel,
   childrenItems,
 }: {
-  item: (typeof navigationItems)[number];
+  item: NavigationItemConfig;
   pathname: string;
   expanded: boolean;
   onToggle: () => void;
@@ -171,14 +200,14 @@ function ExpandableNavigationGroup({
           }
           aria-expanded={expanded}
           onClick={onToggle}
-          className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-[#F39C12] transition-all duration-200 hover:bg-white/10 hover:text-[#FFB238] xl:inline-flex"
+          className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-[#F39C12] transition-all duration-200 hover:bg-white/10 hover:text-[#FFB238] lg:inline-flex"
         >
           <ChevronIcon expanded={expanded} />
         </button>
       </div>
 
       {expanded ? (
-        <div className="hidden pl-4 pr-2 xl:block">
+        <div className="hidden pl-4 pr-2 lg:block">
           {childrenItems.map((childItem) => (
             <SubmenuLink
               key={childItem.href}
@@ -217,14 +246,14 @@ function NavigationItem({
       aria-current={active ? "page" : undefined}
       title={title}
       onClick={onClick}
-      className={`group flex items-center justify-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors xl:justify-start ${
+      className={`group flex items-center justify-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors lg:justify-start ${
         active
-          ? "bg-[#F59E0B] text-white shadow-[0_14px_28px_rgba(245,158,11,0.24)]"
-          : "text-white/74 hover:bg-white/8 hover:text-white"
+          ? "border-white/10 bg-[#F59E0B] text-white shadow-[0_14px_28px_rgba(245,158,11,0.24)]"
+          : "border-transparent text-white/74 hover:border-white/8 hover:bg-white/8 hover:text-white"
       } ${className ?? ""}`}
     >
       <Icon active={active} />
-      <span className="hidden xl:inline">{children}</span>
+      <span className="hidden lg:inline">{children}</span>
     </Link>
   );
 }

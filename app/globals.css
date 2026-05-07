@@ -66,6 +66,12 @@ a {
     margin-inline: auto;
   }
 
+  .df-dashboard-container {
+    width: 100%;
+    max-width: 88rem;
+    margin-inline: auto;
+  }
+
   .df-section-card {
     border: 1px solid var(--color-border);
     background: var(--color-card);

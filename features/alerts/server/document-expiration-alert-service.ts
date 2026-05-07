@@ -63,7 +63,7 @@ function buildAlertTitle(document: FleetDocument, now: Date) {
   const label = getDocumentAlertLabel(document);
 
   if (document.status === "Vencido" || (daysUntilDue !== null && daysUntilDue < 0)) {
-    return `${label} esta vencido`;
+    return `${label} está vencido`;
   }
 
   if (daysUntilDue === 0) {
@@ -71,14 +71,14 @@ function buildAlertTitle(document: FleetDocument, now: Date) {
   }
 
   if (daysUntilDue === 1) {
-    return `${label} vence amanha`;
+    return `${label} vence amanhã`;
   }
 
   if (typeof daysUntilDue === "number") {
     return `${label} vence em ${daysUntilDue} dias`;
   }
 
-  return `${label} requer atencao`;
+  return `${label} requer atenção`;
 }
 
 function toGeneratedAlert(

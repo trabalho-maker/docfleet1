@@ -17,6 +17,14 @@ export type DashboardKpi = {
   icon: DashboardKpiIcon;
 };
 
+export type DashboardOperationalSummary = {
+  totalDocuments: number;
+  attentionDocuments: number;
+  expiredDocuments: number;
+  totalAssociates: number;
+  alertCount: number;
+};
+
 export type DashboardDocumentsByTypeItem = {
   type: string;
   valid: number;
@@ -33,6 +41,7 @@ export type DashboardOverview = {
   user: AuthUser;
   title: string;
   description: string;
+  operationalSummary: DashboardOperationalSummary;
   kpis: DashboardKpi[];
   alertCount: number;
   recentDocuments: FleetDocument[];
