@@ -138,7 +138,7 @@ export function MembershipFeeSection({
       await navigator.clipboard.writeText(sheetView.chargeMessage);
       setCopyFeedback("Mensagem copiada para envio manual.");
     } catch {
-      setCopyFeedback("Nao foi possivel copiar a mensagem agora.");
+      setCopyFeedback("Não foi possível copiar a mensagem agora.");
     }
   }
 
@@ -147,11 +147,9 @@ export function MembershipFeeSection({
       <AssociatesPageHeader
         eyebrow="Associados > Mensalidades"
         title="Ficha de mensalidades"
-        description="Controle financeiro anual do associado, separado da gestao documental e com leitura clara de pagamentos, abertos e atrasos."
         userName={userName}
         userEmail={userEmail}
         userRole={userRole}
-        supportingText="A ficha organiza competencias mensais, confirma pagamentos com data real e preserva o historico anual do associado."
         action={
           <div className="flex flex-wrap gap-3">
             <Link
@@ -189,31 +187,24 @@ export function MembershipFeeSection({
           metric={{
             label: "Ano",
             value: sheetView.sheet.referenceYear,
-            helper: "Competencias exibidas nesta ficha anual.",
           }}
         />
         <MetricCard
           metric={{
             label: "Pagas",
             value: sheetView.summary.paidMonths,
-            helper: "Mensalidades confirmadas com data real de pagamento.",
           }}
         />
         <MetricCard
           metric={{
             label: "Em aberto",
             value: sheetView.summary.currentOpenMonths,
-            helper: "Competencias do mes atual ainda abertas.",
           }}
         />
         <MetricCard
           metric={{
-            label: "Criticos",
+            label: "Críticos",
             value: sheetView.summary.totalOverdueMonths,
-            helper:
-              sheetView.summary.totalOverdueMonths >= 3
-                ? "Atraso critico com tres ou mais competencias em debito."
-                : "Competencias vencidas sem pagamento confirmado.",
           }}
         />
       </section>
@@ -227,7 +218,7 @@ export function MembershipFeeSection({
                 {sheetView.associate.displayName}
               </h2>
               <p className="mt-2 text-sm text-[var(--color-muted)]">
-                Matricula {sheetView.associate.registrationNumber}
+                Matrícula {sheetView.associate.registrationNumber}
               </p>
             </div>
             <span className="df-badge-pill bg-[#EEF4FB] text-[#35577E]">
@@ -237,27 +228,27 @@ export function MembershipFeeSection({
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <InfoCard
-              label="Endereco"
-              value={sheetView.associate.displayAddress ?? "Nao informado"}
+              label="Endereço"
+              value={sheetView.associate.displayAddress ?? "Não informado"}
             />
             <InfoCard
               label="Atividade / categoria"
-              value={sheetView.associate.displayCategory ?? "Nao informado"}
+              value={sheetView.associate.displayCategory ?? "Não informado"}
             />
             <InfoCard
               label="Telefone"
-              value={sheetView.associate.displayPhone ?? "Nao informado"}
+              value={sheetView.associate.displayPhone ?? "Não informado"}
             />
             <InfoCard
-              label="No. matricula"
-              value={sheetView.associate.displayRegistrationSuffix ?? "Nao informado"}
+              label="Nº matrícula"
+              value={sheetView.associate.displayRegistrationSuffix ?? "Não informado"}
             />
             <InfoCard
               label="INSS"
-              value={sheetView.associate.displayInss ?? "Nao informado"}
+              value={sheetView.associate.displayInss ?? "Não informado"}
             />
             <InfoCard
-              label="Situacao anual"
+              label="Situação anual"
               value={buildAnnualSituationLabel(sheetView)}
             />
           </div>
@@ -286,14 +277,10 @@ export function MembershipFeeSection({
         </article>
 
         <article className="df-section-card p-6 lg:p-7">
-          <div className="flex flex-col gap-3 border-b border-[var(--color-border)] pb-5">
-            <p className="df-eyebrow">Cobranca manual</p>
-            <h2 className="text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
-              Mensagem para WhatsApp
+          <div className="flex flex-col gap-2 border-b border-[var(--color-border)] pb-5">
+            <h2 className="text-[1.6rem] font-semibold tracking-tight text-[var(--color-foreground)]">
+              Cobrança
             </h2>
-            <p className="text-sm leading-6 text-[var(--color-muted)]">
-              A mensagem so aparece quando existem duas ou mais competencias em debito. O envio continua manual.
-            </p>
           </div>
 
           {sheetView.chargeEligible && sheetView.chargeMessage ? (
@@ -316,7 +303,7 @@ export function MembershipFeeSection({
             </div>
           ) : (
             <div className="mt-6 rounded-[24px] border border-dashed border-[var(--color-border)] bg-[#F8FAFC] px-5 py-10 text-sm leading-6 text-[var(--color-muted)]">
-              A mensagem de cobranca sera liberada automaticamente quando houver pelo menos duas mensalidades em debito.
+              Disponível com 2 ou mais mensalidades em débito.
             </div>
           )}
         </article>
@@ -325,16 +312,12 @@ export function MembershipFeeSection({
       <article className="df-section-card p-6 lg:p-7">
         <div className="flex flex-col gap-3 border-b border-[var(--color-border)] pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="df-eyebrow">Competencias mensais</p>
-            <h2 className="mt-2 text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
-              Grade anual de mensalidades
+            <h2 className="text-[1.6rem] font-semibold tracking-tight text-[var(--color-foreground)]">
+              Competências
             </h2>
-            <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-              Cada card representa uma competencia mensal do ano {sheetView.sheet.referenceYear}.
-            </p>
           </div>
           <span className="df-badge-pill bg-[#FFF7ED] text-[#C2410C]">
-            {sheetView.summary.totalOverdueMonths} em debito
+            {sheetView.summary.totalOverdueMonths} em débito
           </span>
         </div>
 
@@ -344,14 +327,14 @@ export function MembershipFeeSection({
             const isPaid = month.status === "paid";
             const isClickable = isPaid || (canEdit && month.canConfirmPayment);
             const helpText = month.paidAt
-              ? `Pago em ${formatPaidAt(month.paidAt)}. Clique para ver detalhes.`
+              ? `Pago em ${formatPaidAt(month.paidAt)}.`
               : month.status === "future"
                 ? canEdit
-                  ? "Competencia futura - pode ser paga antecipadamente."
-                  : "Competencia futura disponivel para pagamento antecipado por usuarios com permissao de edicao."
+                  ? "Pagamento antecipado disponível."
+                  : "Disponível para usuários com permissão de edição."
                 : canEdit && month.canConfirmPayment
-                  ? "Clique para confirmar o pagamento desta competencia."
-                  : "Somente usuarios com permissao de edicao podem confirmar pagamentos.";
+                  ? "Clique para confirmar."
+                  : "Sem permissão para confirmar.";
 
             return (
               <button
@@ -359,7 +342,7 @@ export function MembershipFeeSection({
                 type="button"
                 disabled={!isClickable}
                 onClick={() => setSelectedMonth(month)}
-                title={month.status === "future" && !month.paidAt ? "Competencia futura - pode ser paga antecipadamente" : undefined}
+                title={month.status === "future" && !month.paidAt ? "Competência futura: pagamento antecipado disponível" : undefined}
                 className={`group flex min-h-[184px] flex-col rounded-[28px] border p-5 text-left transition-all ${cardPalette.wrapper} ${
                   isClickable
                     ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_24px_50px_rgba(15,23,42,0.10)]"
@@ -419,7 +402,7 @@ export function MembershipFeeSection({
               <p className="mt-1 text-base font-semibold text-[var(--color-foreground)]">
                 {sheetView.associate.displayName}
               </p>
-              <p className="mt-4 text-sm text-[var(--color-muted)]">Competencia</p>
+              <p className="mt-4 text-sm text-[var(--color-muted)]">Competência</p>
               <p className="mt-1 text-base font-semibold text-[var(--color-foreground)]">
                 {selectedMonth.competenceLabel}
               </p>
@@ -437,19 +420,19 @@ export function MembershipFeeSection({
               ) : null}
               {selectedMonth.status === "paid" ? (
                 <>
-                  <p className="mt-4 text-sm text-[var(--color-muted)]">Observacao</p>
+                  <p className="mt-4 text-sm text-[var(--color-muted)]">Observação</p>
                   <p className="mt-1 text-base text-[var(--color-foreground)]">
-                    {selectedPayment?.notes ?? "Sem observacao registrada."}
+                    {selectedPayment?.notes ?? "Sem observação registrada."}
                   </p>
                 </>
               ) : null}
             </div>
             <p className="mt-5 text-sm leading-6 text-[var(--color-muted)]">
               {selectedMonth.status === "paid"
-                ? "Esta competencia ja possui pagamento confirmado. Se o lancamento foi feito por engano, voce pode estornar apenas este pagamento."
+                ? "Esta competência já possui pagamento confirmado. Se o lançamento foi feito por engano, você pode estornar apenas este pagamento."
                 : selectedMonth.status === "future"
-                ? "Ao confirmar, o sistema gravara a data real do pagamento antecipado e mantera a competencia mensal sem alterar os atrasos anteriores."
-                : "Ao confirmar, o sistema gravara a data real do pagamento e atualizara a ficha imediatamente."}
+                  ? "Ao confirmar, o sistema gravará a data real do pagamento antecipado sem alterar os atrasos anteriores."
+                  : "Ao confirmar, o sistema gravará a data real do pagamento e atualizará a ficha imediatamente."}
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -496,7 +479,7 @@ export function MembershipFeeSection({
             aria-labelledby="membership-reverse-dialog-title"
             className="w-full max-w-md rounded-[32px] border border-[var(--color-border)] bg-white p-6 shadow-[0_30px_90px_rgba(15,23,42,0.24)]"
           >
-            <p className="df-eyebrow">Confirmacao de estorno</p>
+            <p className="df-eyebrow">Confirmação de estorno</p>
             <h2
               id="membership-reverse-dialog-title"
               className="mt-2 text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]"
@@ -504,10 +487,10 @@ export function MembershipFeeSection({
               Estornar pagamento?
             </h2>
             <p className="mt-4 text-sm leading-6 text-[var(--color-muted)]">
-              Esta acao removera o lancamento de pagamento desta competencia. A mensalidade voltara ao status correspondente ao mes.
+              Esta ação removerá o lançamento de pagamento desta competência. A mensalidade voltará ao status correspondente ao mês.
             </p>
             <p className="mt-4 text-sm font-semibold text-[var(--color-foreground)]">
-              Tem certeza que deseja remover o pagamento desta competencia?
+              Tem certeza que deseja remover o pagamento desta competência?
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -563,15 +546,15 @@ function InfoCard({ label, value }: { label: string; value: string }) {
 
 function buildAnnualSituationLabel(sheetView: MembershipFeeSheetView) {
   if (sheetView.summary.totalOverdueMonths >= 3) {
-    return "Atraso critico";
+    return "Atraso crítico";
   }
 
   if (sheetView.summary.totalOverdueMonths >= 1) {
-    return "Com debitos";
+    return "Com débitos";
   }
 
   if (sheetView.summary.currentOpenMonths >= 1) {
-    return "Mes atual em aberto";
+    return "Mês atual em aberto";
   }
 
   return "Sem atrasos";
@@ -586,7 +569,7 @@ function getMonthStatusLabel(status: MembershipFeeMonthState["status"]) {
     case "future":
       return "Futuro";
     case "critical_overdue":
-      return "Critico";
+      return "Crítico";
     default:
       return "Atrasado";
   }

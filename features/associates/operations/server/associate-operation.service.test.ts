@@ -45,7 +45,7 @@ describe("associate operation service", () => {
       return [
         {
           id: "doc_school_vehicle",
-          name: "Autorizacao veiculo",
+          name: "Autorização veículo",
           owner: "Operacao",
           documentType: "AUTORIZACAO_VEICULO",
           status: "Atencao",
@@ -58,7 +58,7 @@ describe("associate operation service", () => {
         },
         {
           id: "doc_school_driver",
-          name: "Autorizacao condutor",
+          name: "Autorização condutor",
           owner: "Operacao",
           documentType: "AUTORIZACAO_CONDUTOR",
           status: "Valido",
@@ -95,13 +95,13 @@ describe("associate operation service", () => {
     expect(overview.entries[0].requirements).toEqual([
       {
         key: "vehicleAuthorization",
-        label: "Autorizacao do veiculo",
+        label: "Autorização do veículo",
         dueDate: "2099-06-01",
         status: "Atencao",
       },
       {
         key: "driverAuthorization",
-        label: "Autorizacao do condutor",
+        label: "Autorização do condutor",
         dueDate: "2099-08-15",
         status: "Valido",
       },
@@ -162,7 +162,7 @@ describe("associate operation service", () => {
     expect(overview.entries[0].requirements).toEqual([
       {
         key: "companyDocumentation",
-        label: "Documentacao empresarial",
+        label: "Documentação empresarial",
         dueDate: "2099-01-01",
         status: "Valido",
       },

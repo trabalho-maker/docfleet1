@@ -80,30 +80,30 @@ export function TaxistaCadastroModal({
           { key: "name", label: "Nome", span: "sm:col-span-2" },
           { key: "cpf", label: "CPF" },
           { key: "telefone", label: "Telefone" },
-          { key: "endereco", label: "Endereco", span: "sm:col-span-2" },
+          { key: "endereco", label: "Endereço", span: "sm:col-span-2" },
           { key: "ponto", label: "Ponto" },
           { key: "deca", label: "Deca" },
         ] as const,
       },
       {
-        title: "Veiculo",
+        title: "Veículo",
         fields: [
           { key: "placa", label: "Placa" },
-          { key: "modeloVeiculo", label: "Modelo veiculo", span: "sm:col-span-2" },
+          { key: "modeloVeiculo", label: "Modelo veículo", span: "sm:col-span-2" },
           { key: "pneu", label: "Pneu" },
           { key: "pressaoKgfM2", label: "Pressao KGF/M2" },
         ] as const,
       },
       {
-        title: "Taximetro",
+        title: "Taxímetro",
         fields: [
-          { key: "numeroTaximetro", label: "No. Taximetro" },
-          { key: "modeloTaximetro", label: "Modelo do taximetro" },
+          { key: "numeroTaximetro", label: "Nº Taxímetro" },
+          { key: "modeloTaximetro", label: "Modelo do taxímetro" },
           { key: "constante", label: "Constante" },
           { key: "inmetro", label: "Inmetro" },
           {
             key: "trocaTaximetro",
-            label: "Troca de taximetro",
+            label: "Troca de taxímetro",
             type: "date",
           },
         ] as const,
@@ -111,10 +111,10 @@ export function TaxistaCadastroModal({
       {
         title: "Equipamentos e controle",
         fields: [
-          { key: "instalacao", label: "Instalacao", type: "date" },
-          { key: "lacreModulo", label: "Lacre modulo" },
-          { key: "lacreTaxi", label: "Lacre taxi" },
-          { key: "modulo", label: "Modulo" },
+          { key: "instalacao", label: "Instalação", type: "date" },
+          { key: "lacreModulo", label: "Lacre módulo" },
+          { key: "lacreTaxi", label: "Lacre táxi" },
+          { key: "modulo", label: "Módulo" },
           { key: "cinta", label: "Cinta" },
           { key: "colocado", label: "Colocado" },
           { key: "retirado", label: "Retirado" },
@@ -248,7 +248,7 @@ export function TaxistaCadastroModal({
                 <div className="mt-4">
                   <textarea
                     readOnly
-                    value={modalRecord.observacao ?? "Nenhuma alteracao registrada ainda."}
+                    value={modalRecord.observacao ?? "Nenhuma alteração registrada ainda."}
                     className="min-h-[108px] w-full resize-none rounded-[16px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none"
                   />
                 </div>
@@ -276,7 +276,7 @@ export function TaxistaCadastroModal({
               disabled={!canEdit || isSubmitting}
               className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#F39C12] px-5 text-sm font-semibold text-[#163559] shadow-[0_14px_32px_rgba(243,156,18,0.28)] transition-colors hover:bg-[#FFB238] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
             >
-              {isSubmitting ? "Salvando..." : "Salvar edicao"}
+              {isSubmitting ? "Salvando..." : "Salvar edição"}
             </button>
           </div>
         </form>

@@ -37,18 +37,18 @@ export const associateOperationConfigs: Record<
     type: "Taxista",
     route: "/taxistas",
     navigationLabel: "Taxistas",
-    eyebrow: "Operacao por categoria",
+    eyebrow: "Operação por categoria",
     title: "TAXISTAS",
-    description: "Acompanhe os associados vinculados a operacao de taxi.",
-    summaryTitle: "Exigencia operacional",
-    summaryDescription: "A operacao acompanha um unico vencimento basico por taxista.",
+    description: "Acompanhe os associados vinculados à operação de táxi.",
+    summaryTitle: "Exigência operacional",
+    summaryDescription: "Leitura do vencimento principal por taxista.",
     emptyStateTitle: "Nenhum taxista vinculado ainda",
     emptyStateDescription:
-      "Quando houver associados com modalidade TAXI, eles aparecerao aqui com leitura operacional da exigencia basica.",
+      "Associados com modalidade TAXI aparecerão aqui.",
     requirements: [
       {
         key: "basicDocumentation",
-        label: "Documentacao basica",
+        label: "Documentação básica",
         field: "basicDocumentationDueDate",
         documentType: "CNH",
       },
@@ -58,26 +58,25 @@ export const associateOperationConfigs: Record<
     type: "TransporteEscolar",
     route: "/transportes-escolares",
     navigationLabel: "Transportes escolares",
-    eyebrow: "Operacao por categoria",
+    eyebrow: "Operação por categoria",
     title: "Transportes escolares",
     description:
-      "Concentre a gestao dos associados vinculados ao transporte escolar com foco em autorizacoes do veiculo e do condutor.",
-    summaryTitle: "Autorizacoes da operacao escolar",
-    summaryDescription:
-      "A base ja esta pronta para separar requisitos do veiculo e do motorista sem duplicar o cadastro principal de associados.",
+      "Acompanhe os associados do transporte escolar.",
+    summaryTitle: "Autorizações",
+    summaryDescription: "Leitura das autorizações do veículo e do condutor.",
     emptyStateTitle: "Nenhum transporte escolar vinculado ainda",
     emptyStateDescription:
-      "Quando houver associados vinculados ao transporte escolar, esta visao passara a exibir autorizacoes do veiculo e do condutor com status proprio.",
+      "Associados do transporte escolar aparecerão aqui.",
     requirements: [
       {
         key: "vehicleAuthorization",
-        label: "Autorizacao do veiculo",
+        label: "Autorização do veículo",
         field: "vehicleAuthorizationDueDate",
         documentType: "AUTORIZACAO_VEICULO",
       },
       {
         key: "driverAuthorization",
-        label: "Autorizacao do condutor",
+        label: "Autorização do condutor",
         field: "driverAuthorizationDueDate",
         documentType: "AUTORIZACAO_CONDUTOR",
       },
@@ -87,20 +86,19 @@ export const associateOperationConfigs: Record<
     type: "Caminhao",
     route: "/caminhoes",
     navigationLabel: "Caminhoes",
-    eyebrow: "Operacao por categoria",
-    title: "Caminhoes",
+    eyebrow: "Operação por categoria",
+    title: "Caminhões",
     description:
-      "Gerencie associados vinculados a operacao de carga com leitura rapida do licenciamento e dos pontos que exigem acao imediata.",
-    summaryTitle: "Regularidade da operacao de carga",
-    summaryDescription:
-      "A visao por caminhoes separa o contexto operacional da base sindical, preservando o CRUD principal e abrindo espaco para regras especificas.",
-    emptyStateTitle: "Nenhum caminhao vinculado ainda",
+      "Acompanhe os associados vinculados à operação de carga.",
+    summaryTitle: "Licenciamento",
+    summaryDescription: "Leitura rápida do licenciamento da operação.",
+    emptyStateTitle: "Nenhum caminhão vinculado ainda",
     emptyStateDescription:
-      "Quando houver associados vinculados a operacao de carga, esta pagina passara a destacar licenciamento e prioridade operacional.",
+      "Associados da operação de carga aparecerão aqui.",
     requirements: [
       {
         key: "cargoLicensing",
-        label: "Licenciamento da operacao",
+        label: "Licenciamento da operação",
         field: "cargoLicensingDueDate",
       },
     ],
@@ -109,20 +107,19 @@ export const associateOperationConfigs: Record<
     type: "Empresa",
     route: "/empresas",
     navigationLabel: "Empresas",
-    eyebrow: "Operacao por categoria",
+    eyebrow: "Operação por categoria",
     title: "Empresas",
     description:
-      "Consolide os associados com perfil empresarial para acompanhar CNPJs cadastrados, documentacao da empresa e leitura operacional em uma visao dedicada.",
-    summaryTitle: "Documentacao empresarial",
-    summaryDescription:
-      "Esta visao reune todos os cadastros com modalidade CNPJ e preserva o mesmo nucleo de associados, sem duplicar o CRUD nem misturar dados da ficha com outras operacoes.",
+      "Acompanhe os associados com perfil empresarial.",
+    summaryTitle: "Documentação empresarial",
+    summaryDescription: "Leitura documental dos cadastros com modalidade CNPJ.",
     emptyStateTitle: "Nenhuma empresa vinculada ainda",
     emptyStateDescription:
-      "Quando houver associados com modalidade CNPJ, esta pagina passara a exibir a documentacao empresarial e o status operacional correspondente.",
+      "Associados com modalidade CNPJ aparecerão aqui.",
     requirements: [
       {
         key: "companyDocumentation",
-        label: "Documentacao empresarial",
+        label: "Documentação empresarial",
         field: "basicDocumentationDueDate",
       },
     ],

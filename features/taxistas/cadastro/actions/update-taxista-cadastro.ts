@@ -77,7 +77,7 @@ export async function updateTaxistaCadastroAction(
       return {
         success: false,
         fieldErrors: {
-          cpf: "Ja existe um associado cadastrado com este CPF.",
+          cpf: "Já existe um associado cadastrado com este CPF.",
         },
       };
     }
@@ -86,7 +86,7 @@ export async function updateTaxistaCadastroAction(
       return {
         success: false,
         notFound: true,
-        formError: "O taxista informado nao foi encontrado.",
+        formError: "O taxista informado não foi encontrado.",
       };
     }
 

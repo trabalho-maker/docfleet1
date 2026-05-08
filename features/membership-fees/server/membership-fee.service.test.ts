@@ -475,8 +475,8 @@ describe("membership fee service", () => {
     ).toEqual([
       ["asc_01", 3, "3+ meses vencidos"],
       ["asc_02", 2, "2 meses vencidos"],
-      ["asc_03", 1, "1 mes vencido"],
-      ["asc_04", 0, "Mes atual em aberto"],
+      ["asc_03", 1, "1 mês vencido"],
+      ["asc_04", 0, "Mês atual em aberto"],
     ]);
   });
 
@@ -535,7 +535,7 @@ describe("membership fee service", () => {
 
     expect(twoOverdue.entries.map((entry) => entry.associateId)).toEqual(["asc_02"]);
     expect(upToDate.entries.map((entry) => entry.associateId)).toEqual(["asc_04"]);
-    expect(upToDate.entries[0]?.statusLabel).toBe("Mes atual em aberto");
+    expect(upToDate.entries[0]?.statusLabel).toBe("Mês atual em aberto");
   });
 
   it("does not create current-year sheets while listing the overview", async () => {

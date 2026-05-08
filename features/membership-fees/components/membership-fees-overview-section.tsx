@@ -23,22 +23,18 @@ type MembershipFeesOverviewSectionProps = {
 const statusCards: Array<{
   key: Exclude<MembershipFeeOverviewStatusFilter, "all" | "up_to_date">;
   label: string;
-  description: string;
 }> = [
   {
     key: "one_overdue",
-    label: "1 mes vencido",
-    description: "Associados com exatamente uma competencia vencida.",
+    label: "1 mês vencido",
   },
   {
     key: "two_overdue",
     label: "2 meses vencidos",
-    description: "Associados com duas competencias vencidas.",
   },
   {
     key: "three_plus_overdue",
     label: "3+ meses vencidos",
-    description: "Associados em atraso critico, com tres ou mais competencias vencidas.",
   },
 ];
 
@@ -53,12 +49,10 @@ export function MembershipFeesOverviewSection({
     <div className="flex w-full flex-1 flex-col gap-6 py-2 sm:py-4">
       <AssociatesPageHeader
         eyebrow="Associados > Mensalidades"
-        title="Central de mensalidades"
-        description="Acompanhe inadimplencia, filtre associados por situacao financeira e abra a ficha individual sem misturar o submodulo financeiro com DOCUMENTOS."
+        title="Mensalidades"
         userName={userName}
         userEmail={userEmail}
         userRole={userRole}
-        supportingText="Os filtros e cards desta tela usam apenas regras financeiras de mensalidades. Mes atual em aberto nao conta como vencido e meses futuros permanecem fora do debito."
         action={
           <div className="flex flex-wrap gap-3">
             <Link href="/associados" className="df-button-secondary">
@@ -91,13 +85,12 @@ export function MembershipFeesOverviewSection({
               }`}
             >
               <div className={`absolute inset-x-0 top-0 h-1.5 ${palette.bar}`} aria-hidden="true" />
-              <div className="relative space-y-3">
-                <p className="df-eyebrow">{card.label}</p>
+              <div className="relative space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                  {card.label}
+                </p>
                 <p className="text-4xl font-semibold tracking-tight text-[var(--color-foreground)]">
                   {count}
-                </p>
-                <p className="max-w-xs text-sm leading-6 text-[var(--color-muted)]">
-                  {card.description}
                 </p>
               </div>
             </Link>
@@ -106,14 +99,10 @@ export function MembershipFeesOverviewSection({
       </section>
 
       <section className="df-section-card p-6 lg:p-7">
-        <div className="flex flex-col gap-3 border-b border-[var(--color-border)] pb-5">
-          <p className="df-eyebrow">Filtros financeiros</p>
-          <h2 className="text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
-            Filtre a inadimplencia dos associados
+        <div className="flex flex-col gap-2 border-b border-[var(--color-border)] pb-5">
+          <h2 className="text-[1.4rem] font-semibold tracking-tight text-[var(--color-foreground)]">
+            Filtros
           </h2>
-          <p className="text-sm leading-6 text-[var(--color-muted)]">
-            Use busca por nome, categoria operacional e faixa de atraso para localizar rapidamente as fichas que exigem acompanhamento.
-          </p>
         </div>
 
         <form action="/associados/mensalidades" method="get" className="mt-6 grid gap-4 xl:grid-cols-[1.4fr_0.8fr_0.9fr_auto]">
@@ -140,9 +129,9 @@ export function MembershipFeesOverviewSection({
               className="min-h-12 rounded-2xl border border-[var(--color-border)] bg-white px-4 text-sm text-[var(--color-foreground)] outline-none transition-colors focus:border-[#1D4ED8]"
             >
               <option value="">Todas</option>
-              <option value="TAXI">Taxi</option>
+              <option value="TAXI">Táxi</option>
               <option value="ESCOLAR">Escolar</option>
-              <option value="CAMINHAO">Caminhao</option>
+              <option value="CAMINHAO">Caminhão</option>
               <option value="CNPJ">CNPJ / Empresas</option>
             </select>
           </label>
@@ -158,7 +147,7 @@ export function MembershipFeesOverviewSection({
             >
               <option value="all">Todos</option>
               <option value="up_to_date">Em dia</option>
-              <option value="one_overdue">1 mes vencido</option>
+              <option value="one_overdue">1 mês vencido</option>
               <option value="two_overdue">2 meses vencidos</option>
               <option value="three_plus_overdue">3+ meses vencidos</option>
             </select>
@@ -178,17 +167,13 @@ export function MembershipFeesOverviewSection({
       <section className="df-section-card p-6 lg:p-7">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="df-eyebrow">Listagem financeira</p>
-            <h2 className="mt-2 text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
-              Associados em mensalidades
+            <h2 className="text-[1.6rem] font-semibold tracking-tight text-[var(--color-foreground)]">
+              Associados
             </h2>
             <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
               {overview.filteredAssociates} associado(s) filtrado(s) de {overview.totalAssociates} na base.
             </p>
           </div>
-          <span className="df-badge-pill bg-[#EEF4FB] text-[#35577E]">
-            Central operacional
-          </span>
         </div>
 
         {overview.entries.length === 0 ? (
@@ -203,11 +188,11 @@ export function MembershipFeesOverviewSection({
                   <tr className="text-left text-xs font-semibold uppercase tracking-[0.18em] text-[#64748B]">
                     <th className="px-5 py-4">Nome</th>
                     <th className="px-5 py-4">Categoria</th>
-                    <th className="px-5 py-4">Matricula</th>
+                    <th className="px-5 py-4">Matrícula</th>
                     <th className="px-5 py-4">Telefone</th>
-                    <th className="px-5 py-4">Situacao</th>
+                    <th className="px-5 py-4">Situação</th>
                     <th className="px-5 py-4">Meses vencidos</th>
-                    <th className="px-5 py-4">Ultimo pagamento</th>
+                    <th className="px-5 py-4">Último pagamento</th>
                     <th className="px-5 py-4 text-right">Ficha</th>
                   </tr>
                 </thead>
@@ -225,7 +210,7 @@ export function MembershipFeesOverviewSection({
                       <td className="px-5 py-4 text-sm text-[#64748B]">{entry.categoryLabel}</td>
                       <td className="px-5 py-4 text-sm text-[#64748B]">{entry.registrationNumber}</td>
                       <td className="px-5 py-4 text-sm text-[#64748B]">
-                        {entry.phone ?? "Nao informado"}
+                        {entry.phone ?? "Não informado"}
                       </td>
                       <td className="px-5 py-4">
                         <span className={buildStatusBadgeClassName(entry.statusTone)}>

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { FeedbackAlert } from "@/features/associates/components/feedback-alert";
 import type { AuthUser } from "@/features/auth/types";
@@ -38,8 +40,8 @@ export function AssociateOperationPage({
     : null;
   const moduleMetrics = [
     { label: "Vinculados", value: overview.metrics.totalAssociates },
-    { label: "Atencao", value: overview.metrics.attention },
-    { label: "Criticos", value: overview.metrics.critical },
+    { label: "Atenção", value: overview.metrics.attention },
+    { label: "Críticos", value: overview.metrics.critical },
   ];
 
   return (
@@ -73,27 +75,18 @@ export function AssociateOperationPage({
                 metric={{
                   label: "Vinculados",
                   value: overview.metrics.totalAssociates,
-                  helper: isTaxistaPage
-                    ? undefined
-                    : "Associados atualmente vinculados a esta operação.",
                 }}
               />
               <MetricCard
                 metric={{
-                  label: "Em atencao",
+                  label: "Em atenção",
                   value: overview.metrics.attention,
-                  helper: isTaxistaPage
-                    ? undefined
-                    : "Cadastros com requisito proximo do vencimento e que pedem acompanhamento.",
                 }}
               />
               <MetricCard
                 metric={{
-                  label: "Criticos",
+                  label: "Críticos",
                   value: overview.metrics.critical,
-                  helper: isTaxistaPage
-                    ? undefined
-                    : "Cadastros vencidos ou com requisito operacional ainda pendente.",
                 }}
               />
             </section>
@@ -103,12 +96,9 @@ export function AssociateOperationPage({
                 <TaxistaDuePanel panel={upcomingDuePanel} />
               ) : (
                 <article className="df-section-card p-6 lg:p-7">
-                  <h2 className="mt-2 text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
+                  <h2 className="text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
                     {config.summaryTitle}
                   </h2>
-                  <p className="mt-3 text-sm leading-6 text-[var(--color-muted)]">
-                    {config.summaryDescription}
-                  </p>
 
                   <div className="mt-6 space-y-3">
                     {config.requirements.map((requirement) => (
@@ -119,11 +109,6 @@ export function AssociateOperationPage({
                         <p className="text-sm font-semibold text-[var(--color-foreground)]">
                           {requirement.label}
                         </p>
-                        <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                          Prioriza a base documental oficial quando houver
-                          documento equivalente e usa o perfil operacional como
-                          apoio temporario para manter a leitura da operacao.
-                        </p>
                       </div>
                     ))}
                   </div>
@@ -132,22 +117,18 @@ export function AssociateOperationPage({
 
               <AssociateOperationDirectory
                 title={isTaxistaPage ? "TAXISTAS" : "Associados da categoria"}
-                description={
-                  isTaxistaPage
-                    ? undefined
-                    : `Acompanhe ${config.navigationLabel.toLowerCase()} vinculados, situacao documental e acoes operacionais em uma leitura unica.`
-                }
+                description={undefined}
                 statusColumnLabel={
-                  isTaxistaPage ? "Status da exigencia" : undefined
+                  isTaxistaPage ? "Status da exigência" : undefined
                 }
                 statusFilterLabel={
-                  isTaxistaPage ? "Status da exigencia" : undefined
+                  isTaxistaPage ? "Status da exigência" : undefined
                 }
                 noRequirementsLabel={
-                  isTaxistaPage ? "Sem exigencia configurada" : undefined
+                  isTaxistaPage ? "Sem exigência configurada" : undefined
                 }
                 missingStatusLabel={
-                  isTaxistaPage ? "Sem exigencia" : undefined
+                  isTaxistaPage ? "Sem exigência" : undefined
                 }
                 entries={overview.entries}
                 emptyStateTitle={config.emptyStateTitle}
@@ -182,7 +163,7 @@ function TaxistaDuePanel({
 
       {panel.totalUpcoming === 0 ? (
         <div className="mt-6 rounded-[24px] border border-dashed border-[var(--color-border)] bg-[#F8FAFC] px-5 py-12 text-center text-sm font-medium text-[var(--color-muted)]">
-          Sem exigencias no periodo
+          Sem exigências no período
         </div>
       ) : (
         <div className="mt-6 space-y-6">

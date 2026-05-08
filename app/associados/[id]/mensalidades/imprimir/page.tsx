@@ -15,8 +15,8 @@ import {
 } from "@/features/membership-fees/server/membership-fee.service";
 
 export const metadata: Metadata = {
-  title: "Impressao da ficha de mensalidades",
-  description: "Visualizacao fisica para impressao da ficha de mensalidades do associado.",
+  title: "Impressão da ficha de mensalidades",
+  description: "Visualização física para impressão da ficha de mensalidades do associado.",
 };
 
 type PrintMembershipFeePageProps = {
@@ -44,7 +44,7 @@ export default async function PrintMembershipFeePage({
           <FeedbackAlert
             type="error"
             title="Acesso negado"
-            message={accessMessage ?? "Seu perfil nao pode acessar a ficha de mensalidades."}
+            message={accessMessage ?? "Seu perfil não pode acessar a ficha de mensalidades."}
           />
         </div>
       </main>

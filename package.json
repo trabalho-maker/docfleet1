@@ -13,7 +13,9 @@
     "test:e2e": "node scripts/run-playwright-e2e.mjs",
     "check": "npm run lint && npm run typecheck && npm run build",
     "db:seed:reset-demo": "tsx scripts/seed-sqlite-db.ts",
-    "db:seed": "npm run db:seed:reset-demo"
+    "db:seed": "npm run db:seed:reset-demo",
+    "db:backup": "tsx scripts/backup-sqlite-db.ts",
+    "db:restore:test": "tsx scripts/restore-sqlite-db.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

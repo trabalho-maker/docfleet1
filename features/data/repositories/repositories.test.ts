@@ -850,6 +850,95 @@ describe("repositories", () => {
     });
   });
 
+  it("upserts generated alerts in batch without duplicating existing source documents", async () => {
+    await alertRepository.upsertGeneratedForDocuments([
+      {
+        title: "CNH de Maria vence em 3 dias",
+        severity: "Alta",
+        team: "Origem documental",
+        createdAt: "2026-04-08 08:00",
+        sourceDocumentId: "doc_01",
+        kind: "document_expiration",
+      },
+      {
+        title: "Autorizacao do condutor vence hoje",
+        severity: "Alta",
+        team: "Origem documental",
+        createdAt: "2026-04-09 09:15",
+        sourceDocumentId: "doc_03",
+        kind: "document_expiration",
+      },
+    ]);
+
+    await alertRepository.upsertGeneratedForDocuments([
+      {
+        title: "CNH de Maria vence hoje",
+        severity: "Alta",
+        team: "Origem documental",
+        createdAt: "2026-04-09 10:00",
+        sourceDocumentId: "doc_01",
+        kind: "document_expiration",
+      },
+    ]);
+
+    const storedAlerts = await alertRepository.listGenerated();
+
+    expect(storedAlerts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceDocumentId: "doc_01",
+          title: "CNH de Maria vence hoje",
+        }),
+        expect.objectContaining({
+          sourceDocumentId: "doc_03",
+          title: "Autorizacao do condutor vence hoje",
+        }),
+      ]),
+    );
+
+    await withSqliteWriteLock((db) => {
+      const duplicateCount = Number(
+        db.exec(
+          "SELECT COUNT(*) FROM alerts WHERE kind = ? AND source_document_id = ?",
+          ["document_expiration", "doc_01"],
+        )[0]?.values?.[0]?.[0] ?? 0,
+      );
+
+      expect(duplicateCount).toBe(1);
+    });
+  });
+
+  it("deletes generated alerts in batch without affecting manual alerts", async () => {
+    await alertRepository.upsertGeneratedForDocuments([
+      {
+        title: "CNH de Maria vence hoje",
+        severity: "Alta",
+        team: "Origem documental",
+        createdAt: "2026-04-09 10:00",
+        sourceDocumentId: "doc_01",
+        kind: "document_expiration",
+      },
+      {
+        title: "Autorizacao do condutor vence hoje",
+        severity: "Alta",
+        team: "Origem documental",
+        createdAt: "2026-04-09 10:05",
+        sourceDocumentId: "doc_03",
+        kind: "document_expiration",
+      },
+    ]);
+
+    await alertRepository.deleteGeneratedBySourceDocumentIds(["doc_01", "doc_03"]);
+
+    const generatedAlerts = await alertRepository.listGenerated();
+    const manualAlerts = (await alertRepository.listOpen(10)).filter(
+      (alert) => alert.kind !== "document_expiration",
+    );
+
+    expect(generatedAlerts).toHaveLength(0);
+    expect(manualAlerts).toHaveLength(3);
+  });
+
   it("creates and resolves a valid password reset token", async () => {
     const seededUser = await userRepository.findByEmail("operacoes@docfleet.local");
 

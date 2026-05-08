@@ -9,7 +9,7 @@ const sheetViewFixture: MembershipFeeSheetView = {
     registrationNumber: "MAT-2026-9012",
     displayName: "Maria de Souza",
     displayAddress: "Rua 1, 200 - Centro",
-    displayCategory: "Taxi",
+    displayCategory: "Táxi",
     displayPhone: "(19) 3522-0001",
     displayRegistrationSuffix: "9012",
     displayInss: null,
@@ -21,7 +21,7 @@ const sheetViewFixture: MembershipFeeSheetView = {
     status: "active",
     snapshotName: "Maria de Souza",
     snapshotAddress: "Rua 1, 200 - Centro",
-    snapshotCategory: "Taxi",
+    snapshotCategory: "Táxi",
     snapshotPhone: "(19) 3522-0001",
     snapshotRegistrationSuffix: "9012",
     snapshotInss: null,
@@ -44,7 +44,7 @@ const sheetViewFixture: MembershipFeeSheetView = {
   ],
   months: Array.from({ length: 12 }, (_, index) => ({
     month: index + 1,
-    monthLabel: `Mes ${index + 1}`,
+    monthLabel: `Mês ${index + 1}`,
     competenceLabel: `${String(index + 1).padStart(2, "0")}/2026`,
     status: index === 0 ? "paid" : "future",
     paidAt: index === 0 ? "2026-01-10T12:00:00.000Z" : null,
@@ -74,9 +74,9 @@ describe("membership fee print sheet", () => {
     expect(markup).toContain("12/2026");
     expect(markup).toContain("01/2026");
     expect(markup).toContain("Nome");
-    expect(markup).toContain("Endereco");
+    expect(markup).toContain("Endereço");
     expect(markup).toContain("Ano vigente");
-    expect(markup).toContain("N\u00ba (Matricula)");
+    expect(markup).toContain("N\u00ba (Matrícula)");
     expect(markup).toContain("N\u00ba 9012");
     expect(markup.match(/____\/____\/____/g)).toHaveLength(12);
     expect(markup).toContain("9012");
@@ -101,7 +101,7 @@ describe("membership fee print sheet", () => {
       />,
     );
 
-    expect(markup).toContain("Nao informado");
+    expect(markup).toContain("Não informado");
     expect(markup).not.toContain("Pago");
     expect(markup).toContain("____/____/____");
   });

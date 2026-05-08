@@ -159,8 +159,8 @@ export function AssociateOperationDirectory({
           </div>
 
           <div className="grid gap-2 sm:grid-cols-3">
-            <SummaryChip label="Criticos" value={summary.critical} tone="danger" />
-            <SummaryChip label="Em atencao" value={summary.attention} tone="warning" />
+            <SummaryChip label="Críticos" value={summary.critical} tone="danger" />
+            <SummaryChip label="Em atenção" value={summary.attention} tone="warning" />
             <SummaryChip label="Pendentes" value={summary.pending} tone="neutral" />
           </div>
         </div>
@@ -202,7 +202,7 @@ export function AssociateOperationDirectory({
                 value={registrationQuery}
                 onChange={(event) => setRegistrationQuery(event.target.value)}
                 type="text"
-                placeholder="Matricula"
+                placeholder="Matrícula"
                 className="w-full border-none bg-transparent text-sm outline-none placeholder:text-[var(--color-muted-soft)]"
               />
             </label>
@@ -217,8 +217,8 @@ export function AssociateOperationDirectory({
               >
                 <option value="">{statusFilterLabel}</option>
                 <option value="Valido">Regular</option>
-                <option value="Atencao">Em atencao</option>
-                <option value="Vencido">Critico</option>
+                <option value="Atencao">Em atenção</option>
+                <option value="Vencido">Crítico</option>
                 <option value="Missing">Pendente</option>
               </select>
             </label>
@@ -246,8 +246,8 @@ export function AssociateOperationDirectory({
                 className="w-full border-none bg-transparent text-sm outline-none"
               >
                 <option value="">Prioridade</option>
-                <option value="critical">Criticos e pendentes</option>
-                <option value="attention">Em atencao</option>
+                <option value="critical">Críticos e pendentes</option>
+                <option value="attention">Em atenção</option>
                 <option value="regular">Regulares</option>
                 <option value="missing_date">Sem vencimento</option>
               </select>
@@ -288,11 +288,11 @@ export function AssociateOperationDirectory({
             <thead className="bg-[#F8FAFC] text-left">
               <tr className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
                 <th className="px-6 py-4 lg:px-7">Nome</th>
-                <th className="px-6 py-4">Matricula</th>
+                <th className="px-6 py-4">Matrícula</th>
                 <th className="px-6 py-4">{statusColumnLabel}</th>
-                <th className="px-6 py-4">Proximo vencimento</th>
+                <th className="px-6 py-4">Próximo vencimento</th>
                 <th className="px-6 py-4">Status operacional</th>
-                <th className="px-6 py-4 text-right lg:px-7">Acoes</th>
+                <th className="px-6 py-4 text-right lg:px-7">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -444,12 +444,12 @@ function OperationalHealthBadge({
         }
       : status === "Atencao"
         ? {
-            label: "Em atencao",
+            label: "Em atenção",
             classes: "bg-[#FEF3C7] text-[#92400E]",
           }
         : status === "Vencido"
           ? {
-              label: "Critico",
+              label: "Crítico",
               classes: "bg-[#FEE2E2] text-[#991B1B]",
             }
           : {
@@ -570,7 +570,7 @@ function formatRelativeDueDate(date: string) {
   const days = Math.round((target - today) / 86400000);
 
   if (days < 0) {
-    return `Atrasado ha ${Math.abs(days)}d`;
+    return `Atrasado há ${Math.abs(days)}d`;
   }
 
   if (days === 0) {
@@ -578,7 +578,7 @@ function formatRelativeDueDate(date: string) {
   }
 
   if (days === 1) {
-    return "Vence amanha";
+    return "Vence amanhã";
   }
 
   return `Vence em ${days}d`;

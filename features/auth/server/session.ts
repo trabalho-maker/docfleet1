@@ -11,7 +11,7 @@ export async function getCurrentUser(): Promise<AuthUser> {
 
   return {
     id: session.user.id,
-    name: session.user.name ?? "Usuario DocFleet",
+    name: session.user.name ?? "Usuário DocFleet",
     email: session.user.email,
     role: session.user.role,
   };

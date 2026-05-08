@@ -15,7 +15,7 @@ import type { MembershipFeeOverviewStatusFilter } from "@/features/membership-fe
 
 export const metadata: Metadata = {
   title: "Mensalidades",
-  description: "Central operacional do submodulo de mensalidades no DocFleet.",
+  description: "Visão geral de mensalidades do DocFleet.",
 };
 
 type AssociatesMembershipFeesLandingPageProps = {
@@ -42,7 +42,7 @@ export default async function AssociatesMembershipFeesLandingPage({
           <FeedbackAlert
             type="error"
             title="Acesso negado"
-            message={accessMessage ?? "Seu perfil nao pode acessar mensalidades."}
+            message={accessMessage ?? "Seu perfil não pode acessar mensalidades."}
           />
         ) : (
           overview ? (

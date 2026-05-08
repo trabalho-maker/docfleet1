@@ -308,9 +308,9 @@ export function TaxistaCadastroSection({
                         <th className="px-6 py-4">Selo</th>
                         <th className="px-6 py-4">Placa</th>
                         <th className="px-6 py-4">Ponto</th>
-                        <th className="px-6 py-4">Nº Taximetro</th>
+                        <th className="px-6 py-4">Nº Taxímetro</th>
                         <th className="px-6 py-4">Alvara</th>
-                        <th className="px-6 py-4 text-right lg:px-7">Acoes</th>
+                        <th className="px-6 py-4 text-right lg:px-7">Ações</th>
                       </tr>
                     </thead>
                     <tbody>

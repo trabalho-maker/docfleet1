@@ -33,7 +33,7 @@ const baseRecord: TaxistaCadastroRecord = {
   cinta: "CI-19",
   colocado: "2026-02-12",
   retirado: null,
-  observacao: "Ultima alteracao em 06/04/2026 as 08:58 - alterados: selo",
+  observacao: "Última alteração em 06/04/2026 as 08:58 - alterados: selo",
 };
 
 function createRepositoryMock(): jest.Mocked<TaxistaCadastroRepository> {
@@ -115,7 +115,7 @@ describe("taxista cadastro service", () => {
     expect(result).toEqual({
       success: false,
       fieldErrors: {
-        cpf: "Informe um CPF valido.",
+        cpf: "Informe um CPF válido.",
       },
     });
     expect(repository.saveCadastro).not.toHaveBeenCalled();
@@ -204,7 +204,7 @@ describe("taxista cadastro service", () => {
       cinta: "CI-19",
       colocado: "2026-02-12",
       retirado: null,
-      observacao: expect.stringContaining("alterados: pressao kgf/m2"),
+      observacao: expect.stringContaining("alterados: pressão kgf/m2"),
     });
   });
 

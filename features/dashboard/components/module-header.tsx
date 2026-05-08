@@ -16,7 +16,7 @@ export function ModuleHeader({
   title,
   metrics,
   actions,
-  badge = "Modulo ativo",
+  badge = "Módulo",
 }: ModuleHeaderProps) {
   return (
     <header className="df-section-card border-transparent bg-[linear-gradient(135deg,#173450_0%,#1E3A5F_55%,#29476B_100%)] px-6 py-6 shadow-[0_24px_55px_rgba(15,23,42,0.22)] lg:px-8">

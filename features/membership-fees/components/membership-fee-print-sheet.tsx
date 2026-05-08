@@ -11,7 +11,7 @@ export function MembershipFeePrintSheet({
   logoSrc,
 }: MembershipFeePrintSheetProps) {
   const printableMonths = buildPrintableMonths(sheetView);
-  const registrationSuffix = sheetView.associate.displayRegistrationSuffix?.trim() || "Nao informado";
+  const registrationSuffix = sheetView.associate.displayRegistrationSuffix?.trim() || "Não informado";
 
   return (
     <article className="membership-print-page print-sheet bg-white text-[#111827]">
@@ -30,7 +30,7 @@ export function MembershipFeePrintSheet({
             <div className="membership-print-brand-copy">
               <p className="membership-print-brand-name">SINTRARC</p>
               <p className="membership-print-brand-subtitle">
-                <span>SINDICATO DOS TRANSPORTADORES AUTONOMOS</span>
+                <span>SINDICATO DOS TRANSPORTADORES AUTÔNOMOS</span>
                 <span>DE PESSOAS, DE BENS E DE CARGAS DE RIO CLARO-SP</span>
               </p>
               <h1 className="membership-print-title">FICHA DE MENSALIDADES</h1>
@@ -51,7 +51,7 @@ export function MembershipFeePrintSheet({
               />
               <PrintField
                 icon={<AddressFieldIcon />}
-                label="Endereco"
+                label="Endereço"
                 value={sheetView.associate.displayAddress}
               />
               <PrintField
@@ -69,7 +69,7 @@ export function MembershipFeePrintSheet({
             <div className="membership-print-info-column">
               <PrintField
                 icon={<RegistrationFieldIcon />}
-                label={"N\u00ba (Matricula)"}
+                label={"N\u00ba (Matrícula)"}
                 value={registrationSuffix}
               />
               <PrintField
@@ -87,8 +87,8 @@ export function MembershipFeePrintSheet({
         </section>
 
         <section className="membership-print-section membership-print-section-tight">
-          <div className="membership-print-section-title">Competencias do ano</div>
-          <div className="membership-print-month-sequence" aria-label="Competencias do ano">
+          <div className="membership-print-section-title">Competências do ano</div>
+          <div className="membership-print-month-sequence" aria-label="Competências do ano">
             {Array.from({ length: 12 }, (_, index) => (
               <span key={index + 1} className="membership-print-sequence-pill">
                 {index + 1}
@@ -148,7 +148,7 @@ function PrintField({
         {icon}
       </div>
       <span>{label}</span>
-      <strong>{value?.trim() || "Nao informado"}</strong>
+      <strong>{value?.trim() || "Não informado"}</strong>
     </div>
   );
 }

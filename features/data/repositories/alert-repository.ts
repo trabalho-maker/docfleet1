@@ -14,8 +14,14 @@ export interface AlertRepository {
   listGenerated(): Promise<OperationalAlert[]>;
   findGeneratedBySourceDocumentId(documentId: string): Promise<OperationalAlert | null>;
   upsertGeneratedForDocument(alert: GeneratedOperationalAlertInput): Promise<void>;
+  upsertGeneratedForDocuments(alerts: GeneratedOperationalAlertInput[]): Promise<void>;
   deleteGeneratedBySourceDocumentId(documentId: string): Promise<void>;
+  deleteGeneratedBySourceDocumentIds(documentIds: string[]): Promise<void>;
 }
+
+const SQLITE_MAX_VARIABLE_NUMBER = 999;
+const UPSERT_ALERTS_CHUNK_SIZE = Math.floor(SQLITE_MAX_VARIABLE_NUMBER / 7);
+const DELETE_ALERT_IDS_CHUNK_SIZE = SQLITE_MAX_VARIABLE_NUMBER - 1;
 
 function mapAlert(row: DatabaseRow): OperationalAlert {
   return {
@@ -47,6 +53,16 @@ async function queryUniqueGeneratedAlertBySourceDocumentId(
   }
 
   return rows[0] ? mapAlert(rows[0]) : null;
+}
+
+function chunkArray<T>(items: T[], chunkSize: number) {
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < items.length; index += chunkSize) {
+    chunks.push(items.slice(index, index + chunkSize));
+  }
+
+  return chunks;
 }
 
 export class SqliteAlertRepository implements AlertRepository {
@@ -126,20 +142,18 @@ export class SqliteAlertRepository implements AlertRepository {
   }
 
   async upsertGeneratedForDocument(alert: GeneratedOperationalAlertInput): Promise<void> {
+    return this.upsertGeneratedForDocuments([alert]);
+  }
+
+  async upsertGeneratedForDocuments(alerts: GeneratedOperationalAlertInput[]): Promise<void> {
+    if (alerts.length === 0) {
+      return;
+    }
+
     return this.database.write(async (session) => {
-      await session.execute(
-        `
-          INSERT INTO alerts
-            (id, title, severity, team, created_at, kind, source_document_id)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(source_document_id) DO UPDATE SET
-            title = excluded.title,
-            severity = excluded.severity,
-            team = excluded.team,
-            created_at = excluded.created_at,
-            kind = excluded.kind
-        `,
-        [
+      for (const chunk of chunkArray(alerts, UPSERT_ALERTS_CHUNK_SIZE)) {
+        const placeholders = chunk.map(() => "(?, ?, ?, ?, ?, ?, ?)").join(", ");
+        const params = chunk.flatMap((alert) => [
           randomUUID(),
           alert.title,
           alert.severity,
@@ -147,20 +161,47 @@ export class SqliteAlertRepository implements AlertRepository {
           alert.createdAt,
           alert.kind,
           alert.sourceDocumentId,
-        ],
-      );
+        ]);
+
+        await session.execute(
+          `
+            INSERT INTO alerts
+              (id, title, severity, team, created_at, kind, source_document_id)
+            VALUES ${placeholders}
+            ON CONFLICT(source_document_id) DO UPDATE SET
+              title = excluded.title,
+              severity = excluded.severity,
+              team = excluded.team,
+              created_at = excluded.created_at,
+              kind = excluded.kind
+          `,
+          params,
+        );
+      }
     });
   }
 
   async deleteGeneratedBySourceDocumentId(documentId: string): Promise<void> {
+    return this.deleteGeneratedBySourceDocumentIds([documentId]);
+  }
+
+  async deleteGeneratedBySourceDocumentIds(documentIds: string[]): Promise<void> {
+    if (documentIds.length === 0) {
+      return;
+    }
+
     return this.database.write(async (session) => {
-      await session.execute(
-        `
-        DELETE FROM alerts
-        WHERE kind = ? AND source_document_id = ?
-      `,
-        ["document_expiration", documentId],
-      );
+      for (const chunk of chunkArray(documentIds, DELETE_ALERT_IDS_CHUNK_SIZE)) {
+        const placeholders = chunk.map(() => "?").join(", ");
+
+        await session.execute(
+          `
+            DELETE FROM alerts
+            WHERE kind = ? AND source_document_id IN (${placeholders})
+          `,
+          ["document_expiration", ...chunk],
+        );
+      }
     });
   }
 }

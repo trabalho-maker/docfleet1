@@ -175,7 +175,7 @@ export function AssociateForm({
   }
 
   const resolvedSubmitLabel =
-    submitLabel ?? (mode === "edit" ? "Salvar alteracoes" : "Criar associado");
+    submitLabel ?? (mode === "edit" ? "Salvar alterações" : "Criar associado");
   const resolvedSaveAndPrintLabel =
     saveAndPrintLabel ??
     (mode === "edit" ? "Salvar e imprimir" : "Criar e imprimir");
@@ -186,13 +186,8 @@ export function AssociateForm({
       <div className="space-y-2">
         <p className="df-eyebrow">{mode === "edit" ? "Editar associado" : "Novo associado"}</p>
         <h2 className="text-[1.8rem] font-semibold tracking-tight text-[var(--color-foreground)]">
-          {mode === "edit"
-            ? "Atualize o cadastro conforme a ficha institucional"
-            : "Cadastre um novo associado conforme a ficha institucional"}
+          Cadastro do associado
         </h2>
-        <p className="text-sm leading-6 text-[var(--color-muted)]">
-          Preencha os dados principais da ficha institucional mantendo a modalidade operacional alinhada ao cadastro do associado.
-        </p>
       </div>
 
       {message ? (
@@ -215,7 +210,6 @@ export function AssociateForm({
       >
         <FormSection
           title="Identificação"
-          description="Campos principais para localizar o associado e manter a ficha institucional consistente."
         >
           <div className="grid gap-5 md:grid-cols-2">
             <Input
@@ -231,7 +225,7 @@ export function AssociateForm({
 
             <Input
               id="associate-registration-number"
-              label="Matricula"
+              label="Matrícula"
               value={values.registrationNumber}
               onChange={(event) =>
                 updateField("registrationNumber", event.target.value)
@@ -264,7 +258,7 @@ export function AssociateForm({
 
             <Select
               id="associate-status"
-              label="Situacao"
+              label="Situação"
               value={values.status}
               error={errors.status}
               options={associateEditableStatuses.map((status) => ({
@@ -281,7 +275,7 @@ export function AssociateForm({
 
             <Input
               id="associate-admission-date"
-              label="Admissao"
+              label="Admissão"
               type="date"
               value={values.admissionDate}
               onChange={(event) => updateField("admissionDate", event.target.value)}
@@ -294,7 +288,7 @@ export function AssociateForm({
               label="Foto URL"
               value={values.fotoUrl ?? ""}
               onChange={(event) => updateField("fotoUrl", event.target.value)}
-              placeholder="Preparado para upload futuro"
+              placeholder="Opcional"
               error={errors.fotoUrl}
             />
           </div>
@@ -323,13 +317,12 @@ export function AssociateForm({
         </FormSection>
 
         <FormSection
-          title="Informacoes pessoais"
-          description="Mesmo agrupamento da ficha impressa, incluindo RG, CPF e CNH no mesmo bloco."
+          title="Informações pessoais"
         >
           <div className="grid gap-5">
             <Input
               id="associate-full-address"
-              label="Endereco completo"
+              label="Endereço completo"
               value={values.enderecoCompleto ?? ""}
               onChange={(event) => updateField("enderecoCompleto", event.target.value)}
               placeholder="Rua, numero, complemento"
@@ -378,7 +371,7 @@ export function AssociateForm({
           <div className="grid gap-5 md:grid-cols-3">
             <Input
               id="associate-profissao"
-              label="Profissao"
+              label="Profissão"
               value={values.profissao ?? ""}
               onChange={(event) => updateField("profissao", event.target.value)}
               error={errors.profissao}
@@ -467,7 +460,6 @@ export function AssociateForm({
 
         <FormSection
           title="Dados familiares"
-          description="Mantem a mesma leitura da ficha: pai, mae, telefone e contato."
         >
           <div className="grid gap-5 md:grid-cols-2">
             <Input
@@ -479,7 +471,7 @@ export function AssociateForm({
             />
             <Input
               id="associate-mother-name"
-              label="Nome da mae"
+              label="Nome da mãe"
               value={values.nomeMae ?? ""}
               onChange={(event) => updateField("nomeMae", event.target.value)}
               error={errors.nomeMae}
@@ -517,7 +509,6 @@ export function AssociateForm({
 
         <FormSection
           title="Dependentes"
-          description="Os campos abaixo alimentam diretamente as linhas 20 a 23 da ficha de impressao."
         >
           <div className="grid gap-5 md:grid-cols-2">
             <Input
@@ -599,7 +590,7 @@ function FormSection({
   children,
 }: {
   title: string;
-  description: string;
+  description?: string;
   children: ReactNode;
 }) {
   return (
@@ -608,9 +599,11 @@ function FormSection({
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--color-accent-strong)]">
           {title}
         </p>
-        <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-          {description}
-        </p>
+        {description ? (
+          <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+            {description}
+          </p>
+        ) : null}
       </div>
       {children}
     </section>

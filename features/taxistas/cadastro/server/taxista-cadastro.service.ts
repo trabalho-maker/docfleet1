@@ -154,7 +154,7 @@ function validateTaxistaCadastroInput(
   if (!normalized.cpf) {
     fieldErrors.cpf = "Informe o CPF do taxista.";
   } else if (!validateAssociateCpf(normalized.cpf)) {
-    fieldErrors.cpf = "Informe um CPF valido.";
+    fieldErrors.cpf = "Informe um CPF válido.";
   }
 
   if (Object.keys(fieldErrors).length > 0) {
@@ -214,23 +214,23 @@ const fieldLabels: Array<{
   { key: "name", label: "nome" },
   { key: "cpf", label: "cpf" },
   { key: "telefone", label: "telefone" },
-  { key: "endereco", label: "endereco" },
+  { key: "endereco", label: "endereço" },
   { key: "selo", label: "selo" },
   { key: "ponto", label: "ponto" },
   { key: "deca", label: "deca" },
   { key: "placa", label: "placa" },
-  { key: "modeloVeiculo", label: "modelo veiculo" },
+  { key: "modeloVeiculo", label: "modelo veículo" },
   { key: "pneu", label: "pneu" },
-  { key: "pressaoKgfM2", label: "pressao kgf/m2" },
-  { key: "numeroTaximetro", label: "numero taximetro" },
-  { key: "modeloTaximetro", label: "modelo taximetro" },
+  { key: "pressaoKgfM2", label: "pressão kgf/m2" },
+  { key: "numeroTaximetro", label: "número taxímetro" },
+  { key: "modeloTaximetro", label: "modelo taxímetro" },
   { key: "constante", label: "constante" },
   { key: "inmetro", label: "inmetro" },
-  { key: "trocaTaximetro", label: "troca de taximetro" },
-  { key: "instalacao", label: "instalacao" },
-  { key: "lacreModulo", label: "lacre modulo" },
-  { key: "lacreTaxi", label: "lacre taxi" },
-  { key: "modulo", label: "modulo" },
+  { key: "trocaTaximetro", label: "troca de taxímetro" },
+  { key: "instalacao", label: "instalação" },
+  { key: "lacreModulo", label: "lacre módulo" },
+  { key: "lacreTaxi", label: "lacre táxi" },
+  { key: "modulo", label: "módulo" },
   { key: "cinta", label: "cinta" },
   { key: "colocado", label: "colocado" },
   { key: "retirado", label: "retirado" },
@@ -254,10 +254,10 @@ function buildLastUpdateSummary(
     .replace(",", " as");
 
   if (changedFields.length === 0) {
-    return `Ultima alteracao em ${timestamp} - sem mudancas nos campos do cadastro`;
+    return `Última alteração em ${timestamp} - sem mudanças nos campos do cadastro`;
   }
 
-  return `Ultima alteracao em ${timestamp} - alterados: ${changedFields.join(", ")}`;
+  return `Última alteração em ${timestamp} - alterados: ${changedFields.join(", ")}`;
 }
 
 function getComparableValue(

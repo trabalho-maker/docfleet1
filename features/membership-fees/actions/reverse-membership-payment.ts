@@ -54,7 +54,7 @@ export async function reverseMembershipPaymentAction(input: {
     if (error instanceof MembershipFeeValidationError) {
       return {
         success: false,
-        formError: "Nao foi possivel estornar o pagamento com os dados recebidos.",
+        formError: "Não foi possível estornar o pagamento com os dados recebidos.",
       };
     }
 
@@ -64,8 +64,8 @@ export async function reverseMembershipPaymentAction(input: {
         notFound: true,
         formError:
           error.message === "MEMBERSHIP_FEE_PAYMENT_NOT_FOUND"
-            ? "Nao existe pagamento registrado para esta competencia."
-            : "Nao foi possivel localizar a ficha de mensalidades deste associado.",
+            ? "Não existe pagamento registrado para esta competência."
+            : "Não foi possível localizar a ficha de mensalidades deste associado.",
       };
     }
 

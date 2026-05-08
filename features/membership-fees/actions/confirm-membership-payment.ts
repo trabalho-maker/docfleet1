@@ -60,14 +60,14 @@ export async function confirmMembershipPaymentAction(input: {
       return {
         success: false,
         duplicate: true,
-        formError: "Esta competencia ja foi registrada como paga.",
+        formError: "Esta competência já foi registrada como paga.",
       };
     }
 
     if (error instanceof MembershipFeeValidationError) {
       return {
         success: false,
-        formError: "Nao foi possivel confirmar o pagamento com os dados recebidos.",
+        formError: "Não foi possível confirmar o pagamento com os dados recebidos.",
       };
     }
 
@@ -75,11 +75,10 @@ export async function confirmMembershipPaymentAction(input: {
       return {
         success: false,
         notFound: true,
-        formError: "Nao foi possivel localizar a ficha de mensalidades deste associado.",
+        formError: "Não foi possível localizar a ficha de mensalidades deste associado.",
       };
     }
 
     throw error;
   }
 }
-

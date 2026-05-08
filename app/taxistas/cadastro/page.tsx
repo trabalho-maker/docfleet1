@@ -17,7 +17,7 @@ const DEFAULT_PAGE_SIZE = 25;
 
 export const metadata: Metadata = {
   title: "Cadastro de taxistas",
-  description: "Gerenciamento operacional do cadastro do modulo TAXISTAS.",
+  description: "Cadastro operacional de taxistas do DocFleet.",
 };
 
 export default async function TaxistasCadastroPage({
@@ -74,7 +74,7 @@ export default async function TaxistasCadastroPage({
                 href="/taxistas"
                 className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full bg-[#F39C12] px-5 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(243,156,18,0.28)] transition hover:brightness-95"
               >
-                Voltar ao modulo
+                Voltar ao módulo
               </Link>
               {canEdit ? (
                 <Link

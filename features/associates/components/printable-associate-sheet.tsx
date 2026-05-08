@@ -43,10 +43,10 @@ export function PrintableAssociateSheet({
 
             <div className="print-sheet-brand-copy">
               <div className="print-sheet-brand-title-row">
-                <h1>Ficha de Inscricao</h1>
+                <h1>Ficha de Inscrição</h1>
               </div>
               <div className="print-sheet-brand-subtitle">
-                <p>Sindicato dos Transportadores Autonomos</p>
+                <p>Sindicato dos Transportadores Autônomos</p>
                 <p>de Pessoas, de Bens e de Cargas de Rio Claro-SP</p>
               </div>
             </div>
@@ -69,16 +69,16 @@ export function PrintableAssociateSheet({
           </div>
 
           <div className="print-sheet-summary-bar">
-            <SummaryCell label="Numero" value={deriveMemberNumber(associate)} />
-            <SummaryCell label="Admissao" value={formatDate(associate.admissionDate)} />
-            <SummaryCell label="Matricula" value={associate.registrationNumber} strong />
+            <SummaryCell label="Número" value={deriveMemberNumber(associate)} />
+            <SummaryCell label="Admissão" value={formatDate(associate.admissionDate)} />
+            <SummaryCell label="Matrícula" value={associate.registrationNumber} strong />
             <SummaryCell label="Categoria" value={profileCategory} />
           </div>
 
           <div className="print-sheet-summary-pill-row">
-            <SummaryPill label="Socio" value={associate.name} />
+            <SummaryPill label="Sócio" value={associate.name} />
             <SummaryPill label="Categoria" value={profileCategory} />
-            <SummaryPill label="Situacao" value={associate.status} />
+            <SummaryPill label="Situação" value={associate.status} />
           </div>
         </header>
 
@@ -93,19 +93,19 @@ export function PrintableAssociateSheet({
         ) : null}
 
         <section className="print-sheet-section">
-          <SectionTitle title="Informacoes pessoais" />
+          <SectionTitle title="Informações pessoais" />
           <div className="print-sheet-grid print-sheet-grid-personal">
             <FieldCell className="col-span-4" label="1. Nome" value={associate.name} />
             <FieldCell
               className="col-span-4"
-              label="2. Endereco completo"
+              label="2. Endereço completo"
               value={associate.enderecoCompleto}
             />
             <FieldCell label="3. Bairro" value={associate.bairro} />
             <FieldCell label="4. Cidade" value={associate.cidade} />
             <FieldCell label="5. Estado" value={associate.estado} />
             <FieldCell label="6. CEP" value={formatCep(associate.cep)} />
-            <FieldCell label="7. Profissao" value={associate.profissao} />
+            <FieldCell label="7. Profissão" value={associate.profissao} />
             <FieldCell label="8. Sexo" value={associate.sexo} />
             <FieldCell
               label="9. Data de nascimento"
@@ -125,7 +125,7 @@ export function PrintableAssociateSheet({
             <SectionTitle title="Dados familiares" />
             <div className="print-sheet-grid print-sheet-grid-family">
               <FieldCell className="col-span-2" label="16. Nome do pai" value={associate.nomePai} />
-              <FieldCell className="col-span-2" label="17. Nome da mae" value={associate.nomeMae} />
+              <FieldCell className="col-span-2" label="17. Nome da mãe" value={associate.nomeMae} />
               <FieldCell className="col-span-2" label="18. Telefone" value={associate.telefone} />
               <FieldCell
                 className="col-span-2"
@@ -155,10 +155,10 @@ export function PrintableAssociateSheet({
         </div>
 
         <section className="print-sheet-section">
-          <SectionTitle title="Documentacao" />
+          <SectionTitle title="Documentação" />
           <div className="print-sheet-document-table">
             <TableCell head>Documento</TableCell>
-            <TableCell head>Numero/Referencia</TableCell>
+            <TableCell head>Número/Referência</TableCell>
             <TableCell head>Status</TableCell>
             <TableCell head>Observacao</TableCell>
 
@@ -170,7 +170,7 @@ export function PrintableAssociateSheet({
         </section>
 
         <footer className="print-sheet-footer">
-          <SignatureLine label="Assinatura do Socio" />
+          <SignatureLine label="Assinatura do Sócio" />
           <SignatureLine label="Assinatura do Responsavel" />
         </footer>
 
@@ -327,7 +327,7 @@ function getPrintableDocumentStatusLabel(status: "Valido" | "Atencao" | "Vencido
   }
 
   if (status === "Atencao") {
-    return "Em atencao";
+    return "Em atenção";
   }
 
   if (status === "Vencido") {
@@ -353,7 +353,7 @@ function buildPrintableDocumentObservation(
     return baseLabel;
   }
 
-  return `${baseLabel} | Proximo vencimento: ${formatDate(summary.nextDueDate)}`;
+  return `${baseLabel} | Próximo vencimento: ${formatDate(summary.nextDueDate)}`;
 }
 
 function buildDependentEntries(associate: Associate) {

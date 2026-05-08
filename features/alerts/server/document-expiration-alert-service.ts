@@ -191,12 +191,12 @@ async function applyAlertReconciliationPlan(
   dataLayer: DataLayer,
   plan: AlertReconciliationPlan,
 ) {
-  for (const alert of plan.upserts) {
-    await dataLayer.alerts.upsertGeneratedForDocument(alert);
+  if (plan.upserts.length > 0) {
+    await dataLayer.alerts.upsertGeneratedForDocuments(plan.upserts);
   }
 
-  for (const documentId of plan.deleteDocumentIds) {
-    await dataLayer.alerts.deleteGeneratedBySourceDocumentId(documentId);
+  if (plan.deleteDocumentIds.length > 0) {
+    await dataLayer.alerts.deleteGeneratedBySourceDocumentIds(plan.deleteDocumentIds);
   }
 }
 

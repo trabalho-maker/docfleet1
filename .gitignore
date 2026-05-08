@@ -19,6 +19,7 @@
 # next.js
 /.next/
 /out/
+/backups/
 /data/*.db
 /data/*.db-wal
 /data/*.db-shm
